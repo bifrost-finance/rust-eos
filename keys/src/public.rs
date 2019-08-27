@@ -78,9 +78,7 @@ impl PublicKey {
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.compressed {
-            for ch in &self.key.serialize()[..] {
-                write!(f, "{:02x}", ch)?;
-            }
+            write!(f, "{}", self.to_eos_fmt())?;
         } else {
             for ch in &self.key.serialize_uncompressed()[..] {
                 write!(f, "{:02x}", ch)?;

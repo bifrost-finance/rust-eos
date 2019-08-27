@@ -11,8 +11,8 @@ use crate::base58;
 use crate::network::Network::Mainnet;
 
 
-#[derive(Copy, Clone, PartialEq, Eq)]
 /// A Secp256k1 private key
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct SecretKey {
     /// Whether this private key should be serialized as compressed
     pub compressed: bool,
@@ -35,7 +35,7 @@ impl SecretKey {
     /// Creates a public key from this private key
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey {
-            compressed: self.compressed,
+            compressed: true,
             key: secp256k1::PublicKey::from_secret_key(secp, &self.key),
         }
     }
