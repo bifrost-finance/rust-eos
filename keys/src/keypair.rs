@@ -32,25 +32,26 @@ impl Keypair {
     pub fn generate<R>(csprng: &mut R) -> Keypair where R: CryptoRng + Rng {
         let secp = Secp256k1::new();
         let sk = SecretKey::generate(csprng);
-        let pk = sk.public_key(&secp);
+        let pk = PublicKey::from(&sk);
 
         Keypair { sk, pk }
     }
 
+    /// Generate an secp256k1 keypair from secret in WIF format
     pub fn from_secret_wif(wif: &str) -> Result<Keypair, error::Error> {
-        let secp = Secp256k1::new();
         let sk = SecretKey::from_wif(wif)?;
-        let pk = sk.public_key(&secp);
+        let pk = PublicKey::from(&sk);
 
         Ok(Keypair { sk, pk })
     }
 
     /// Sign a message with this keypair's secret key.
-    pub fn sign(&self, message: &[u8]) -> Signature {
-        let secp = Secp256k1::signing_only();
-        let msg = Message::from_slice(&message).unwrap();
-        let sig = secp.sign(&msg, &self.sk.key);
+    pub fn sign(&self, message: &[u8]) -> Result<Signature, error::Error> {
+        self.sk.sign(&message)
+    }
 
-        Signature(sig)
+    /// Verify a signature on a message with this keypair's public key
+    pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), error::Error> {
+        self.pk.verify(&message, &signature)
     }
 }

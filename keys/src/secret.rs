@@ -3,12 +3,13 @@
 use std::fmt::{self, Write};
 use std::str::FromStr;
 use rand::{CryptoRng, Rng};
-use secp256k1::{self, Secp256k1, key};
+use secp256k1::{self, Secp256k1, key, Message};
 use crate::error;
 use crate::network::Network;
 use crate::public::PublicKey;
 use crate::base58;
 use crate::network::Network::Mainnet;
+use crate::signature::Signature;
 
 
 /// A Secp256k1 private key
@@ -29,14 +30,6 @@ impl SecretKey {
             compressed: false,
             network: Mainnet,
             key: key::SecretKey::new(csprng),
-        }
-    }
-
-    /// Creates a public key from this private key
-    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
-        PublicKey {
-            compressed: true,
-            key: secp256k1::PublicKey::from_secret_key(secp, &self.key),
         }
     }
 
@@ -108,6 +101,18 @@ impl SecretKey {
             network: Mainnet,
             key: secp256k1::SecretKey::from_slice(data).unwrap(),
         })
+    }
+
+    /// Sign a message with secret key
+    pub fn sign(&self, message: &[u8]) -> Result<Signature, error::Error> {
+        let secp = Secp256k1::signing_only();
+        let msg = match Message::from_slice(&message) {
+            Ok(msg) => msg,
+            Err(err) => return Err(err.into()),
+        };
+        let sig = secp.sign(&msg, &self.key);
+
+        Ok(Signature(sig))
     }
 }
 

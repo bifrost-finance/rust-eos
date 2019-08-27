@@ -3,12 +3,13 @@
 use std::{io, fmt, str::FromStr};
 use crypto::ripemd160::Ripemd160;
 use crypto::digest::Digest;
-use secp256k1::{self, Secp256k1};
+use secp256k1::{self, Secp256k1, Message};
 use crate::constant::*;
 use crate::error;
 use crate::secret::SecretKey;
 use crate::hash::H160;
 use crate::base58;
+use crate::signature::Signature;
 
 /// A Secp256k1 public key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -48,6 +49,17 @@ impl PublicKey {
         format!("EOS{}", base58::encode_slice(&public_key))
     }
 
+    /// Verify a signature on a message with public key.
+    pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), error::Error> {
+        let secp = Secp256k1::verification_only();
+        let msg = Message::from_slice(&message).unwrap();
+
+        match secp.verify(&msg, &signature.0, &self.key) {
+            Ok(()) => Ok(()),
+            Err(err) => Err(err.into()),
+        }
+    }
+
     /// Deserialize a public key from a slice
     pub fn from_slice(data: &[u8]) -> Result<PublicKey, error::Error> {
         let compressed: bool = match data.len() {
@@ -62,10 +74,6 @@ impl PublicKey {
         })
     }
 
-    /// Computes the public key as supposed to be used with this secret
-    pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &SecretKey) -> PublicKey {
-        sk.public_key(secp)
-    }
 
     /// Computes RIPEMD-160 cryptographic hash of key
     fn ripemd160(&self) -> H160 {
@@ -100,5 +108,17 @@ impl FromStr for PublicKey {
             key,
             compressed: s.len() == 66,
         })
+    }
+}
+
+impl<'a> From<&'a SecretKey> for PublicKey {
+    /// Derive this public key from its corresponding `SecretKey`.
+    fn from(sk: &SecretKey) -> PublicKey {
+        let secp = Secp256k1::new();
+
+        PublicKey {
+            compressed: true,
+            key: secp256k1::PublicKey::from_secret_key(&secp, &sk.key),
+        }
     }
 }
