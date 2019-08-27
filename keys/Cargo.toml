@@ -7,4 +7,13 @@ edition = "2018"
 [dependencies]
 bitcoin_hashes = "0.7"
 byteorder = "1.2"
+secp256k1 = "0.15"
+rust-crypto = "0.2.36"
+rustc-hex = "2"
+
+[dependencies.rand]
+version = "0.6"
+features = ["i128_support"]
+
+[dev-dependencies]
 hex = "=0.3.2"
