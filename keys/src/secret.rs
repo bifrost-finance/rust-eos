@@ -59,6 +59,7 @@ impl SecretKey {
         } else {
             base58::check_encode_slice(&ret[..33])
         };
+
         fmt.write_str(&privkey)
     }
 
@@ -67,6 +68,7 @@ impl SecretKey {
         let mut buf = String::new();
         buf.write_fmt(format_args!("{}", self)).unwrap();
         buf.shrink_to_fit();
+
         buf
     }
 

@@ -34,6 +34,7 @@ impl PublicKey {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         self.write_into(&mut buf);
+
         buf
     }
 
@@ -43,6 +44,7 @@ impl PublicKey {
         let mut public_key: [u8; PUBLIC_KEY_WITH_CHECKSUM_SIZE] = [0u8; PUBLIC_KEY_WITH_CHECKSUM_SIZE];
         public_key[..PUBLIC_KEY_SIZE].copy_from_slice(self.to_bytes().as_ref());
         public_key[PUBLIC_KEY_SIZE..].copy_from_slice(&h160.take()[..PUBLIC_KEY_CHECKSUM_SIZE]);
+
         format!("EOS{}", base58::encode_slice(&public_key))
     }
 
@@ -71,6 +73,7 @@ impl PublicKey {
         let mut hasher = Ripemd160::new();
         hasher.input(&self.key.serialize());
         hasher.result(&mut *result);
+
         result
     }
 }
@@ -84,6 +87,7 @@ impl fmt::Display for PublicKey {
                 write!(f, "{:02x}", ch)?;
             }
         }
+
         Ok(())
     }
 }

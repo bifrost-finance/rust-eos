@@ -24,6 +24,7 @@ impl Keypair {
 
         bytes[..SECRET_KEY_SIZE].copy_from_slice(self.sk.to_bytes().as_slice());
         bytes[SECRET_KEY_SIZE..].copy_from_slice(self.pk.to_bytes().as_slice());
+
         bytes
     }
 
@@ -32,6 +33,7 @@ impl Keypair {
         let secp = Secp256k1::new();
         let sk = SecretKey::generate(csprng);
         let pk = sk.public_key(&secp);
+
         Keypair { sk, pk }
     }
 
@@ -39,6 +41,7 @@ impl Keypair {
         let secp = Secp256k1::new();
         let sk = SecretKey::from_wif(wif)?;
         let pk = sk.public_key(&secp);
+
         Ok(Keypair { sk, pk })
     }
 

@@ -11,6 +11,7 @@ impl fmt::Display for Signature {
         for v in sig.iter() {
             write!(f, "{:02x}", v)?;
         }
+
         Ok(())
     }
 }
