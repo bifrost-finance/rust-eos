@@ -10,6 +10,7 @@ use crate::secret::SecretKey;
 use crate::hash::H160;
 use crate::base58;
 use crate::signature::Signature;
+use crypto::sha2::Sha256;
 
 /// A Secp256k1 public key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -51,8 +52,18 @@ impl PublicKey {
 
     /// Verify a signature on a message with public key.
     pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), error::Error> {
+        let mut msg = [0u8; 32];
+        let mut hasher = Sha256::new();
+        hasher.input(&message);
+        hasher.result(&mut msg);
+
+        self.verify_hash(&msg, &signature)
+    }
+
+    /// Verify a signature on a hash with public key.
+    pub fn verify_hash(&self, hash: &[u8], signature: &Signature) -> Result<(), error::Error> {
         let secp = Secp256k1::verification_only();
-        let msg = Message::from_slice(&message).unwrap();
+        let msg = Message::from_slice(&hash).unwrap();
 
         match secp.verify(&msg, &signature.0, &self.key) {
             Ok(()) => Ok(()),

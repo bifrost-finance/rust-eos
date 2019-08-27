@@ -6,10 +6,11 @@ use rand::{CryptoRng, Rng};
 use secp256k1::{self, Secp256k1, key, Message};
 use crate::error;
 use crate::network::Network;
-use crate::public::PublicKey;
 use crate::base58;
 use crate::network::Network::Mainnet;
 use crate::signature::Signature;
+use crypto::sha2::Sha256;
+use crypto::digest::Digest;
 
 
 /// A Secp256k1 private key
@@ -105,8 +106,18 @@ impl SecretKey {
 
     /// Sign a message with secret key
     pub fn sign(&self, message: &[u8]) -> Result<Signature, error::Error> {
+        let mut msg = [0u8; 32];
+        let mut hasher = Sha256::new();
+        hasher.input(&message);
+        hasher.result(&mut msg);
+
+        self.sign_hash(&msg)
+    }
+
+    /// Sign a hash with secret key
+    pub fn sign_hash(&self, hash: &[u8]) -> Result<Signature, error::Error> {
         let secp = Secp256k1::signing_only();
-        let msg = match Message::from_slice(&message) {
+        let msg = match Message::from_slice(&hash) {
             Ok(msg) => msg,
             Err(err) => return Err(err.into()),
         };
