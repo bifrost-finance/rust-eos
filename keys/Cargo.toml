@@ -3,6 +3,7 @@ name = "keys"
 version = "0.1.0"
 authors = ["Edwin Wang <lark930@gmail.com>"]
 edition = "2018"
+description = "Secp256k1 crypto for Eos"
 
 [dependencies]
 bitcoin_hashes = "0.7"
