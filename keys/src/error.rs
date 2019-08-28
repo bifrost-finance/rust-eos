@@ -3,7 +3,7 @@ use std::fmt;
 use secp256k1;
 use crate::base58;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),

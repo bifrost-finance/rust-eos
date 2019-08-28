@@ -114,11 +114,16 @@ impl fmt::Display for PublicKey {
 impl FromStr for PublicKey {
     type Err = error::Error;
     fn from_str(s: &str) -> Result<PublicKey, error::Error> {
-        let key = secp256k1::PublicKey::from_str(s)?;
-        Ok(PublicKey {
-            key,
-            compressed: s.len() == 66,
-        })
+        if !s.starts_with("EOS") {
+            return Err(error::Error::Secp256k1(secp256k1::Error::InvalidPublicKey));
+        }
+
+        let s_hex = base58::from(&s[3..])?;
+        let raw = &s_hex[..PUBLIC_KEY_SIZE];
+        let checksum = &s_hex[PUBLIC_KEY_SIZE..];
+        let key = secp256k1::PublicKey::from_slice(&raw)?;
+
+        Ok(PublicKey { key, compressed: true })
     }
 }
 
@@ -131,5 +136,28 @@ impl<'a> From<&'a SecretKey> for PublicKey {
             compressed: true,
             key: secp256k1::PublicKey::from_secret_key(&secp, &sk.key),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::PublicKey;
+    use std::str::FromStr;
+    use crate::error;
+
+    #[test]
+    fn pk_from_str_should_work() {
+        let pk_str = "EOS8FdQ4gt16pFcSiXAYCcHnkHTS2nNLFWGZXW5sioAdvQuMxKhAm";
+        let pk = PublicKey::from_str(pk_str);
+        assert!(pk.is_ok());
+        assert_eq!(pk.unwrap().to_string(), pk_str);
+    }
+
+    #[test]
+    fn pk_from_str_should_error() {
+        let pk_str = "8FdQ4gt16pFcSiXAYCcHnkHTS2nNLFWGZXW5sioAdvQuMxKhAm";
+        let pk = PublicKey::from_str(pk_str);
+        assert!(pk.is_err());
+        assert_eq!(pk.unwrap_err(), error::Error::Secp256k1(secp256k1::Error::InvalidPublicKey));
     }
 }
