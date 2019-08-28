@@ -121,7 +121,7 @@ impl SecretKey {
             Ok(msg) => msg,
             Err(err) => return Err(err.into()),
         };
-        let sig = secp.sign(&msg, &self.key);
+        let sig = secp.sign_recoverable(&msg, &self.key);
 
         Ok(Signature(sig))
     }

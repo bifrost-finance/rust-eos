@@ -1,13 +1,11 @@
 #![allow(dead_code)]
 
 use std::{io, fmt, str::FromStr};
-use crypto::ripemd160::Ripemd160;
 use crypto::digest::Digest;
 use secp256k1::{self, Secp256k1, Message};
 use crate::constant::*;
-use crate::error;
+use crate::{error, hash};
 use crate::secret::SecretKey;
-use crate::hash::H160;
 use crate::base58;
 use crate::signature::Signature;
 use crypto::sha2::Sha256;
@@ -42,7 +40,7 @@ impl PublicKey {
 
     /// Serialize the public key to Eos format string
     pub fn to_eos_fmt(&self) -> String {
-        let h160 = self.ripemd160();
+        let h160 = hash::ripemd160(&self.key.serialize());
         let mut public_key: [u8; PUBLIC_KEY_WITH_CHECKSUM_SIZE] = [0u8; PUBLIC_KEY_WITH_CHECKSUM_SIZE];
         public_key[..PUBLIC_KEY_SIZE].copy_from_slice(self.to_bytes().as_ref());
         public_key[PUBLIC_KEY_SIZE..].copy_from_slice(&h160.take()[..PUBLIC_KEY_CHECKSUM_SIZE]);
@@ -65,7 +63,7 @@ impl PublicKey {
         let secp = Secp256k1::verification_only();
         let msg = Message::from_slice(&hash).unwrap();
 
-        match secp.verify(&msg, &signature.0, &self.key) {
+        match secp.verify(&msg, &signature.0.to_standard(), &self.key) {
             Ok(()) => Ok(()),
             Err(err) => Err(err.into()),
         }
@@ -83,17 +81,6 @@ impl PublicKey {
             compressed,
             key: secp256k1::PublicKey::from_slice(data)?,
         })
-    }
-
-
-    /// Computes RIPEMD-160 cryptographic hash of key
-    fn ripemd160(&self) -> H160 {
-        let mut result = H160::default();
-        let mut hasher = Ripemd160::new();
-        hasher.input(&self.key.serialize());
-        hasher.result(&mut *result);
-
-        result
     }
 }
 
@@ -120,6 +107,7 @@ impl FromStr for PublicKey {
 
         let s_hex = base58::from(&s[3..])?;
         let raw = &s_hex[..PUBLIC_KEY_SIZE];
+        // TODO verify with checksum
         let checksum = &s_hex[PUBLIC_KEY_SIZE..];
         let key = secp256k1::PublicKey::from_slice(&raw)?;
 
