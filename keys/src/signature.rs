@@ -33,7 +33,7 @@ impl FromStr for Signature {
         };
         // TODO verify with checksum
         let data = &s_hex[1..65];
-        let checksum = &s_hex[65..];
+        let _checksum = &s_hex[65..];
         let rec_sig = match secp256k1::recovery::RecoverableSignature::from_compact(&data, recid) {
             Ok(rec_sig) => rec_sig,
             Err(err) => return Err(err.into()),

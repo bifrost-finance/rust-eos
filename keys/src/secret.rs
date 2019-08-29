@@ -145,3 +145,30 @@ impl FromStr for SecretKey {
         SecretKey::from_wif(s)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::SecretKey;
+    use crate::public::PublicKey;
+
+    #[test]
+    fn sk_from_wif_should_work() {
+        let wif = "5HrBLKfeEdqH9KLMv1daHLVjrXV3DGVERAkN5cdSSc58bzqqfT4";
+        let sk = SecretKey::from_wif(wif);
+        assert!(sk.is_ok());
+    }
+
+    #[test]
+    fn sk_sign_should_work() {
+        let sk = SecretKey::from_wif("5KUEhweMaSD2szyjU9EKjAyY642ZdVL2qzHW72dQcNRzUMWx9EL");
+        assert!(sk.is_ok());
+
+        let sk = sk.unwrap();
+        let pk = PublicKey::from(&sk);
+        println!("pk: {}", pk);
+
+        let sig = sk.sign("hello".as_bytes());
+        assert!(sig.is_ok());
+        assert_eq!(sig.unwrap().to_string(), "SIG_K1_KomV6FEHKdtZxGDwhwSubEAcJ7VhtUQpEt5P6iDz33ic936aSXx87B2L56C8JLQkqNpp1W8ZXjrKiLHUEB4LCGeXvbtVuR");
+    }
+}

@@ -60,7 +60,6 @@ mod tests {
     use rand::rngs::OsRng;
     use super::Keypair;
     use crate::public::PublicKey;
-    use crate::secret::SecretKey;
 
     #[test]
     fn keypair_generate_should_work() {

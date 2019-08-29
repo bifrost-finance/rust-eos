@@ -108,7 +108,7 @@ impl FromStr for PublicKey {
         let s_hex = base58::from(&s[3..])?;
         let raw = &s_hex[..PUBLIC_KEY_SIZE];
         // TODO verify with checksum
-        let checksum = &s_hex[PUBLIC_KEY_SIZE..];
+        let _checksum = &s_hex[PUBLIC_KEY_SIZE..];
         let key = secp256k1::PublicKey::from_slice(&raw)?;
 
         Ok(PublicKey { key, compressed: true })
@@ -132,6 +132,7 @@ mod test {
     use super::PublicKey;
     use std::str::FromStr;
     use crate::error;
+    use crate::signature::Signature;
 
     #[test]
     fn pk_from_str_should_work() {
@@ -147,5 +148,19 @@ mod test {
         let pk = PublicKey::from_str(pk_str);
         assert!(pk.is_err());
         assert_eq!(pk.unwrap_err(), error::Error::Secp256k1(secp256k1::Error::InvalidPublicKey));
+    }
+
+    #[test]
+    fn pk_verify_should_work() {
+        let pk_str = "EOS86jwjSu9YkD4JDJ7nGK1Rx2SmvNMQ3XiKrvFndABzLDPwk1ZHx";
+        let sig_str = "SIG_K1_KomV6FEHKdtZxGDwhwSubEAcJ7VhtUQpEt5P6iDz33ic936aSXx87B2L56C8JLQkqNpp1W8ZXjrKiLHUEB4LCGeXvbtVuR";
+
+        let pk = PublicKey::from_str(pk_str);
+        assert!(pk.is_ok());
+        let sig = Signature::from_str(sig_str);
+        assert!(sig.is_ok());
+
+        let vfy = pk.unwrap().verify("hello".as_bytes(), &sig.unwrap());
+        assert!(vfy.is_ok());
     }
 }
