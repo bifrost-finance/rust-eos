@@ -133,6 +133,8 @@ mod test {
     use std::str::FromStr;
     use crate::error;
     use crate::signature::Signature;
+    use secp256k1::Error::IncorrectSignature;
+    use crate::error::Error::Secp256k1;
 
     #[test]
     fn pk_from_str_should_work() {
@@ -162,5 +164,20 @@ mod test {
 
         let vfy = pk.unwrap().verify("hello".as_bytes(), &sig.unwrap());
         assert!(vfy.is_ok());
+    }
+
+    #[test]
+    fn pk_verify_should_error() {
+        let pk_str = "EOS86jwjSu9YkD4JDJ7nGK1Rx2SmvNMQ3XiKrvFndABzLDPwk1ZHx";
+        let sig_str = "SIG_K1_KomV6FEHKdtZxGDwhwSubEAcJ7VhtUQpEt5P6iDz33ic936aSXx87B2L56C8JLQkqNpp1W8ZXjrKiLHUEB4LCGeXvbtVuR";
+
+        let pk = PublicKey::from_str(pk_str);
+        assert!(pk.is_ok());
+        let sig = Signature::from_str(sig_str);
+        assert!(sig.is_ok());
+
+        let vfy = pk.unwrap().verify("world".as_bytes(), &sig.unwrap());
+        assert!(vfy.is_err());
+        assert_eq!(vfy, Err(Secp256k1(IncorrectSignature)));
     }
 }
