@@ -121,9 +121,9 @@ impl SecretKey {
             Ok(msg) => msg,
             Err(err) => return Err(err.into()),
         };
-        let sig = secp.sign_canonical(&msg, &self.key);
+        let recv_sig = secp.sign_canonical(&msg, &self.key);
 
-        Ok(Signature(sig))
+        Ok(Signature::from(recv_sig))
     }
 }
 

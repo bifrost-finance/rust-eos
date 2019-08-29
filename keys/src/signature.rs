@@ -2,19 +2,30 @@
 use std::fmt;
 use crate::{base58, hash, error};
 use std::str::FromStr;
+use secp256k1::recovery::RecoverableSignature;
 
 /// An secp256k1 signature.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct Signature(pub secp256k1::recovery::RecoverableSignature);
+pub struct Signature(RecoverableSignature);
 
 impl Signature {
-    pub fn is_canonical(sig: secp256k1::recovery::RecoverableSignature) -> bool {
+    pub fn is_canonical(sig: RecoverableSignature) -> bool {
         let (_, pk) = sig.serialize_compact();
 
         (pk[0] & 0x80 == 0)
             && !((pk[0] == 0) && (pk[1] & 0x80 == 0))
             && (pk[32] & 0x80 == 0)
             && !((pk[32] == 0) && (pk[33] & 0x80 == 0))
+    }
+
+    pub fn to_standard(&self) -> secp256k1::Signature {
+        self.0.to_standard()
+    }
+}
+
+impl From<RecoverableSignature> for Signature {
+    fn from(recv_sig: RecoverableSignature) -> Signature {
+        Signature(recv_sig)
     }
 }
 

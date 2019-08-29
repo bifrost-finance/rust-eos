@@ -63,7 +63,7 @@ impl PublicKey {
         let secp = Secp256k1::verification_only();
         let msg = Message::from_slice(&hash).unwrap();
 
-        match secp.verify(&msg, &signature.0.to_standard(), &self.key) {
+        match secp.verify(&msg, &signature.to_standard(), &self.key) {
             Ok(()) => Ok(()),
             Err(err) => Err(err.into()),
         }
