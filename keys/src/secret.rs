@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::fmt::{self, Write};
 use std::str::FromStr;
 use rand::{CryptoRng, Rng};

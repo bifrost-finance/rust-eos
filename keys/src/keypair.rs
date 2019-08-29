@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use rand::{CryptoRng, Rng};
 use crate::constant::*;
 use crate::error;

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{io, fmt, str::FromStr};
 use crypto::digest::Digest;
 use secp256k1::{self, Secp256k1, Message};
