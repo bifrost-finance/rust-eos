@@ -1,5 +1,5 @@
 [package]
-name = "keys"
+name = "eos-keys"
 version = "0.1.0"
 authors = ["Edwin Wang <lark930@gmail.com>"]
 edition = "2018"
