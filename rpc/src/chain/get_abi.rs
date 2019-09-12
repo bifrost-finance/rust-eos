@@ -1,10 +1,12 @@
+use crate::Client;
+use crate::chain::ReturnKind;
 use eosio::AccountName;
 use eosio_abi::Abi;
 use serde_derive::{Deserialize, Serialize};
+use rpc_codegen::Fetch;
 
-crate::builder!("/v1/chain/get_abi", GetAbiParams, GetAbi);
-
-#[derive(Serialize, Clone)]
+#[derive(Fetch, Debug, Clone, Serialize)]
+#[api(path="v1/chain/get_abi", http_method="POST", returns="GetAbi")]
 pub struct GetAbiParams {
     account_name: AccountName,
 }
