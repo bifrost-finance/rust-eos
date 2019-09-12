@@ -1,10 +1,12 @@
-use crate::builder;
+use crate::Client;
+use crate::chain::ReturnKind;
 use eosio::AccountName;
 use serde_derive::{Deserialize, Serialize};
+use rpc_codegen::Fetch;
 
-builder!("/v1/chain/get_info", GetInfoParams, GetInfo);
 
-#[derive(Serialize, Clone)]
+#[derive(Fetch, Debug, Clone, Serialize)]
+#[api(path="v1/chain/get_info", http_method="POST", returns="GetInfo")]
 pub struct GetInfoParams {}
 
 pub const fn get_info() -> GetInfoParams {
