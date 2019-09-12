@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Edwin Wang <lark930@gmail.com>"]
 edition = "2018"
 
+[lib]
+path = "src/lib.rs"
+
 [dependencies]
 cfg-if = "0.1.2"
 serde = "1.0"
@@ -19,6 +22,14 @@ hyper = { version = "0.12", optional = true }
 hyper-tls = { version = "0.3", optional = true }
 stdweb = { version = "0.4.14", optional = true }
 futures-util-preview = { version = "=0.3.0-alpha.16" }
+
+tokio = "0.1"
+failure = "0.1"
+
+syn = { version = "1.0", features = ["full", "derive", "extra-traits", "parsing"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+rpc_codegen = { version = "0.1.0", path = "rpc_codegen"}
 
 [dependencies.web-sys]
 version = "0.3.4"
