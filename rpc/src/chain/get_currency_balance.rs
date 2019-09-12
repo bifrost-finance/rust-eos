@@ -1,13 +1,12 @@
-use eosio::AccountName;
-use serde_derive::Serialize;
+use crate::Client;
+use crate::chain::ReturnKind;
+use eosio::{AccountName, PermissionLevel, PermissionName};
+use serde_derive::{Deserialize, Serialize};
+use rpc_codegen::Fetch;
 
-crate::builder!(
-    "/v1/chain/get_currency_balance",
-    GetCurrencyBalanceParams,
-    GetCurrencyBalance
-);
 
-#[derive(Serialize, Clone)]
+#[derive(Fetch, Debug, Clone, Serialize)]
+#[api(path="v1/chain/get_currency_balance", http_method="POST", returns="GetCurrencyBalance")]
 pub struct GetCurrencyBalanceParams {
     code: AccountName,
     account: AccountName,
