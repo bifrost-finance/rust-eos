@@ -1,9 +1,12 @@
+use crate::Client;
+use crate::chain::ReturnKind;
 use eosio::{AccountName, PermissionLevel, PermissionName};
 use serde_derive::{Deserialize, Serialize};
+use rpc_codegen::Fetch;
 
-crate::builder!("/v1/chain/get_account", GetAccountParams, GetAccount);
 
-#[derive(Serialize, Clone)]
+#[derive(Fetch, Debug, Clone, Serialize)]
+#[api(path="v1/chain/get_account", http_method="POST", returns="GetAccount")]
 pub struct GetAccountParams {
     account_name: AccountName,
 }
