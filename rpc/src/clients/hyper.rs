@@ -1,12 +1,11 @@
 use crate::error::Error;
-use crate::Client;
-use futures::compat::Future01CompatExt;
-use futures::future::FutureExt;
+use crate::client::Client;
 use hyper::rt::{Future, Stream};
 use hyper_tls::HttpsConnector;
 use serde::{Deserialize, Serialize};
-use std::pin::Pin;
 
+
+#[derive(Clone, Debug)]
 pub struct HyperClient {
     node: String,
 }
@@ -24,44 +23,36 @@ impl Client for HyperClient {
         &self.node
     }
 
-    fn fetch<Output, Params>(
-        &self,
-        path: &str,
-        params: Params,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<Output, Error>> + Send>>
-    where
-        Output: 'static + for<'b> Deserialize<'b> + Send,
-        Params: Serialize,
+    fn fetch<T>(&self, path: impl AsRef<str>, params: impl Serialize) -> crate::Result<T>
+        where T: 'static + for<'b> Deserialize<'b> + Send + Sync
     {
-        let https = HttpsConnector::new(4).unwrap();
+        let https = HttpsConnector::new(4)?;
         let client = hyper::Client::builder().build::<_, hyper::Body>(https);
+        let url = self.node.to_string() + path.as_ref();
+        let url: hyper::Uri = url.parse()?;
 
-        let mut url = self.node.to_owned();
-        url.push_str(path);
-
-        let uri: hyper::Uri = url.parse().unwrap();
-
-        let json = serde_json::to_string(&params).unwrap();
+        let json = serde_json::to_string(&params)?;
         let mut req = hyper::Request::new(hyper::Body::from(json));
         *req.method_mut() = hyper::Method::POST;
-        *req.uri_mut() = uri;
+        *req.uri_mut() = url;
         req.headers_mut().insert(
             hyper::header::CONTENT_TYPE,
             hyper::header::HeaderValue::from_static("application/json"),
         );
+        req.headers_mut().insert(
+            hyper::header::ACCEPT,
+            hyper::header::HeaderValue::from_static("application/json"),
+        );
 
-        client
+        let fut = client
             .request(req)
             .and_then(|res| res.into_body().concat2())
             .from_err::<Error>()
             .and_then(|body| {
-                let s = std::str::from_utf8(&body).unwrap();
-                println!("!!!!!!!!!!!!!!!!!!! {}", s);
-                let res = serde_json::from_slice(&body)?;
-                Ok(res)
-            })
-            .from_err()
-            .compat()
-            .boxed()
+                let block: T = serde_json::from_slice(&body)?;
+                Ok(block)
+            });
+        let result = tokio::runtime::Runtime::new()?.block_on(fut)?;
+        Ok(result)
     }
 }
