@@ -7,7 +7,8 @@ pub mod get_block;
 pub mod get_currency_balance;
 pub mod get_currency_stats;
 pub mod get_info;
-pub mod get_table_rows;
+// to-do, this modile will be added later.
+// pub mod get_table_rows;
 
 pub use self::get_abi::{get_abi, GetAbi, GetAbiParams};
 pub use self::get_account::{get_account, GetAccount, GetAccountParams};
@@ -17,6 +18,16 @@ pub use self::get_currency_balance::{
 };
 pub use self::get_currency_stats::{get_currency_stats, GetCurrencyStats};
 pub use self::get_info::{get_info, GetInfo};
-pub use self::get_table_rows::{
-    get_table_rows, GetTableRows, GetTableRowsParams,
-};
+// pub use self::get_table_rows::{
+    // get_table_rows, GetTableRows, GetTableRowsParams,
+// };
+
+// use enum to hold different struct
+#[derive(Debug)]
+pub enum ReturnKind {
+    GetBlock(GetBlock),
+    GetInfo(GetInfo),
+    GetAccount(GetAccount),
+    GetCurrencyBalance(GetCurrencyBalance),
+    GetAbi(GetAbi)
+}
