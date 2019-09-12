@@ -1,11 +1,6 @@
 use eosio::AccountName;
 use serde_derive::{Deserialize, Serialize};
 
-crate::builder!(
-    "/v1/chain/get_currency_stats",
-    GetCurrencyStatsParams,
-    GetCurrencyStats
-);
 
 #[derive(Serialize, Clone)]
 pub struct GetCurrencyStatsParams {
