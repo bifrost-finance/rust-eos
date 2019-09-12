@@ -1,27 +1,58 @@
+use failure::Fail;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+
+pub type Result<T> = std::result::Result<T, failure::Error>;
+
+#[derive(Debug, Fail)]
 pub enum Error {
-    BadRequestJson(::serde_json::Error),
-    BadRequest,
+    #[fail(display = "Parsed json error due to: {}", serde_err)]
+    RequestJsonError {
+        #[cause]
+        serde_err: serde_json::Error,
+    },
+    #[fail(display = "Parsed json error due to: {}", serde_err)]
+    ParseJsonError {
+        #[cause]
+        serde_err: serde_json::Error,
+    },
+    #[fail(display = "Bad request due to: {}", request_err)]
+    HttpRequestError {
+        #[cause]
+        request_err: hyper::Error,
+    },
+    #[fail(display = "No window error happened?")]
     NoWindow,
-    BadResponse,
-    BadResponseJson(::serde_json::Error),
-    EosError(ErrorResponse),
+    #[fail(display = "Bad http response due to: {}.", response_err)]
+    HttpResponseError {
+        #[cause]
+        response_err: hyper::Error,
+    },
+    #[fail(display = "Bad http response due to: {}.", response_json_err)]
+    ResponseJsonError {
+        #[cause]
+        response_json_err: serde_json::Error,
+    },
+    // to-do, need to impl Display trait
+    // #[fail(display = "Bad http response due to: {}.", eos_err)]
+    // EosError{
+    //     #[cause]
+    //     eos_err: ErrorResponse,
+    // }
 }
 
 #[cfg(feature = "use-hyper")]
 impl From<hyper::Error> for Error {
     fn from(err: hyper::Error) -> Self {
         println!("HYPER ERROR: {:#?}", err);
-        Error::BadResponse
+        Error::HttpRequestError { request_err: err }
     }
 }
 
 impl From<serde_json::Error> for Error {
     fn from(err: serde_json::Error) -> Self {
         println!("SERDE ERROR: {:#?}", err);
-        Error::BadResponse
+        Error::ParseJsonError { serde_err: err }
     }
 }
 
