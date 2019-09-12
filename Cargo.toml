@@ -2,4 +2,5 @@
 members = [
   "keys",
   "rpc",
+  "rpc/rpc_codegen",
 ]
