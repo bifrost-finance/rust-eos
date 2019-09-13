@@ -88,3 +88,34 @@ pub struct Action {
     pub data: ::serde_json::Value,
     pub hex_data: String,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::HyperClient;
+    use crate::ReturnKind;
+
+    #[test]
+    fn get_block_by_id_should_work() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        let block_id = "00000001405147477ab2f5f51cda427b638191c66d2c59aa392d5c2c98076cb0";
+        let response = get_block(block_id).fetch(&hyper_client);
+        if let ReturnKind::GetBlock(data) = response.unwrap() {
+            dbg!(&data);
+        }
+    }
+
+    #[test]
+    fn get_block_by_num_should_work() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        let block_num = 1;
+        let response = get_block(block_num).fetch(&hyper_client);
+        if let ReturnKind::GetBlock(data) = response.unwrap() {
+            dbg!(&data);
+        }
+    }
+}

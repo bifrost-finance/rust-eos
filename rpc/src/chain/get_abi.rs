@@ -20,3 +20,24 @@ pub struct GetAbi {
     pub account_name: AccountName,
     pub abi: Abi,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::HyperClient;
+    use crate::ReturnKind;
+    use std::str::FromStr;
+    use eosio::n;
+
+    #[test]
+    fn get_abi_should_work() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        let account_name: AccountName = n!(eosio.token).into();
+        let response = get_abi(account_name).fetch(&hyper_client);
+        if let ReturnKind::GetAbi(data) = response.unwrap() {
+            dbg!(&data);
+        }
+    }
+}

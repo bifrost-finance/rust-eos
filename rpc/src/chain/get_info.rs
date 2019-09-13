@@ -39,3 +39,21 @@ pub struct GetInfo {
     pub block_cpu_limit: u32,
     pub block_net_limit: u32,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::HyperClient;
+    use crate::ReturnKind;
+
+    #[test]
+    fn get_info_should_work() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        let response = get_info().fetch(&hyper_client);
+        if let ReturnKind::GetInfo(data) = response.unwrap() {
+            dbg!(&data);
+        }
+    }
+}

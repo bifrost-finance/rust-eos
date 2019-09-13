@@ -111,3 +111,36 @@ pub struct VoterInfo {
     pub proxied_vote_weight: String,
     pub is_proxy: u8,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::HyperClient;
+    use crate::ReturnKind;
+    use std::str::FromStr;
+    use eosio::n;
+
+    #[test]
+    fn get_account_from_str_should_work() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        let account_name = AccountName::from_str("eosio").unwrap();
+        let response = get_account(account_name).fetch(&hyper_client);
+        if let ReturnKind::GetAccount(data) = response.unwrap() {
+            dbg!(&data);
+        }
+    }
+
+    #[test]
+    fn get_account_by_n_should_work() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        let account_name: AccountName = n!(eosio).into();
+        let response = get_account(account_name).fetch(&hyper_client);
+        if let ReturnKind::GetAccount(data) = response.unwrap() {
+            dbg!(&data);
+        }
+    }
+}
