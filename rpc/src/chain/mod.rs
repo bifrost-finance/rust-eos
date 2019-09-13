@@ -7,6 +7,7 @@ pub mod get_block;
 pub mod get_currency_balance;
 pub mod get_currency_stats;
 pub mod get_info;
+pub mod get_raw_code_and_abi;
 // to-do, this modile will be added later.
 // pub mod get_table_rows;
 
@@ -16,6 +17,7 @@ pub use self::get_block::{get_block, GetBlock, GetBlockParams};
 pub use self::get_currency_balance::{get_currency_balance, GetCurrencyBalance};
 pub use self::get_currency_stats::{get_currency_stats, GetCurrencyStats};
 pub use self::get_info::{get_info, GetInfo};
+pub use self::get_raw_code_and_abi::{get_raw_code_and_abi, GetRawCodeAndAbi};
 // pub use self::get_table_rows::{
     // get_table_rows, GetTableRows, GetTableRowsParams,
 // };
@@ -29,4 +31,5 @@ pub enum ReturnKind {
     GetCurrencyBalance(GetCurrencyBalance),
     GetCurrencyStats(GetCurrencyStats),
     GetInfo(GetInfo),
+    GetRawCodeAndAbi(GetRawCodeAndAbi),
 }
