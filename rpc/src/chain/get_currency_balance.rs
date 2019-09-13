@@ -39,7 +39,6 @@ mod test {
     use crate::HyperClient;
     use crate::ReturnKind;
     use eosio::{Symbol, s, n};
-    use std::str::FromStr;
 
     #[test]
     fn get_currency_balance_should_work() {

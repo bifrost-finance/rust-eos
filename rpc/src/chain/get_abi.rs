@@ -26,7 +26,6 @@ mod test {
     use super::*;
     use crate::HyperClient;
     use crate::ReturnKind;
-    use std::str::FromStr;
     use eosio::n;
 
     #[test]
