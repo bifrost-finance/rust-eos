@@ -1,3 +1,5 @@
+#![cfg(feature = "use-hyper")]
+
 use crate::error::Error;
 use crate::client::Client;
 use hyper::rt::{Future, Stream};
