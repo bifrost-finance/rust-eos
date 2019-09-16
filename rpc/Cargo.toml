@@ -22,9 +22,9 @@ hyper = { version = "0.12", optional = true }
 hyper-tls = { version = "0.3", optional = true }
 stdweb = { version = "0.4.14", optional = true }
 futures-util-preview = { version = "=0.3.0-alpha.16" }
-tokio = "0.1"
+tokio = { version = "0.1", optional = true }
 failure = "0.1"
-rpc_codegen = { version = "0.1.0", path = "rpc_codegen"}
+rpc_codegen = { version = "0.1", path = "rpc_codegen" }
 
 [dependencies.web-sys]
 version = "0.3.4"
@@ -41,5 +41,5 @@ features = [
 [features]
 default = ["use-hyper"]
 use-web-sys = ["wasm-bindgen", "wasm-bindgen-futures", "js-sys", "web-sys"]
-use-hyper = ["hyper", "hyper-tls"]
+use-hyper = ["hyper", "hyper-tls", "tokio"]
 use-stdweb = ["stdweb"]
