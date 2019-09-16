@@ -1,9 +1,9 @@
 use crate::Client;
-use crate::chain::ReturnKind;
 use eosio::AccountName;
 use eosio_abi::Abi;
 use serde_derive::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
+
 
 #[derive(Fetch, Debug, Clone, Serialize)]
 #[api(path="v1/chain/get_abi", http_method="POST", returns="GetAbi")]
@@ -25,7 +25,6 @@ pub struct GetAbi {
 mod test {
     use super::*;
     use crate::HyperClient;
-    use crate::ReturnKind;
     use eosio::n;
 
     #[test]
@@ -35,7 +34,7 @@ mod test {
 
         let account_name: AccountName = n!(eosio.token).into();
         let response = get_abi(account_name).fetch(&hyper_client);
-        if let ReturnKind::GetAbi(data) = response.unwrap() {
+        if let Ok(data) = response {
             dbg!(&data);
         }
     }
