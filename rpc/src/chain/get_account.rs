@@ -1,5 +1,4 @@
 use crate::Client;
-use crate::chain::ReturnKind;
 use eosio::{AccountName, PermissionLevel, PermissionName};
 use serde_derive::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
@@ -116,7 +115,6 @@ pub struct VoterInfo {
 mod test {
     use super::*;
     use crate::HyperClient;
-    use crate::ReturnKind;
     use std::str::FromStr;
     use eosio::n;
 
@@ -127,7 +125,7 @@ mod test {
 
         let account_name = AccountName::from_str("eosio").unwrap();
         let response = get_account(account_name).fetch(&hyper_client);
-        if let ReturnKind::GetAccount(data) = response.unwrap() {
+        if let Ok(data) = response {
             dbg!(&data);
         }
     }
@@ -139,7 +137,7 @@ mod test {
 
         let account_name: AccountName = n!(eosio).into();
         let response = get_account(account_name).fetch(&hyper_client);
-        if let ReturnKind::GetAccount(data) = response.unwrap() {
+        if let Ok(data) = response {
             dbg!(&data);
         }
     }

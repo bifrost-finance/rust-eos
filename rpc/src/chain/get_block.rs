@@ -1,5 +1,4 @@
 use crate::Client;
-use crate::chain::ReturnKind;
 use eosio::{AccountName, ActionName, PermissionLevel};
 use serde_derive::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
@@ -93,7 +92,6 @@ pub struct Action {
 mod test {
     use super::*;
     use crate::HyperClient;
-    use crate::ReturnKind;
 
     #[test]
     fn get_block_by_id_should_work() {
@@ -102,7 +100,7 @@ mod test {
 
         let block_id = "00000001405147477ab2f5f51cda427b638191c66d2c59aa392d5c2c98076cb0";
         let response = get_block(block_id).fetch(&hyper_client);
-        if let ReturnKind::GetBlock(data) = response.unwrap() {
+        if let Ok(data) = response {
             dbg!(&data);
         }
     }
@@ -114,7 +112,7 @@ mod test {
 
         let block_num = 1;
         let response = get_block(block_num).fetch(&hyper_client);
-        if let ReturnKind::GetBlock(data) = response.unwrap() {
+        if let Ok(data) = response {
             dbg!(&data);
         }
     }

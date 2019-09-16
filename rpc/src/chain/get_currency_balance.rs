@@ -1,5 +1,4 @@
 use crate::Client;
-use crate::chain::ReturnKind;
 use eosio::AccountName;
 use eosio::Symbol;
 use serde_derive::Serialize;
@@ -37,7 +36,6 @@ pub type GetCurrencyBalance = Vec<String>;
 mod test {
     use super::*;
     use crate::HyperClient;
-    use crate::ReturnKind;
     use eosio::{Symbol, s, n};
 
     #[test]
@@ -49,7 +47,7 @@ mod test {
         let account_name: AccountName = n!(b1).into();
         let symbol: Symbol = s!(4, EOS).into();
         let response = get_currency_balance(code, account_name, Some(symbol)).fetch(&hyper_client);
-        if let ReturnKind::GetCurrencyBalance(data) = response.unwrap() {
+        if let Ok(data) = response {
             dbg!(&data);
         }
     }

@@ -1,5 +1,4 @@
 use crate::Client;
-use crate::chain::ReturnKind;
 use eosio::AccountName;
 use serde_derive::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
@@ -44,7 +43,6 @@ pub struct GetInfo {
 mod test {
     use super::*;
     use crate::HyperClient;
-    use crate::ReturnKind;
 
     #[test]
     fn get_info_should_work() {
@@ -52,7 +50,7 @@ mod test {
         let hyper_client = HyperClient::new(node);
 
         let response = get_info().fetch(&hyper_client);
-        if let ReturnKind::GetInfo(data) = response.unwrap() {
+        if let Ok(data) = response {
             dbg!(&data);
         }
     }

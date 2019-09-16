@@ -1,5 +1,4 @@
 use crate::Client;
-use crate::chain::ReturnKind;
 use eosio::{AccountName, Symbol};
 use serde_derive::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
@@ -35,7 +34,6 @@ pub struct CurrencyStats {
 mod test {
     use super::*;
     use crate::HyperClient;
-    use crate::ReturnKind;
     use eosio::{Symbol, s, n};
 
     #[test]
@@ -46,7 +44,7 @@ mod test {
         let code: AccountName = n!(eosio.token).into();
         let symbol: Symbol = s!(4, EOS).into();
         let response = get_currency_stats(code, symbol).fetch(&hyper_client);
-        if let ReturnKind::GetCurrencyStats(data) = response.unwrap() {
+        if let Ok(data) = response {
             dbg!(&data);
         }
     }

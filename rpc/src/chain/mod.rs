@@ -21,15 +21,3 @@ pub use self::get_raw_code_and_abi::{get_raw_code_and_abi, GetRawCodeAndAbi};
 // pub use self::get_table_rows::{
     // get_table_rows, GetTableRows, GetTableRowsParams,
 // };
-
-// use enum to hold different struct
-#[derive(Debug)]
-pub enum ReturnKind {
-    GetAbi(GetAbi),
-    GetAccount(GetAccount),
-    GetBlock(GetBlock),
-    GetCurrencyBalance(GetCurrencyBalance),
-    GetCurrencyStats(GetCurrencyStats),
-    GetInfo(GetInfo),
-    GetRawCodeAndAbi(GetRawCodeAndAbi),
-}
