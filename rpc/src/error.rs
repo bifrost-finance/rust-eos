@@ -16,6 +16,7 @@ pub enum Error {
         #[cause]
         serde_err: serde_json::Error,
     },
+    #[cfg(feature = "use-hyper")]
     #[fail(display = "Bad request due to: {}", request_err)]
     HttpRequestError {
         #[cause]
@@ -23,6 +24,7 @@ pub enum Error {
     },
     #[fail(display = "No window error happened?")]
     NoWindow,
+    #[cfg(feature = "use-hyper")]
     #[fail(display = "Bad http response due to: {}.", response_err)]
     HttpResponseError {
         #[cause]
