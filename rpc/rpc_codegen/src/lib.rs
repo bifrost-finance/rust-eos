@@ -1,6 +1,6 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
-use syn::{ parse_macro_input, DeriveInput, Meta, Lit, NestedMeta, LitStr };
+use syn::{ parse_macro_input, DeriveInput, Meta, Lit, NestedMeta, LitStr, Type };
 use quote::quote;
 use proc_macro2::{Ident, Span};
 
@@ -63,22 +63,22 @@ pub fn derive_show(item: TokenStream) -> TokenStream {
             _ => unreachable!(),
         }
     });
-    
+
     // rebuild the path(String) to LitStr type
     let path_ident = LitStr::new(&path, Span::call_site());
-    // build the variant name in enum ReturnKind
+    // build the return type
     let returns_ident = Ident::new(&returns, Span::call_site());
+    let return_ty = Type::Verbatim(proc_macro2::TokenStream::from(quote! {
+        #returns_ident
+    }));
     let expanded_fetch = quote! {
         impl #struct_name {
             #[inline]
-            pub fn fetch<C: Client>(&self, client: &C) -> 
-                Result<ReturnKind, Box<dyn std::error::Error + Send + Sync + 'static>>
-            {
-                let result = client.fetch(#path_ident, self)?;
-                Ok(ReturnKind::#returns_ident(result))
+            pub fn fetch<C: Client>(&self, client: &C) -> Result<#return_ty, failure::Error> {
+                client.fetch(#path_ident, self)
             }
         }
     };
-    
+
     expanded_fetch.into()
 }
