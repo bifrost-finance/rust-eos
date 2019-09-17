@@ -100,9 +100,7 @@ mod test {
 
         let block_id = "00000001405147477ab2f5f51cda427b638191c66d2c59aa392d5c2c98076cb0";
         let response = get_block(block_id).fetch(&hyper_client);
-        if let Ok(data) = response {
-            dbg!(&data);
-        }
+        assert!(response.is_ok())
     }
 
     #[test]
@@ -112,8 +110,47 @@ mod test {
 
         let block_num = 1;
         let response = get_block(block_num).fetch(&hyper_client);
-        if let Ok(data) = response {
-            dbg!(&data);
+        assert!(response.is_ok())
+    }
+
+    #[test]
+    fn get_block_by_invalid_num() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        let block_num = -1;
+        let response = get_block(block_num).fetch(&hyper_client);
+        if let Err(e) = response {
+            // downcast failure::Error to our own error
+            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
+                assert_eq!(eos_err.code, 500);
+                assert_eq!(eos_err.error.what, "Invalid block ID");
+            } else {
+                assert!(true);
+            }
+        } else {
+            assert!(true);
+        }
+    }
+
+    #[test]
+    fn get_block_by_invalid_id() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        // an invalid block id
+        let block_id = "04bf8ea548296524ee3913b21763f6b2207476598efb627292c8843b971e6121";
+        let response = get_block(block_id).fetch(&hyper_client);
+        if let Err(e) = response {
+            // downcast failure::Error to our own error
+            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
+                assert_eq!(eos_err.code, 500);
+                assert_eq!(eos_err.error.what, "Invalid block ID");
+            } else {
+                assert!(true);
+            }
+        } else {
+            assert!(true);
         }
     }
 }

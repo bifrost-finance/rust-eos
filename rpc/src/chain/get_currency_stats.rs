@@ -44,8 +44,30 @@ mod test {
         let code: AccountName = n!(eosio.token).into();
         let symbol: Symbol = s!(4, EOS).into();
         let response = get_currency_stats(code, symbol).fetch(&hyper_client);
-        if let Ok(data) = response {
-            dbg!(&data);
+        assert!(response.is_ok());
+    }
+
+    #[test]
+    fn get_currency_stats_by_invalid_account() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        // eosio.tok2 is an invalid account
+        let code: AccountName = n!(eosio.tok2).into();
+        let symbol: Symbol = s!(1, EOS).into();
+        let response = get_currency_stats(code, symbol).fetch(&hyper_client);
+
+        if let Err(e) = response {
+            // downcast failure::Error to our own error
+            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
+                assert_eq!(eos_err.code, 500);
+                assert_eq!(eos_err.error.what, "Account Query Exception");
+                assert_eq!(eos_err.error.code, 3_060_002);
+            } else {
+                assert!(true);
+            }
+        } else {
+            assert!(true);
         }
     }
 }

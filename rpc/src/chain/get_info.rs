@@ -50,8 +50,26 @@ mod test {
         let hyper_client = HyperClient::new(node);
 
         let response = get_info().fetch(&hyper_client);
-        if let Ok(data) = response {
-            dbg!(&data);
+        assert!(response.is_ok());
+    }
+
+    #[test]
+    fn get_info_from_non_exist_server() {
+        // this is a non exist server
+        let node: &'static str = "https://eos.greymass.com/2";
+        let hyper_client = HyperClient::new(node);
+
+        let response = get_info().fetch(&hyper_client);
+        if let Err(e) = response {
+            // downcast failure::Error to our own error
+            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
+                assert_eq!(eos_err.code, 404);
+                assert_eq!(eos_err.message, "Not Found");
+            } else {
+                assert!(true);
+            }
+        } else {
+            assert!(true);
         }
     }
 }
