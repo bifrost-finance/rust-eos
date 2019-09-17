@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "keys",
+  "primitives",
   "rpc",
   "rpc/rpc_codegen",
 ]
