@@ -41,7 +41,7 @@ impl SerializeData for Action {}
 
 #[derive(Clone, Debug, Serialize, Deserialize, Read, Write, NumBytes, Default)]
 #[eosio_core_root_path = "crate"]
-struct ActionTransfer {
+pub struct ActionTransfer {
     from: AccountName,
     to: AccountName,
     amount: Asset,
@@ -49,11 +49,11 @@ struct ActionTransfer {
 }
 
 impl ActionTransfer {
-    fn new(from: AccountName, to: AccountName, amount: Asset, memo: String) -> Self {
+    pub fn new(from: AccountName, to: AccountName, amount: Asset, memo: String) -> Self {
         ActionTransfer { from, to, amount, memo }
     }
 
-    fn from_str<T: AsRef<str>>(from: T, to: T, amount: T, memo: T)
+    pub fn from_str<T: AsRef<str>>(from: T, to: T, amount: T, memo: T)
         -> Result<Self, crate::Error>
     {
         let from = AccountName::from_str(from.as_ref()).map_err(|err| crate::Error::from(err) )?;
