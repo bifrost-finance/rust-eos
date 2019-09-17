@@ -1,5 +1,5 @@
-// pub mod abi_bin_to_json;
-// pub mod abi_json_to_bin;
+pub mod abi_bin_to_json;
+pub mod abi_json_to_bin;
 pub mod get_abi;
 pub mod get_account;
 pub mod get_block;
