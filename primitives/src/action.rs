@@ -1,5 +1,5 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/contracts/eosio/action.hpp#L249-L274>
-use crate::{AccountName, ActionName, NumBytes, PermissionLevel, Read, Write, Asset};
+use crate::{AccountName, ActionName, NumBytes, PermissionLevel, Read, Write, Asset, SerializeData};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -23,15 +23,21 @@ impl Action {
         Action { account, name, authorization, data }
     }
 
-    pub fn from_str<T: AsRef<str>>(account: T, name: T, authorization: Vec<PermissionLevel>, data: Vec<u8>)
-        -> Result<Self, crate::Error>
-    {
+    pub fn from_str<T: AsRef<str>, S: SerializeData>(
+        account: T,
+        name: T,
+        authorization: Vec<PermissionLevel>,
+        action_data: S
+    ) -> Result<Self, crate::Error> {
         let account = AccountName::from_str(account.as_ref()).map_err(|err| crate::Error::from(err) )?;
         let name =  ActionName::from_str(name.as_ref()).map_err(|err| crate::Error::from(err) )?;
+        let data = action_data.to_serialize_data();
 
         Ok(Action { account, name, authorization, data })
     }
 }
+
+impl SerializeData for Action {}
 
 #[derive(Clone, Debug, Serialize, Deserialize, Read, Write, NumBytes, Default)]
 #[eosio_core_root_path = "crate"]
@@ -57,14 +63,9 @@ impl ActionTransfer {
 
         Ok(ActionTransfer { from, to, amount, memo })
     }
-
-    fn to_action_data(&self) -> Vec<u8> {
-        let mut data = vec![0u8; 1024];
-        let mut pos = 0;
-        self.write(&mut data, &mut pos).expect("write");
-        data[..pos].to_vec()
-    }
 }
+
+impl SerializeData for ActionTransfer {}
 
 pub trait ToAction: Write + NumBytes {
     const NAME: u64;
@@ -90,26 +91,31 @@ pub trait ToAction: Write + NumBytes {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hex;
 
     #[test]
     fn action_should_work() {
-        let permission_level = PermissionLevel::from_str("testa", "active").ok().unwrap();
-        let authorization: Vec<PermissionLevel> = vec![permission_level];
+        let permission_level = PermissionLevel::from_str(
+            "testa",
+            "active"
+        ).ok().unwrap();
+        let action_transfer = ActionTransfer::from_str(
+            "testa",
+            "testb",
+            "1.0000 EOS",
+            "a memo"
+        ).ok().unwrap();
+        let action = Action::from_str(
+            "eosio.token",
+            "transfer",
+            vec![permission_level],
+            action_transfer
+        ).ok().unwrap();
 
-        let from = "testa";
-        let to = "testb";
-        let amount = "1.0000 EOS";
-        let memo = "a memo";
-        let action_transfer = ActionTransfer::from_str(from, to, amount, memo).ok().unwrap();
-        let data = action_transfer.to_action_data();
-        let account = "eosio.token";
-        let name = "transfer";
-        let action = Action::from_str(account, name, authorization, data).ok().unwrap();
-
-        let mut data1 = vec![0u8; 1024];
-        let mut pos = 0;
-        action.write(&mut data1, &mut pos).expect("write");;
-        dbg!(format!("{:02x?})", &data1[..pos]));
-        dbg!(format!("{:02x?})", pos));
+        let data = action.to_serialize_data();
+        assert_eq!(
+            hex::encode(data),
+            "00a6823403ea3055000000572d3ccdcd01000000000093b1ca00000000a8ed323227000000000093b1ca000000008093b1ca102700000000000004454f53000000000661206d656d6f"
+        );
     }
 }

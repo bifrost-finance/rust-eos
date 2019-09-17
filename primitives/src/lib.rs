@@ -15,3 +15,11 @@ pub use self::{
     action::*, asset::*, bytes::*, error::*, names::*, ops::*, permission_level::*,
     symbol::*, symbol_code::*, unsigned_int::*,
 };
+
+pub trait SerializeData: Write + NumBytes {
+    fn to_serialize_data(&self) -> Vec<u8> {
+        let mut data = vec![0u8; self.num_bytes()];
+        self.write(&mut data, &mut 0).expect("write");
+        data.to_vec()
+    }
+}
