@@ -10,6 +10,7 @@ pub mod get_info;
 pub mod get_raw_code_and_abi;
 // to-do, this modile will be added later.
 // pub mod get_table_rows;
+pub mod push_transaction;
 
 pub use self::get_abi::{get_abi, GetAbi, GetAbiParams};
 pub use self::get_account::{get_account, GetAccount, GetAccountParams};
@@ -21,3 +22,4 @@ pub use self::get_raw_code_and_abi::{get_raw_code_and_abi, GetRawCodeAndAbi};
 // pub use self::get_table_rows::{
     // get_table_rows, GetTableRows, GetTableRowsParams,
 // };
+pub use self::push_transaction::{push_transaction, PushTransaction};
