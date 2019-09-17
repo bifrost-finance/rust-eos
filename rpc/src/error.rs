@@ -1,5 +1,6 @@
 use failure::Fail;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 
 pub type Result<T> = std::result::Result<T, failure::Error>;
@@ -35,12 +36,11 @@ pub enum Error {
         #[cause]
         response_json_err: serde_json::Error,
     },
-    // to-do, need to impl Display trait
-    // #[fail(display = "Bad http response due to: {}.", eos_err)]
-    // EosError{
-    //     #[cause]
-    //     eos_err: ErrorResponse,
-    // }
+    #[fail(display = "Bad http response due to: {:?}.", eos_err)]
+    EosError{
+        #[cause]
+        eos_err: ErrorResponse,
+    }
 }
 
 #[cfg(feature = "use-hyper")]
@@ -60,14 +60,26 @@ impl From<serde_json::Error> for Error {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ErrorResponse {
-    pub code: u16,
+    pub code: u32,
     pub message: String,
     pub error: ErrorMessage,
 }
 
+impl fmt::Display for ErrorResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}, {}, {:?}", self.code, self.message, self.error)
+    }
+}
+
+impl std::error::Error for ErrorResponse {
+    fn description(&self) -> &str {
+        &self.message
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ErrorMessage {
-    pub code: u16,
+    pub code: u32,
     pub name: String,
     pub what: String,
     pub details: Vec<ErrorDetails>,
