@@ -7,13 +7,17 @@ pub mod ops;
 pub mod permission_level;
 pub mod symbol;
 pub mod symbol_code;
+pub mod transaction;
+pub mod time_point;
+pub mod time_point_sec;
 pub mod unsigned_int;
 
 pub use eosio_core_derive::*;
 
 pub use self::{
     action::*, asset::*, bytes::*, error::*, names::*, ops::*, permission_level::*,
-    symbol::*, symbol_code::*, unsigned_int::*,
+    symbol::*, symbol_code::*, time_point::*, time_point_sec::*, transaction::*,
+    unsigned_int::*,
 };
 
 pub trait SerializeData: Write + NumBytes {
