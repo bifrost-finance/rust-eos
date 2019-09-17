@@ -1,5 +1,6 @@
 use crate::{Action, NumBytes, Read, TimePointSec, UnsignedInt, Write, SerializeData};
 use keys::secret::SecretKey;
+use hex;
 
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default)]
 #[eosio_core_root_path = "crate"]
@@ -51,9 +52,15 @@ impl Transaction {
         }
     }
 
-    pub fn sign(&self, sk: SecretKey) -> Result<SignedTransaction, crate::error::Error> {
-        let trx_data = self.to_serialize_data();
-        let sig = sk.sign(trx_data.as_slice())
+    pub fn sign(&self, sk: SecretKey, chain_id: String) -> Result<SignedTransaction, crate::error::Error> {
+        let mut sign_data: Vec<u8>  = Vec::new();
+        let mut chain_id_hex = hex::decode(chain_id)
+            .map_err(|err| crate::error::Error::FromHexError(err))?;
+        sign_data.append(&mut chain_id_hex);
+        sign_data.append(&mut self.to_serialize_data());
+        sign_data.append(&mut vec![0u8; 32]);
+
+        let sig = sk.sign(&sign_data.as_slice())
             .map_err(|err| crate::error::Error::SignErr(err))?;
 
         Ok(SignedTransaction {
@@ -120,12 +127,14 @@ mod test {
         ).ok().unwrap();
         let actions = vec![action];
 
+        let chain_id = "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f".to_string();
         let trx = Transaction::new(trx_header, actions);
-        let signed_trx = trx.sign(sk);
+        let signed_trx = trx.sign(sk, chain_id);
         assert!(signed_trx.is_ok());
         assert_eq!(
             hex::encode(&trx.to_serialize_data()[4..]),
             "000000000000000000000100a6823403ea3055000000572d3ccdcd01000000000093b1ca00000000a8ed323227000000000093b1ca000000008093b1ca102700000000000004454f53000000000661206d656d6f00"
         );
+        dbg!(signed_trx.ok().unwrap());
     }
 }
