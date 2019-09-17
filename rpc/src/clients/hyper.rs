@@ -49,12 +49,19 @@ impl Client for HyperClient {
         let fut = client
             .request(req)
             .and_then(|res| res.into_body().concat2())
-            .from_err::<Error>()
-            .and_then(|body| {
-                let block: T = serde_json::from_slice(&body)?;
-                Ok(block)
-            });
-        let result = tokio::runtime::Runtime::new()?.block_on(fut)?;
-        Ok(result)
+            .from_err::<Error>();
+
+        // get returned body
+        let resp_body = tokio::runtime::Runtime::new()?.block_on(fut)?;
+        let body_bytes = resp_body.into_bytes();
+        //try to parse error information if request is illegal
+        let block_err = serde_json::from_slice(&body_bytes);
+        if block_err.is_ok() {
+            // return eos request error information
+            return Err(Error::EosError{ eos_err: block_err.unwrap() })?;
+        }
+        // returned the correct request http body and parse it.
+        let block: T = serde_json::from_slice(&body_bytes)?;
+        Ok(block)
     }
 }
