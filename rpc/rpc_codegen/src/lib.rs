@@ -10,6 +10,8 @@ pub fn derive_show(item: TokenStream) -> TokenStream {
     // parse the whole token tree
     let input = parse_macro_input!(item as DeriveInput);
     let struct_name = &input.ident;
+    let generics = &input.generics;
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     // get api attribute and paranmeters
     let mut returns = String::new();
@@ -72,7 +74,7 @@ pub fn derive_show(item: TokenStream) -> TokenStream {
         #returns_ident
     }));
     let expanded_fetch = quote! {
-        impl #struct_name {
+        impl #impl_generics #struct_name #ty_generics #where_clause {
             #[inline]
             pub fn fetch<C: Client>(&self, client: &C) -> Result<#return_ty, failure::Error> {
                 client.fetch(#path_ident, self)
