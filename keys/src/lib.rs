@@ -2,9 +2,9 @@ pub mod keypair;
 pub mod public;
 pub mod secret;
 pub mod signature;
+pub mod error;
 
 mod constant;
-mod error;
 mod hash;
 mod base58;
 mod network;
