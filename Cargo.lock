@@ -1165,7 +1165,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "secp256k1"
 version = "0.15.3"
-source = "git+https://github.com/bifrost-codes/rust-secp256k1#3fd792ede11056d6e020691abb823f3c3073c092"
+source = "git+https://github.com/bifrost-codes/rust-secp256k1#9c756f7e5227e2e11c3fdb6b506ea6220bf1409b"
 dependencies = [
  "cc 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",

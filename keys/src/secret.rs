@@ -148,6 +148,13 @@ impl FromStr for SecretKey {
 mod test {
     use super::SecretKey;
     use crate::public::PublicKey;
+    use rand::rngs::OsRng;
+
+    #[test]
+    fn sk_generate_should_work() {
+        let mut csprng: OsRng = OsRng::new().unwrap();
+        let _sk = SecretKey::generate(&mut csprng);
+    }
 
     #[test]
     fn sk_from_wif_should_work() {
@@ -158,15 +165,15 @@ mod test {
 
     #[test]
     fn sk_sign_should_work() {
-        let sk = SecretKey::from_wif("5KUEhweMaSD2szyjU9EKjAyY642ZdVL2qzHW72dQcNRzUMWx9EL");
+        let sk = SecretKey::from_wif("5KJVA9P4xsiRC3zPy1KPa3GA6ffvmyZSxhKPbE924YJphvSCG4F");
         assert!(sk.is_ok());
-
         let sk = sk.unwrap();
         let pk = PublicKey::from(&sk);
-        println!("pk: {}", pk);
-
+        assert_eq!(pk.to_string(), "EOS55KuLPN3u9qii2hEhJhkdQSdaVLVPTHdwdkEhszhhCWDthQtfi");
         let sig = sk.sign("hello".as_bytes());
         assert!(sig.is_ok());
-        assert_eq!(sig.unwrap().to_string(), "SIG_K1_KomV6FEHKdtZxGDwhwSubEAcJ7VhtUQpEt5P6iDz33ic936aSXx87B2L56C8JLQkqNpp1W8ZXjrKiLHUEB4LCGeXvbtVuR");
+        let sig = sig.unwrap();
+        assert!(sig.is_canonical());
+        assert_eq!(sig.to_string(), "SIG_K1_K5DaZL6EH7L2iDhKBhxNAxTeGsgCWuZs2vJUfctrRoqJTMdo5hCnpmVkY9zt8dQGQebPrgp6fdu6D4KXUk8atYDYngnsUh");
     }
 }

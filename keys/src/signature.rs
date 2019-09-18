@@ -8,13 +8,8 @@ use secp256k1::recovery::RecoverableSignature;
 pub struct Signature(RecoverableSignature);
 
 impl Signature {
-    pub fn is_canonical(sig: RecoverableSignature) -> bool {
-        let (_, pk) = sig.serialize_compact();
-
-        (pk[0] & 0x80 == 0)
-            && !((pk[0] == 0) && (pk[1] & 0x80 == 0))
-            && (pk[32] & 0x80 == 0)
-            && !((pk[32] == 0) && (pk[33] & 0x80 == 0))
+    pub fn is_canonical(&self) -> bool {
+        self.0.is_canonical()
     }
 
     pub fn to_standard(&self) -> secp256k1::Signature {
@@ -85,10 +80,10 @@ mod test {
 
     #[test]
     fn sig_from_str_should_work() {
-        let sig_str = "SIG_K1_KomV6FEHKdtZxGDwhwSubEAcJ7VhtUQpEt5P6iDz33ic936aSXx87B2L56C8JLQkqNpp1W8ZXjrKiLHUEB4LCGeXvbtVuR";
+        let sig_str = "SIG_K1_KBJgSuRYtHZcrWThugi4ygFabto756zuQQo8XeEpyRtBXLb9kbJtNW3xDcS14Rc14E8iHqLrdx46nenG5T7R4426Bspyzk";
         let sig = Signature::from_str(sig_str);
         assert!(sig.is_ok());
-        assert_eq!(sig.unwrap().to_string(), sig_str);
+        assert!(sig.unwrap().is_canonical());
     }
 
     #[test]
