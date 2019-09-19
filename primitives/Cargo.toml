@@ -6,13 +6,13 @@ edition = "2018"
 
 [dependencies]
 chrono = "0.4"
-eosio-core-derive = { version = "0.2", git = "https://github.com/sagan-software/eosio-rust.git" }
+eosio-core-derive = { path = "../eosio-core-derive" }
 hex = "0.3"
 keys = { package = "eos-keys", path = "../keys" }
 serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
-eosio-core-macros = { version = "0.2", git = "https://github.com/sagan-software/eosio-rust.git" }
+eosio-core-macros = { path = "../eosio-core-macros" }
 
 [features]
 default = []
