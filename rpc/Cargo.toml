@@ -12,8 +12,8 @@ cfg-if = "0.1.2"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-eosio = { git = "https://github.com/sagan-software/eosio-rust.git" }
-eosio-abi = { git = "https://github.com/sagan-software/eosio-rust.git" }
+eosio-core = { git = "https://github.com/sagan-software/eosio-rust.git", features = ["internal-use-only-root-path-is-eosio"] }
+eosio-core-macros = { git = "https://github.com/sagan-software/eosio-rust.git" }
 futures-preview = { version = "=0.3.0-alpha.16", features = ["compat"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"], optional = true }
 js-sys = { version = "0.3.5", optional = true }

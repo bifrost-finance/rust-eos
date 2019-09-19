@@ -205,8 +205,8 @@ dependencies = [
  "cfg-if 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "eos-keys 0.1.0",
  "eos-primitives 0.1.0",
- "eosio 0.2.0 (git+https://github.com/sagan-software/eosio-rust.git)",
- "eosio-abi 0.1.0 (git+https://github.com/sagan-software/eosio-rust.git)",
+ "eosio-core 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)",
+ "eosio-core-macros 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-preview 0.3.0-alpha.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-util-preview 0.3.0-alpha.16 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -224,69 +224,6 @@ dependencies = [
  "wasm-bindgen-futures 0.3.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.27 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "eosio"
-version = "0.2.0"
-source = "git+https://github.com/sagan-software/eosio-rust.git#b14cc6155b6cac8e4072a762cff79d475d159f93"
-dependencies = [
- "eosio-cdt 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)",
- "eosio-cdt-macros 0.1.0 (git+https://github.com/sagan-software/eosio-rust.git)",
- "eosio-core 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)",
- "eosio-core-macros 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)",
-]
-
-[[package]]
-name = "eosio-abi"
-version = "0.1.0"
-source = "git+https://github.com/sagan-software/eosio-rust.git#b14cc6155b6cac8e4072a762cff79d475d159f93"
-dependencies = [
- "eosio 0.2.0 (git+https://github.com/sagan-software/eosio-rust.git)",
- "heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)",
- "quote 0.6.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.99 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.99 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.15.44 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "eosio-cdt"
-version = "0.2.1"
-source = "git+https://github.com/sagan-software/eosio-rust.git#b14cc6155b6cac8e4072a762cff79d475d159f93"
-dependencies = [
- "eosio-cdt-sys 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)",
- "eosio-core 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)",
- "mashup 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "eosio-cdt-macros"
-version = "0.1.0"
-source = "git+https://github.com/sagan-software/eosio-rust.git#b14cc6155b6cac8e4072a762cff79d475d159f93"
-dependencies = [
- "eosio-cdt-macros-internal 0.1.0 (git+https://github.com/sagan-software/eosio-rust.git)",
- "proc-macro-hack 0.5.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "proc-macro-nested 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "eosio-cdt-macros-internal"
-version = "0.1.0"
-source = "git+https://github.com/sagan-software/eosio-rust.git#b14cc6155b6cac8e4072a762cff79d475d159f93"
-dependencies = [
- "eosio-core 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)",
- "heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "proc-macro-hack 0.5.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)",
- "quote 0.6.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.15.44 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "eosio-cdt-sys"
-version = "0.2.1"
-source = "git+https://github.com/sagan-software/eosio-rust.git#b14cc6155b6cac8e4072a762cff79d475d159f93"
 
 [[package]]
 name = "eosio-core"
@@ -647,24 +584,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mashup"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "mashup-impl 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "proc-macro-hack 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "mashup-impl"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "proc-macro-hack 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "memchr"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -857,14 +776,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "proc-macro-hack"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "proc-macro-hack-impl 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "proc-macro-hack"
 version = "0.5.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
@@ -872,11 +783,6 @@ dependencies = [
  "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "proc-macro-hack-impl"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "proc-macro-nested"
@@ -1749,12 +1655,6 @@ dependencies = [
 "checksum crossbeam-utils 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)" = "04973fa96e96579258a5091af6003abde64af786b860f18622b82e026cca60e6"
 "checksum discard 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
 "checksum either 1.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "5527cfe0d098f36e3f8839852688e63c8fff1c90b2b405aef730615f9a7bcf7b"
-"checksum eosio 0.2.0 (git+https://github.com/sagan-software/eosio-rust.git)" = "<none>"
-"checksum eosio-abi 0.1.0 (git+https://github.com/sagan-software/eosio-rust.git)" = "<none>"
-"checksum eosio-cdt 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)" = "<none>"
-"checksum eosio-cdt-macros 0.1.0 (git+https://github.com/sagan-software/eosio-rust.git)" = "<none>"
-"checksum eosio-cdt-macros-internal 0.1.0 (git+https://github.com/sagan-software/eosio-rust.git)" = "<none>"
-"checksum eosio-cdt-sys 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)" = "<none>"
 "checksum eosio-core 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)" = "<none>"
 "checksum eosio-core-derive 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)" = "<none>"
 "checksum eosio-core-macros 0.2.1 (git+https://github.com/sagan-software/eosio-rust.git)" = "<none>"
@@ -1795,8 +1695,6 @@ dependencies = [
 "checksum libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)" = "34fcd2c08d2f832f376f4173a231990fa5aef4e99fb569867318a227ef4c06ba"
 "checksum lock_api 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "62ebf1391f6acad60e5c8b43706dde4582df75c06698ab44511d15016bc2442c"
 "checksum log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)" = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
-"checksum mashup 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "f2d82b34c7fb11bb41719465c060589e291d505ca4735ea30016a91f6fc79c3b"
-"checksum mashup-impl 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "aa607bfb674b4efb310512527d64266b065de3f894fc52f84efcbf7eaa5965fb"
 "checksum memchr 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "88579771288728879b57485cc7d6b07d648c9f0141eb955f8ab7f9d45394468e"
 "checksum memoffset 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ce6075db033bbbb7ee5a0bbd3a3186bbae616f57fb001c485c7ff77955f8177f"
 "checksum mio 0.6.19 (registry+https://github.com/rust-lang/crates.io-index)" = "83f51996a3ed004ef184e16818edc51fadffe8e7ca68be67f9dee67d84d0ff23"
@@ -1818,9 +1716,7 @@ dependencies = [
 "checksum pin-utils 0.1.0-alpha.4 (registry+https://github.com/rust-lang/crates.io-index)" = "5894c618ce612a3fa23881b152b608bafb8c56cfc22f434a3ba3120b40f7b587"
 "checksum pkg-config 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "a7c1d2cfa5a714db3b5f24f0915e74fcdf91d09d496ba61329705dda7774d2af"
 "checksum ppv-lite86 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)" = "e3cbf9f658cdb5000fcf6f362b8ea2ba154b9f146a61c7a20d647034c6b6561b"
-"checksum proc-macro-hack 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "463bf29e7f11344e58c9e01f171470ab15c925c6822ad75028cc1c0e1d1eb63b"
 "checksum proc-macro-hack 0.5.9 (registry+https://github.com/rust-lang/crates.io-index)" = "e688f31d92ffd7c1ddc57a1b4e6d773c0f2a14ee437a4b0a4f5a69c80eb221c8"
-"checksum proc-macro-hack-impl 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "38c47dcb1594802de8c02f3b899e2018c78291168a22c281be21ea0fb4796842"
 "checksum proc-macro-nested 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "369a6ed065f249a159e06c45752c780bda2fb53c995718f9e484d08daa9eb42e"
 "checksum proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)" = "cf3d2011ab5c909338f7887f4fc896d35932e29146c12c8d01da6b22a80ba759"
 "checksum proc-macro2 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "175a40b9cf564ce9bf050654633dbf339978706b8ead1a907bb970b63185dd95"

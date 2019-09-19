@@ -1,5 +1,5 @@
 use crate::Client;
-use eosio::AccountName;
+use crate::eosio::AccountName;
 use serde_derive::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
 
@@ -25,7 +25,7 @@ pub struct GetRawCodeAndAbi {
 mod test {
     use super::*;
     use crate::HyperClient;
-    use eosio::n;
+    use crate::eosio::n;
 
     #[test]
     fn get_raw_code_and_abi_should_work() {

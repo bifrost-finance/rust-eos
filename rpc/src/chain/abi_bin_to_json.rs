@@ -1,4 +1,4 @@
-use eosio::{AccountName, ActionName};
+use crate::eosio::{AccountName, ActionName};
 
 const PATH: &str = "/v1/chain/abi_bin_to_json";
 

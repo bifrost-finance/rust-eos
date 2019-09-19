@@ -1,6 +1,5 @@
 use crate::Client;
-use eosio::AccountName;
-use eosio::Symbol;
+use crate::eosio::{AccountName, Symbol};
 use serde_derive::Serialize;
 use rpc_codegen::Fetch;
 
@@ -36,7 +35,7 @@ pub type GetCurrencyBalance = Vec<String>;
 mod test {
     use super::*;
     use crate::HyperClient;
-    use eosio::{Symbol, s, n};
+    use crate::eosio::{Symbol, s, n};
 
     #[test]
     fn get_currency_balance_should_work() {

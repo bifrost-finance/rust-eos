@@ -1,4 +1,4 @@
-use eosio::{AccountName, ScopeName, TableName};
+use crate::eosio::{AccountName, ScopeName, TableName};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Clone, Copy)]

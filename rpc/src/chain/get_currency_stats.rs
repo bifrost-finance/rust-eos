@@ -1,5 +1,5 @@
 use crate::Client;
-use eosio::{AccountName, Symbol};
+use crate::eosio::{AccountName, Symbol};
 use serde_derive::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
 
@@ -34,7 +34,7 @@ pub struct CurrencyStats {
 mod test {
     use super::*;
     use crate::HyperClient;
-    use eosio::{Symbol, s, n};
+    use crate::eosio::{Symbol, s, n};
 
     #[test]
     fn get_currency_stats_should_work() {

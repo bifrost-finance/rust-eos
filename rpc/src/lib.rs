@@ -15,6 +15,10 @@ pub mod producer;
 mod client;
 mod clients;
 mod error;
+mod eosio {
+    pub use eosio_core::*;
+    pub use eosio_core_macros::*;
+}
 
 pub use self::client::*;
 pub use self::clients::*;

@@ -1,5 +1,5 @@
 use crate::Client;
-use eosio::{AccountName, PermissionLevel, PermissionName};
+use crate::eosio::{AccountName, PermissionLevel, PermissionName};
 use serde_derive::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
 
@@ -116,7 +116,7 @@ mod test {
     use super::*;
     use crate::HyperClient;
     use std::str::FromStr;
-    use eosio::n;
+    use crate::eosio::n;
 
     #[test]
     fn get_account_from_str_should_work() {

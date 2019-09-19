@@ -1,5 +1,5 @@
 use crate::Client;
-use eosio::{AccountName, ActionName, PermissionLevel};
+use crate::eosio::{AccountName, ActionName, PermissionLevel};
 use serde_derive::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
 
