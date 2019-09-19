@@ -1,6 +1,6 @@
 use crate::Client;
 use crate::eosio::{AccountName, Symbol};
-use serde_derive::Serialize;
+use serde::Serialize;
 use rpc_codegen::Fetch;
 
 

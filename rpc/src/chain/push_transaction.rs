@@ -1,5 +1,5 @@
 use crate::Client;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use rpc_codegen::Fetch;
 use primitives::transaction::SignedTransaction;
 use primitives::SerializeData;
