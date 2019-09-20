@@ -8,7 +8,6 @@ description = "Secp256k1 crypto for Eos"
 [dependencies]
 bitcoin_hashes = "0.7"
 byteorder = "1.2"
-rust-crypto = "0.2.36"
 rustc-hex = "2"
 
 [dependencies.rand]

@@ -3,8 +3,7 @@
 use std::{fmt, ops, cmp, str};
 use rustc_hex::{ToHex, FromHex, FromHexError};
 use std::hash::{Hash, Hasher};
-use crypto::ripemd160::Ripemd160;
-use crypto::digest::Digest;
+use bitcoin_hashes::{ripemd160, Hash as HashTrait, HashEngine};
 
 macro_rules! impl_hash {
     ($name: ident, $size: expr) => {
@@ -181,10 +180,7 @@ impl H256 {
 
 /// Computes RIPEMD-160 cryptographic hash of key
 pub fn ripemd160(msg: &[u8]) -> H160 {
-    let mut result = H160::default();
-    let mut hasher = Ripemd160::new();
-    hasher.input(&msg);
-    hasher.result(&mut *result);
-
-    result
+    let mut engine = ripemd160::Hash::engine();
+    engine.input(msg);
+    ripemd160::Hash::from_engine(engine).into_inner().into()
 }

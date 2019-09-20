@@ -1,12 +1,12 @@
 use std::{io, fmt, str::FromStr};
-use crypto::digest::Digest;
 use secp256k1::{self, Secp256k1, Message};
 use crate::constant::*;
 use crate::{error, hash};
 use crate::secret::SecretKey;
 use crate::base58;
 use crate::signature::Signature;
-use crypto::sha2::Sha256;
+use bitcoin_hashes::{sha256, Hash as HashTrait};
+
 
 /// A Secp256k1 public key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -47,13 +47,9 @@ impl PublicKey {
     }
 
     /// Verify a signature on a message with public key.
-    pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), error::Error> {
-        let mut msg = [0u8; 32];
-        let mut hasher = Sha256::new();
-        hasher.input(&message);
-        hasher.result(&mut msg);
-
-        self.verify_hash(&msg, &signature)
+    pub fn verify(&self, message_slice: &[u8], signature: &Signature) -> Result<(), error::Error> {
+        let msg_hash = sha256::Hash::hash(&message_slice);
+        self.verify_hash(&msg_hash, &signature)
     }
 
     /// Verify a signature on a hash with public key.

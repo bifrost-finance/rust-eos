@@ -7,8 +7,7 @@ use crate::network::Network;
 use crate::base58;
 use crate::network::Network::Mainnet;
 use crate::signature::Signature;
-use crypto::sha2::Sha256;
-use crypto::digest::Digest;
+use bitcoin_hashes::{sha256, Hash as HashTrait};
 
 
 /// A Secp256k1 private key
@@ -103,13 +102,9 @@ impl SecretKey {
     }
 
     /// Sign a message with secret key
-    pub fn sign(&self, message: &[u8]) -> Result<Signature, error::Error> {
-        let mut msg = [0u8; 32];
-        let mut hasher = Sha256::new();
-        hasher.input(&message);
-        hasher.result(&mut msg);
-
-        self.sign_hash(&msg)
+    pub fn sign(&self, message_slice: &[u8]) -> Result<Signature, error::Error> {
+        let msg_hash = sha256::Hash::hash(&message_slice);
+        self.sign_hash(&msg_hash)
     }
 
     /// Sign a hash with secret key
