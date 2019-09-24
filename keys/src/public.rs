@@ -1,15 +1,15 @@
 use std::{io, fmt, str::FromStr};
-use secp256k1::{self, Secp256k1, Message};
+use bitcoin_hashes::{sha256, Hash as HashTrait};
+use secp256k1;
 use crate::constant::*;
 use crate::{error, hash};
 use crate::secret::SecretKey;
 use crate::base58;
 use crate::signature::Signature;
-use bitcoin_hashes::{sha256, Hash as HashTrait};
 
 
 /// A Secp256k1 public key
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct PublicKey {
     /// Whether this public key should be serialized as compressed
     pub compressed: bool,
@@ -21,9 +21,9 @@ impl PublicKey {
     /// Write the public key into a writer
     pub fn write_into<W: io::Write>(&self, mut writer: W) {
         let write_res: io::Result<()> = if self.compressed {
-            writer.write_all(&self.key.serialize())
+            writer.write_all(&self.key.serialize_compressed())
         } else {
-            writer.write_all(&self.key.serialize_uncompressed())
+            writer.write_all(&self.key.serialize())
         };
         debug_assert!(write_res.is_ok());
     }
@@ -38,7 +38,7 @@ impl PublicKey {
 
     /// Serialize the public key to Eos format string
     pub fn to_eos_fmt(&self) -> String {
-        let h160 = hash::ripemd160(&self.key.serialize());
+        let h160 = hash::ripemd160(&self.key.serialize_compressed());
         let mut public_key: [u8; PUBLIC_KEY_WITH_CHECKSUM_SIZE] = [0u8; PUBLIC_KEY_WITH_CHECKSUM_SIZE];
         public_key[..PUBLIC_KEY_SIZE].copy_from_slice(self.to_bytes().as_ref());
         public_key[PUBLIC_KEY_SIZE..].copy_from_slice(&h160.take()[..PUBLIC_KEY_CHECKSUM_SIZE]);
@@ -46,21 +46,10 @@ impl PublicKey {
         format!("EOS{}", base58::encode_slice(&public_key))
     }
 
-    /// Verify a signature on a message with public key.
-    pub fn verify(&self, message_slice: &[u8], signature: &Signature) -> Result<(), error::Error> {
+    pub fn verify(&self, message_slice: &[u8], signature: &Signature) -> bool {
         let msg_hash = sha256::Hash::hash(&message_slice);
-        self.verify_hash(&msg_hash, &signature)
-    }
-
-    /// Verify a signature on a hash with public key.
-    pub fn verify_hash(&self, hash: &[u8], signature: &Signature) -> Result<(), error::Error> {
-        let secp = Secp256k1::verification_only();
-        let msg = Message::from_slice(&hash).unwrap();
-
-        match secp.verify(&msg, &signature.to_standard(), &self.key) {
-            Ok(()) => Ok(()),
-            Err(err) => Err(err.into()),
-        }
+        let msg = secp256k1::Message::parse(&msg_hash.into_inner());
+        secp256k1::verify(&msg, &signature.sig, &self.key)
     }
 
     /// Deserialize a public key from a slice
@@ -73,7 +62,7 @@ impl PublicKey {
 
         Ok(PublicKey {
             compressed,
-            key: secp256k1::PublicKey::from_slice(data)?,
+            key: secp256k1::PublicKey::parse_slice(&data, Some(secp256k1::PublicKeyFormat::Full))?,
         })
     }
 }
@@ -83,7 +72,7 @@ impl fmt::Display for PublicKey {
         if self.compressed {
             write!(f, "{}", self.to_eos_fmt())?;
         } else {
-            for ch in &self.key.serialize_uncompressed()[..] {
+            for ch in &self.key.serialize()[..] {
                 write!(f, "{:02x}", ch)?;
             }
         }
@@ -100,10 +89,14 @@ impl FromStr for PublicKey {
         }
 
         let s_hex = base58::from(&s[3..])?;
+        let format = match s_hex.len() {
+            PUBLIC_KEY_WITH_CHECKSUM_SIZE => secp256k1::PublicKeyFormat::Compressed,
+            _ => secp256k1::PublicKeyFormat::Full,
+        };
         let raw = &s_hex[..PUBLIC_KEY_SIZE];
         // TODO verify with checksum
         let _checksum = &s_hex[PUBLIC_KEY_SIZE..];
-        let key = secp256k1::PublicKey::from_slice(&raw)?;
+        let key = secp256k1::PublicKey::parse_slice(&raw, Some(format))?;
 
         Ok(PublicKey { key, compressed: true })
     }
@@ -112,11 +105,11 @@ impl FromStr for PublicKey {
 impl<'a> From<&'a SecretKey> for PublicKey {
     /// Derive this public key from its corresponding `SecretKey`.
     fn from(sk: &SecretKey) -> PublicKey {
-        let secp = Secp256k1::new();
+        let pk = secp256k1::PublicKey::from_secret_key(&sk.key);
 
         PublicKey {
             compressed: true,
-            key: secp256k1::PublicKey::from_secret_key(&secp, &sk.key),
+            key: pk,
         }
     }
 }
@@ -127,8 +120,7 @@ mod test {
     use std::str::FromStr;
     use crate::error;
     use crate::signature::Signature;
-    use secp256k1::Error::IncorrectSignature;
-    use crate::error::Error::Secp256k1;
+    use secp256k1;
 
     #[test]
     fn pk_from_str_should_work() {
@@ -157,7 +149,7 @@ mod test {
         assert!(sig.is_ok());
 
         let vfy = pk.unwrap().verify("hello".as_bytes(), &sig.unwrap());
-        assert!(vfy.is_ok());
+        assert_eq!(vfy, true);
     }
 
     #[test]
@@ -171,7 +163,6 @@ mod test {
         assert!(sig.is_ok());
 
         let vfy = pk.unwrap().verify("world".as_bytes(), &sig.unwrap());
-        assert!(vfy.is_err());
-        assert_eq!(vfy, Err(Secp256k1(IncorrectSignature)));
+        assert_eq!(vfy, false);
     }
 }

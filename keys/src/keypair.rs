@@ -1,4 +1,5 @@
-use rand::{CryptoRng, Rng};
+#[cfg(feature="std")]
+use rand::Rng;
 use crate::constant::*;
 use crate::error;
 use crate::public::PublicKey;
@@ -7,7 +8,7 @@ use crate::signature::Signature;
 
 
 /// A secp256k1 keypair.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Keypair {
     /// The secret half of this keypair.
     pub sk: SecretKey,
@@ -17,7 +18,8 @@ pub struct Keypair {
 
 impl Keypair {
     /// Generate an secp256k1 keypair.
-    pub fn generate<R>(csprng: &mut R) -> Keypair where R: CryptoRng + Rng {
+    #[cfg(feature="std")]
+    pub fn generate<R>(csprng: &mut R) -> Keypair where R:  Rng {
         let sk = SecretKey::generate(csprng);
         let pk = PublicKey::from(&sk);
 
@@ -43,26 +45,29 @@ impl Keypair {
     }
 
     /// Sign a message with this keypair's secret key.
-    pub fn sign(&self, message: &[u8]) -> Result<Signature, error::Error> {
+    pub fn sign(&self, message: &[u8]) -> Signature {
         self.sk.sign(&message)
     }
 
     /// Verify a signature on a message with this keypair's public key
-    pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), error::Error> {
+    pub fn verify(&self, message: &[u8], signature: &Signature) -> bool {
         self.pk.verify(&message, &signature)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use rand::rngs::OsRng;
-    use super::Keypair;
+    #[cfg(feature="std")]
+    use rand::{thread_rng, Rng};
+    #[cfg(feature="std")]
     use crate::public::PublicKey;
+    use super::Keypair;
 
     #[test]
+    #[cfg(feature="std")]
     fn keypair_generate_should_work() {
-        let mut csprng: OsRng = OsRng::new().unwrap();
-        let keypair = Keypair::generate(&mut csprng);
+        let mut rng = thread_rng();
+        let keypair = Keypair::generate(&mut rng);
 
         assert_eq!(PublicKey::from(&keypair.sk), keypair.pk);
     }
@@ -80,7 +85,8 @@ mod tests {
         let keypair = Keypair::from_secret_wif(wif).unwrap();
         let message = "hello".as_bytes();
         let sig = keypair.sign(&message);
-        assert!(sig.is_ok());
+        assert_eq!(sig.to_string(),
+            "SIG_K1_JwWq5syfD1tBvELTB6bQwmWeeRepC5P86kzmv4Kx1vLbFahK4qAp74y7QtG7GYjfH8MdPoyWTP7ygVE6QoEFtXQrzhanLa");
     }
 
     #[test]
@@ -89,9 +95,8 @@ mod tests {
         let keypair = Keypair::from_secret_wif(wif).unwrap();
         let message = "hello".as_bytes();
         let sig = keypair.sign(&message);
-        assert!(sig.is_ok());
 
-        let verify = keypair.verify(&message, &sig.unwrap());
-        assert!(verify.is_ok());
+        let verify = keypair.verify(&message, &sig);
+        assert_eq!(verify, true);
     }
 }

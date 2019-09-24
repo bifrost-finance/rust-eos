@@ -60,8 +60,7 @@ impl Transaction {
         sign_data.append(&mut self.to_serialize_data());
         sign_data.append(&mut vec![0u8; 32]);
 
-        let sig = sk.sign(&sign_data.as_slice())
-            .map_err(|err| crate::error::Error::SignErr(err))?;
+        let sig = sk.sign(&sign_data.as_slice());
 
         Ok(SignedTransaction {
             signatures: vec![sig.to_string()],
