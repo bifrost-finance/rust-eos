@@ -31,6 +31,7 @@ pub fn get_currency_balance<
 
 pub type GetCurrencyBalance = Vec<String>;
 
+#[cfg(feature = "use-hyper")]
 #[cfg(test)]
 mod test {
     use super::*;

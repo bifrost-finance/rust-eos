@@ -21,6 +21,7 @@ pub struct GetRawCodeAndAbi {
     pub abi: String,
 }
 
+#[cfg(feature = "use-hyper")]
 #[cfg(test)]
 mod test {
     use super::*;

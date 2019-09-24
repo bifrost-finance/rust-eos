@@ -39,6 +39,7 @@ pub struct GetInfo {
     pub block_net_limit: u32,
 }
 
+#[cfg(feature = "use-hyper")]
 #[cfg(test)]
 mod test {
     use super::*;

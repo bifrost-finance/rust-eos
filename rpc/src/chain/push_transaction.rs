@@ -89,6 +89,7 @@ pub struct ActionReceipt {
     abi_sequence: u32,
 }
 
+#[cfg(feature = "use-hyper")]
 #[cfg(test)]
 mod tests {
     use super::*;

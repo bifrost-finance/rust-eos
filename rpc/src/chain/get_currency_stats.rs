@@ -30,6 +30,7 @@ pub struct CurrencyStats {
     pub issuer: AccountName,
 }
 
+#[cfg(feature = "use-hyper")]
 #[cfg(test)]
 mod test {
     use super::*;

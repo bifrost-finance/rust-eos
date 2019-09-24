@@ -91,6 +91,7 @@ pub struct AbiExtension {
     pub data: String,
 }
 
+#[cfg(feature = "use-hyper")]
 #[cfg(test)]
 mod test {
     use super::*;

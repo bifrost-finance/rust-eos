@@ -111,6 +111,7 @@ pub struct VoterInfo {
     pub is_proxy: u8,
 }
 
+#[cfg(feature = "use-hyper")]
 #[cfg(test)]
 mod test {
     use super::*;

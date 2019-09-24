@@ -88,6 +88,7 @@ pub struct Action {
     pub hex_data: String,
 }
 
+#[cfg(feature = "use-hyper")]
 #[cfg(test)]
 mod test {
     use super::*;
