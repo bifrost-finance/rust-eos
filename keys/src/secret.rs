@@ -4,13 +4,12 @@ use alloc::vec;
 use bitcoin_hashes::{sha256, Hash as HashTrait};
 use core::fmt::{self, Write};
 use core::str::FromStr;
-#[cfg(feature="std")]
 use crate::error;
 use crate::network::Network;
 use crate::base58;
 use crate::network::Network::Mainnet;
 use crate::signature::Signature;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 use secp256k1;
 
 
@@ -27,7 +26,6 @@ pub struct SecretKey {
 
 impl SecretKey {
     /// Creates a new random secret key. Requires compilation with the "rand" feature.
-    #[cfg(feature="std")]
     pub fn generate<R>(csprng: &mut R) -> Self where R: Rng {
         Self {
             compressed: false,
@@ -142,11 +140,10 @@ impl FromStr for SecretKey {
 mod test {
     use super::SecretKey;
     use crate::public::PublicKey;
-    #[cfg(feature="std")]
-    use rand::{thread_rng, Rng};
+    use rand::thread_rng;
+    use alloc::string::ToString;
 
     #[test]
-    #[cfg(feature="std")]
     fn sk_generate_should_work() {
         let mut rng = thread_rng();
         let _sk = SecretKey::generate(&mut rng);
@@ -160,7 +157,6 @@ mod test {
     }
 
     #[test]
-//    #[ignore]
     fn sk_sign_should_work() {
         let sk = SecretKey::from_wif("5KJVA9P4xsiRC3zPy1KPa3GA6ffvmyZSxhKPbE924YJphvSCG4F");
         assert!(sk.is_ok());

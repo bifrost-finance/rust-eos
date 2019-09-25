@@ -1,4 +1,3 @@
-#[cfg(feature="std")]
 use crate::constant::*;
 use crate::error;
 use crate::public::PublicKey;
@@ -18,7 +17,6 @@ pub struct Keypair {
 
 impl Keypair {
     /// Generate an secp256k1 keypair.
-    #[cfg(feature="std")]
     pub fn generate<R>(csprng: &mut R) -> Keypair where R:  Rng {
         let sk = SecretKey::generate(csprng);
         let pk = PublicKey::from(&sk);
@@ -57,14 +55,11 @@ impl Keypair {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature="std")]
-    use rand::{thread_rng, Rng};
-    #[cfg(feature="std")]
-    use crate::public::PublicKey;
-    use super::Keypair;
+    use super::{Keypair, PublicKey};
+    use alloc::string::ToString;
+    use rand::thread_rng;
 
     #[test]
-    #[cfg(feature="std")]
     fn keypair_generate_should_work() {
         let mut rng = thread_rng();
         let keypair = Keypair::generate(&mut rng);
@@ -73,11 +68,9 @@ mod tests {
     }
 
     #[test]
-//    #[ignore]
     fn keypair_from_secret_wif_should_work() {
         let wif = "5HrBLKfeEdqH9KLMv1daHLVjrXV3DGVERAkN5cdSSc58bzqqfT4";
         let keypair = Keypair::from_secret_wif(wif).unwrap();
-        dbg!(&keypair.pk.to_string());
         assert_eq!(keypair.pk.to_string(), "EOS8FdQ4gt16pFcSiXAYCcHnkHTS2nNLFWGZXW5sioAdvQuMxKhAm");
     }
 

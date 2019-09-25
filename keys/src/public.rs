@@ -24,7 +24,7 @@ pub struct PublicKey {
 impl PublicKey {
     /// Write the public key into a writer
     pub fn write_into<W: BufMut>(&self, mut writer: W) {
-        let write_res = if self.compressed {
+        let _write_res = if self.compressed {
             writer.put(&self.key.serialize_compressed()[..])
         } else {
             writer.put(&self.key.serialize()[..])
@@ -120,13 +120,13 @@ impl<'a> From<&'a SecretKey> for PublicKey {
 #[cfg(test)]
 mod test {
     use super::PublicKey;
-    use std::str::FromStr;
+    use core::str::FromStr;
     use crate::error;
     use crate::signature::Signature;
     use secp256k1;
+    use alloc::string::ToString;
 
     #[test]
-//    #[ignore]
     fn pk_from_str_should_work() {
         let pk_str = "EOS8FdQ4gt16pFcSiXAYCcHnkHTS2nNLFWGZXW5sioAdvQuMxKhAm";
         let pk = PublicKey::from_str(pk_str);

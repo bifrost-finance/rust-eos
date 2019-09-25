@@ -67,7 +67,8 @@ impl fmt::Display for Signature {
 #[cfg(test)]
 mod test {
     use super::Signature;
-    use std::str::FromStr;
+    use core::str::FromStr;
+    use alloc::string::ToString;
 
     #[test]
     fn sig_from_str_should_work() {
