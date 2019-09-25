@@ -9,8 +9,14 @@ description = "Pure Rust implementation of Secp256k1 crypto for Eos"
 bitcoin_hashes = "0.7"
 byteorder = "1.2"
 libsecp256k1 = { git = "https://github.com/bifrost-codes/libsecp256k1-rs" }
-rand = { version = "0.6", default-features = false }
+rand = { version = "0.6", optional = true }
 rustc-hex = "2"
+failure = "0.1"
+bytes = { version = "0.4", default-features = false }
+
+[features]
+default = ["std"]
+std = ["rand"]
 
 [dev-dependencies]
 hex = "=0.3.2"

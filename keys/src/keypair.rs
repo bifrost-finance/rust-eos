@@ -1,10 +1,10 @@
 #[cfg(feature="std")]
-use rand::Rng;
 use crate::constant::*;
 use crate::error;
 use crate::public::PublicKey;
 use crate::secret::SecretKey;
 use crate::signature::Signature;
+use rand::Rng;
 
 
 /// A secp256k1 keypair.
@@ -73,9 +73,11 @@ mod tests {
     }
 
     #[test]
+//    #[ignore]
     fn keypair_from_secret_wif_should_work() {
         let wif = "5HrBLKfeEdqH9KLMv1daHLVjrXV3DGVERAkN5cdSSc58bzqqfT4";
         let keypair = Keypair::from_secret_wif(wif).unwrap();
+        dbg!(&keypair.pk.to_string());
         assert_eq!(keypair.pk.to_string(), "EOS8FdQ4gt16pFcSiXAYCcHnkHTS2nNLFWGZXW5sioAdvQuMxKhAm");
     }
 
@@ -86,7 +88,7 @@ mod tests {
         let message = "hello".as_bytes();
         let sig = keypair.sign(&message);
         assert_eq!(sig.to_string(),
-            "SIG_K1_JwWq5syfD1tBvELTB6bQwmWeeRepC5P86kzmv4Kx1vLbFahK4qAp74y7QtG7GYjfH8MdPoyWTP7ygVE6QoEFtXQrzhanLa");
+                   "SIG_K1_JwWq5syfD1tBvELTB6bQwmWeeRepC5P86kzmv4Kx1vLbFahK4qAp74y7QtG7GYjfH8MdPoyWTP7ygVE6QoEFtXQrzhanLa");
     }
 
     #[test]

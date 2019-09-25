@@ -1,8 +1,9 @@
-#[cfg(feature = "std")]
-use std::{error, fmt};
-use secp256k1;
-use crate::base58;
 use bitcoin_hashes;
+use core::fmt;
+use crate::base58;
+use secp256k1;
+#[cfg(feature = "std")]
+use std::error;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Error {

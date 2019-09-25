@@ -1,5 +1,9 @@
-use std::{io, fmt, str::FromStr};
+use alloc::vec::Vec;
+use alloc::string::String;
+use alloc::format;
 use bitcoin_hashes::{sha256, Hash as HashTrait};
+use bytes::BufMut;
+use core::{fmt, str::FromStr};
 use secp256k1;
 use crate::constant::*;
 use crate::{error, hash};
@@ -19,18 +23,17 @@ pub struct PublicKey {
 
 impl PublicKey {
     /// Write the public key into a writer
-    pub fn write_into<W: io::Write>(&self, mut writer: W) {
-        let write_res: io::Result<()> = if self.compressed {
-            writer.write_all(&self.key.serialize_compressed())
+    pub fn write_into<W: BufMut>(&self, mut writer: W) {
+        let write_res = if self.compressed {
+            writer.put(&self.key.serialize_compressed()[..])
         } else {
-            writer.write_all(&self.key.serialize())
+            writer.put(&self.key.serialize()[..])
         };
-        debug_assert!(write_res.is_ok());
     }
 
     /// Serialize the public key to bytes
     pub fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = Vec::new();
+        let mut buf = alloc::vec::Vec::new();
         self.write_into(&mut buf);
 
         buf
@@ -123,6 +126,7 @@ mod test {
     use secp256k1;
 
     #[test]
+//    #[ignore]
     fn pk_from_str_should_work() {
         let pk_str = "EOS8FdQ4gt16pFcSiXAYCcHnkHTS2nNLFWGZXW5sioAdvQuMxKhAm";
         let pk = PublicKey::from_str(pk_str);

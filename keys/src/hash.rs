@@ -1,9 +1,12 @@
 //! Fixed-size hashes
 
-use std::{fmt, ops, cmp, str};
-use rustc_hex::{ToHex, FromHex, FromHexError};
-use std::hash::{Hash, Hasher};
+use alloc::vec::Vec;
+use alloc::string::{String, ToString};
 use bitcoin_hashes::{ripemd160, Hash as HashTrait, HashEngine};
+use core::{fmt, ops, cmp, str};
+use core::hash::{Hash, Hasher};
+use rustc_hex::{ToHex, FromHex, FromHexError};
+
 
 macro_rules! impl_hash {
     ($name: ident, $size: expr) => {

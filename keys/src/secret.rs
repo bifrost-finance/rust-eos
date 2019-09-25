@@ -1,14 +1,18 @@
-use std::fmt::{self, Write};
-use std::str::FromStr;
+use alloc::vec::Vec;
+use alloc::string::String;
+use alloc::vec;
+use bitcoin_hashes::{sha256, Hash as HashTrait};
+use core::fmt::{self, Write};
+use core::str::FromStr;
 #[cfg(feature="std")]
-use rand::{thread_rng, Rng};
-use secp256k1;
 use crate::error;
 use crate::network::Network;
 use crate::base58;
 use crate::network::Network::Mainnet;
 use crate::signature::Signature;
-use bitcoin_hashes::{sha256, Hash as HashTrait};
+use rand::{thread_rng, Rng};
+use secp256k1;
+
 
 /// A Secp256k1 private key
 #[derive(Clone, PartialEq, Eq)]
@@ -156,6 +160,7 @@ mod test {
     }
 
     #[test]
+//    #[ignore]
     fn sk_sign_should_work() {
         let sk = SecretKey::from_wif("5KJVA9P4xsiRC3zPy1KPa3GA6ffvmyZSxhKPbE924YJphvSCG4F");
         assert!(sk.is_ok());

@@ -4,29 +4,42 @@
 
 extern crate bitcoin_hashes as hashes;
 
-use std::{error, fmt, str, slice, iter};
+use alloc::vec::Vec;
+use alloc::string::String;
+use alloc::vec;
+use core::{fmt, str, slice, iter};
 use byteorder::{ByteOrder, LittleEndian};
 use hashes::{sha256d, Hash};
+use failure::Fail;
+
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(not(feature = "std"), derive(Fail))]
 pub enum Error {
     /// Invalid character encountered
+    #[cfg_attr(not(feature = "std"), fail(display = "invalid base58 character 0x{:x}", _0))]
     BadByte(u8),
     /// Checksum was not correct (expected, actual)
+    #[cfg_attr(not(feature = "std"), fail(display = "base58ck checksum 0x{:x} does not match expected 0x{:x}", _1, _0))]
     BadChecksum(u32, u32),
     /// The length (in bytes) of the object was not correct
     /// Note that if the length is excessively long the provided length may be
     /// an estimate (and the checksum step may be skipped).
+    #[cfg_attr(not(feature = "std"), fail(display = "length {} invalid for this base58 type", _0))]
     InvalidLength(usize),
     /// Version byte(s) were not recognized
+    #[cfg_attr(not(feature = "std"), fail(display = "version {:?} invalid for this base58 type", _0))]
     InvalidVersion(Vec<u8>),
     /// Checked data was less than 4 bytes
+    #[cfg_attr(not(feature = "std"), fail(display = "base58ck data not even long enough for a checksum"))]
     TooShort(usize),
     /// Any other error
+    #[cfg_attr(not(feature = "std"), fail(display = "{}", _0))]
     Other(String),
 }
 
+#[cfg(feature = "std")]
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -40,7 +53,8 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
     fn description(&self) -> &'static str {
         match *self {
             Error::BadByte(_) => "invalid b58 character",
@@ -51,7 +65,7 @@ impl error::Error for Error {
             Error::Other(_) => "unknown b58 error"
         }
     }
-    fn cause(&self) -> Option<&dyn error::Error> { None }
+    fn cause(&self) -> Option<&dyn std::error::Error> { None }
 }
 
 /// Vector-like object that holds the first 100 elements on the stack. If more space is needed it
@@ -281,7 +295,7 @@ mod tests {
 
         // Addresses
         assert_eq!(from_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
-            Some(hex_decode("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap()))
+                   Some(hex_decode("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap()))
     }
 
     #[test]
@@ -292,4 +306,3 @@ mod tests {
         assert_eq!(from_check(&check_encode_slice(&v[..])).ok(), Some(v));
     }
 }
-

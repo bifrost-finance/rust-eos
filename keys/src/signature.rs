@@ -1,7 +1,8 @@
-use std::fmt;
+use core::fmt;
+use core::str::FromStr;
 use crate::{base58, hash, error};
-use std::str::FromStr;
 use secp256k1;
+
 
 /// An secp256k1 signature.
 #[derive(Clone, PartialEq, Eq, Debug)]
