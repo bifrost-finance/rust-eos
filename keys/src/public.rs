@@ -2,7 +2,6 @@ use alloc::vec::Vec;
 use alloc::string::String;
 use alloc::format;
 use bitcoin_hashes::{sha256, Hash as HashTrait};
-use bytes::BufMut;
 use core::{fmt, str::FromStr};
 use secp256k1;
 use crate::constant::*;
@@ -22,21 +21,13 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
-    /// Write the public key into a writer
-    pub fn write_into<W: BufMut>(&self, mut writer: W) {
-        let _write_res = if self.compressed {
-            writer.put(&self.key.serialize_compressed()[..])
-        } else {
-            writer.put(&self.key.serialize()[..])
-        };
-    }
-
     /// Serialize the public key to bytes
     pub fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = alloc::vec::Vec::new();
-        self.write_into(&mut buf);
-
-        buf
+        if self.compressed {
+            self.key.serialize_compressed().to_vec()
+        } else {
+            self.key.serialize().to_vec()
+        }
     }
 
     /// Serialize the public key to Eos format string
