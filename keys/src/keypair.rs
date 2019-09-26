@@ -55,10 +55,14 @@ impl Keypair {
 
 #[cfg(test)]
 mod tests {
-    use super::{Keypair, PublicKey};
+    use super::Keypair;
     use alloc::string::ToString;
+    #[cfg(feature = "std")]
     use rand::thread_rng;
+    #[cfg(feature = "std")]
+    use super::PublicKey;
 
+    #[cfg(feature = "std")]
     #[test]
     fn keypair_generate_should_work() {
         let mut rng = thread_rng();

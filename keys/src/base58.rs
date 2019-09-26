@@ -10,36 +10,27 @@ use alloc::vec;
 use core::{fmt, str, slice, iter};
 use byteorder::{ByteOrder, LittleEndian};
 use hashes::{sha256d, Hash};
-use failure::Fail;
 
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(not(feature = "std"), derive(Fail))]
 pub enum Error {
     /// Invalid character encountered
-    #[cfg_attr(not(feature = "std"), fail(display = "invalid base58 character 0x{:x}", _0))]
     BadByte(u8),
     /// Checksum was not correct (expected, actual)
-    #[cfg_attr(not(feature = "std"), fail(display = "base58ck checksum 0x{:x} does not match expected 0x{:x}", _1, _0))]
     BadChecksum(u32, u32),
     /// The length (in bytes) of the object was not correct
     /// Note that if the length is excessively long the provided length may be
     /// an estimate (and the checksum step may be skipped).
-    #[cfg_attr(not(feature = "std"), fail(display = "length {} invalid for this base58 type", _0))]
     InvalidLength(usize),
     /// Version byte(s) were not recognized
-    #[cfg_attr(not(feature = "std"), fail(display = "version {:?} invalid for this base58 type", _0))]
     InvalidVersion(Vec<u8>),
     /// Checked data was less than 4 bytes
-    #[cfg_attr(not(feature = "std"), fail(display = "base58ck data not even long enough for a checksum"))]
     TooShort(usize),
     /// Any other error
-    #[cfg_attr(not(feature = "std"), fail(display = "{}", _0))]
     Other(String),
 }
 
-#[cfg(feature = "std")]
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {

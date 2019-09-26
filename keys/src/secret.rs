@@ -140,9 +140,11 @@ impl FromStr for SecretKey {
 mod test {
     use super::SecretKey;
     use crate::public::PublicKey;
-    use rand::thread_rng;
     use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use rand::thread_rng;
 
+    #[cfg(feature = "std")]
     #[test]
     fn sk_generate_should_work() {
         let mut rng = thread_rng();

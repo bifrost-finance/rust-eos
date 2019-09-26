@@ -1,12 +1,10 @@
 //! Fixed-size hashes
 
 use alloc::vec::Vec;
-use alloc::string::{String, ToString};
 use bitcoin_hashes::{ripemd160, Hash as HashTrait, HashEngine};
-use core::{fmt, ops, cmp, str};
+use core::{ops, cmp, str};
 use core::hash::{Hash, Hasher};
-use rustc_hex::{ToHex, FromHex, FromHexError};
-
+use hex::{FromHex, FromHexError};
 
 macro_rules! impl_hash {
     ($name: ident, $size: expr) => {
@@ -72,27 +70,15 @@ macro_rules! impl_hash {
             type Err = FromHexError;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                let vec: Vec<u8> = s.from_hex()?;
+                let vec: Vec<u8> = Vec::from_hex(s)?;
                 match vec.len() {
                     $size => {
                         let mut result = [0u8; $size];
                         result.copy_from_slice(&vec);
                         Ok($name(result))
                     },
-                    _ => Err(FromHexError::InvalidHexLength)
+                    _ => Err(FromHexError::InvalidStringLength)
                 }
-            }
-        }
-
-        impl fmt::Debug for $name {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.write_str(&self.0.to_hex::<String>())
-            }
-        }
-
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.write_str(&self.0.to_hex::<String>())
             }
         }
 
@@ -166,20 +152,6 @@ impl_hash!(H256, 32);
 impl_hash!(H264, 33);
 impl_hash!(H512, 64);
 impl_hash!(H520, 65);
-
-//known_heap_size!(0, H32, H48, H96, H160, H256, H264, H512, H520);
-
-impl H256 {
-    #[inline]
-    pub fn from_reversed_str(s: &'static str) -> Self {
-        H256::from(s).reversed()
-    }
-
-    #[inline]
-    pub fn to_reversed_str(&self) -> String {
-        self.reversed().to_string()
-    }
-}
 
 /// Computes RIPEMD-160 cryptographic hash of key
 pub fn ripemd160(msg: &[u8]) -> H160 {
