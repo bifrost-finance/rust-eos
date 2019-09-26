@@ -1,4 +1,6 @@
 use crate::UnsignedInt;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 /// Count the number of bytes a type is expected to use.
 pub trait NumBytes {
@@ -224,7 +226,7 @@ impl NumBytes for usize {
 impl Read for usize {
     #[inline]
     fn read(bytes: &[u8], pos: &mut usize) -> Result<Self, ReadError> {
-        UnsignedInt::read(bytes, pos).map(std::convert::Into::into)
+        UnsignedInt::read(bytes, pos).map(core::convert::Into::into)
     }
 }
 
@@ -283,7 +285,7 @@ where
     }
 }
 
-impl<T> NumBytes for std::collections::VecDeque<T>
+impl<T> NumBytes for alloc::collections::VecDeque<T>
 where
     T: NumBytes,
 {
@@ -297,7 +299,7 @@ where
     }
 }
 
-impl<T> Read for std::collections::VecDeque<T>
+impl<T> Read for alloc::collections::VecDeque<T>
 where
     T: Read + Default + Clone,
 {
@@ -317,7 +319,7 @@ where
     }
 }
 
-impl<T> Write for std::collections::VecDeque<T>
+impl<T> Write for alloc::collections::VecDeque<T>
 where
     T: Write,
 {
@@ -668,6 +670,7 @@ impl_array! {
 #[cfg(test)]
 mod tests {
     use crate::*;
+    use alloc::string::{String, ToString};
 
     macro_rules! test_type {
         ($($i:ident, $t:ty, $e:expr)*) => ($(

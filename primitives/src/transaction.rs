@@ -1,6 +1,9 @@
 use crate::{Action, NumBytes, Read, TimePointSec, UnsignedInt, Write, SerializeData};
 use keys::secret::SecretKey;
 use hex;
+use alloc::vec;
+use alloc::vec::Vec;
+use alloc::string::{String, ToString};
 
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default)]
 #[eosio_core_root_path = "crate"]
@@ -94,17 +97,24 @@ impl From<u128> for DeferredTransactionId {
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::{ActionTransfer, PermissionLevel};
     use keys::secret::SecretKey;
+    use std::time::{SystemTime, UNIX_EPOCH, Duration};
 
     #[test]
     fn sign_tx_should_work() {
         let sk = SecretKey::from_wif("5KUEhweMaSD2szyjU9EKjAyY642ZdVL2qzHW72dQcNRzUMWx9EL").unwrap();
 
-        let expiration = TimePointSec::now();
+        let start = SystemTime::now().checked_add(Duration::from_secs(600)).unwrap();
+        let since_the_epoch = start
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+
+        let expiration = TimePointSec::from_unix_seconds(since_the_epoch.as_secs() as u32);
         let ref_block_num = 0;
         let ref_block_prefix = 0;
         let trx_header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);

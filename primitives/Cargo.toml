@@ -5,15 +5,14 @@ authors = ["Edwin Wang <lark930@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-chrono = "0.4"
 eosio-core-derive = { path = "../eosio-core-derive" }
-hex = "0.3"
+hex = { version = "0.4", default-features = false }
 keys = { package = "eos-keys", path = "../keys" }
-serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 eosio-core-macros = { path = "../eosio-core-macros" }
 
 [features]
 default = []
+std = []
 internal-use-only-root-path-is-eosio = ["eosio-core-derive/internal-use-only-root-path-is-eosio"]

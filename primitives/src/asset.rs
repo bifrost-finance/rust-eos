@@ -3,26 +3,16 @@ use crate::{
     symbol_from_chars, CheckedAdd, CheckedDiv, CheckedMul, CheckedRem,
     CheckedSub, NumBytes, ParseSymbolError, Read, Symbol, Write,
 };
-use serde::{Deserialize, Serialize, Serializer};
-use std::convert::TryFrom;
-use std::error::Error;
-use std::fmt;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
-use std::str::FromStr;
+use alloc::{string::String, format};
+use core::{
+    convert::TryFrom,
+    fmt,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign},
+    str::FromStr,
+};
 
 /// Stores information for owner of asset
-#[derive(
-    Debug,
-    PartialEq,
-    PartialOrd,
-    Clone,
-    Copy,
-    Default,
-    Read,
-    Write,
-    NumBytes,
-    Deserialize,
-)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Default, Read, Write, NumBytes)]
 #[eosio_core_root_path = "crate"]
 pub struct Asset {
     /// The amount of the asset
@@ -177,17 +167,6 @@ impl TryFrom<String> for Asset {
     }
 }
 
-impl Serialize for Asset {
-    #[inline]
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let s = self.to_string();
-        serializer.serialize_str(s.as_str())
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 pub enum AssetOpError {
     Overflow,
@@ -204,8 +183,6 @@ impl fmt::Display for AssetOpError {
         write!(f, "{}", msg)
     }
 }
-
-impl Error for AssetOpError {}
 
 #[derive(Debug, Clone, Copy)]
 pub enum AssetDivOpError {
@@ -225,8 +202,6 @@ impl fmt::Display for AssetDivOpError {
         write!(f, "{}", msg)
     }
 }
-
-impl Error for AssetDivOpError {}
 
 macro_rules! impl_op {
     ($($checked_trait:ident, $checked_error:ident, $checked_fn:ident, $op_trait:ident, $op_fn:ident, $assign_trait:ident, $assign_fn:ident)*) => ($(
@@ -356,6 +331,7 @@ impl_op! {
 mod tests {
     use super::*;
     use eosio_core_macros::s;
+    use alloc::string::ToString;
 
     macro_rules! test_to_string {
         ($($name:ident, $amount:expr, $symbol:expr, $expected:expr)*) => ($(

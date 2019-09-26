@@ -1,11 +1,13 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/contracts/eosio/action.hpp#L249-L274>
 use crate::{AccountName, ActionName, NumBytes, PermissionLevel, Read, Write, Asset, SerializeData};
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use alloc::vec;
+use alloc::vec::Vec;
+use alloc::string::{String, ToString};
+use core::str::FromStr;
 
 /// This is the packed representation of an action along with meta-data about
 /// the authorization levels.
-#[derive(Clone, Debug, Serialize, Deserialize, Read, Write, NumBytes, Default)]
+#[derive(Clone, Debug, Read, Write, NumBytes, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct Action {
     /// Name of the account the action is intended for
@@ -39,7 +41,7 @@ impl Action {
 
 impl SerializeData for Action {}
 
-#[derive(Clone, Debug, Serialize, Deserialize, Read, Write, NumBytes, Default)]
+#[derive(Clone, Debug, Read, Write, NumBytes, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct ActionTransfer {
     from: AccountName,

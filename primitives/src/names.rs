@@ -1,9 +1,11 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/name.hpp#L28-L269>
 use crate::{NumBytes, Read, Write};
-use std::convert::TryFrom;
-use std::error::Error;
-use std::fmt;
-use std::str::FromStr;
+use alloc::string::{String, ToString};
+use core::{
+    convert::TryFrom,
+    fmt,
+    str::FromStr,
+};
 
 /// All possible characters that can be used in EOSIO names.
 pub const NAME_UTF8_CHARS: [u8; 32] = *b".12345abcdefghijklmnopqrstuvwxyz";
@@ -20,8 +22,6 @@ pub enum ParseNameError {
     BadChar(char),
 }
 
-impl Error for ParseNameError {}
-
 impl fmt::Display for ParseNameError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -35,7 +35,7 @@ impl fmt::Display for ParseNameError {
                 f,
                 "name contains invalid character '{}'; must only contain the following characters: {}",
                 c,
-                String::from_utf8_lossy(&NAME_UTF8_CHARS)
+                alloc::string::String::from_utf8_lossy(&NAME_UTF8_CHARS)
             ),
         }
     }
@@ -52,7 +52,7 @@ impl From<ParseNameError> for crate::error::Error {
 /// # Examples
 ///
 /// ```
-/// use eosio_core::{name_from_str, ParseNameError};
+/// use eos_primitives::{name_from_str, ParseNameError};
 /// assert_eq!(name_from_str(""), Ok(0));
 /// assert_eq!(name_from_str("a"), Ok(3458764513820540928));
 /// assert_eq!(name_from_str("123456789012"), Err(ParseNameError::BadChar('6')));
@@ -73,7 +73,7 @@ pub fn name_from_str(value: &str) -> Result<u64, ParseNameError> {
 /// # Examples
 ///
 /// ```
-/// use eosio_core::{name_from_chars, ParseNameError};
+/// use eos_primitives::{name_from_chars, ParseNameError};
 /// assert_eq!(name_from_chars("".chars()), Ok(0));
 /// assert_eq!(name_from_chars("a".chars()), Ok(3458764513820540928));
 /// assert_eq!(name_from_chars("123456789012".chars()), Err(ParseNameError::BadChar('6')));
@@ -115,9 +115,9 @@ where
 /// Converts a character to a symbol.
 fn char_to_symbol(c: char) -> Option<char> {
     if c >= 'a' && c <= 'z' {
-        ::std::char::from_u32((c as u32 - 'a' as u32) + 6)
+        ::core::char::from_u32((c as u32 - 'a' as u32) + 6)
     } else if c >= '1' && c <= '5' {
-        ::std::char::from_u32((c as u32 - '1' as u32) + 1)
+        ::core::char::from_u32((c as u32 - '1' as u32) + 1)
     } else {
         None
     }
@@ -128,7 +128,7 @@ fn char_to_symbol(c: char) -> Option<char> {
 /// # Examples
 ///
 /// ```
-/// use eosio_core::name_to_string;
+/// use eos_primitives::name_to_string;
 /// assert_eq!(name_to_string(6138663591592764928), "eosio.token");
 /// assert_eq!(name_to_string(6138663581940940800), "eosio.bpay");
 /// assert_eq!(name_to_string(0), "");
@@ -146,7 +146,7 @@ pub fn name_to_string(name: u64) -> String {
 /// # Examples
 ///
 /// ```
-/// use eosio_core::name_to_utf8;
+/// use eos_primitives::name_to_utf8;
 /// assert_eq!(name_to_utf8(6138663591592764928), *b"eosio.token..");
 /// assert_eq!(name_to_utf8(6138663581940940800), *b"eosio.bpay...");
 /// assert_eq!(name_to_utf8(0), *b".............");
@@ -165,41 +165,6 @@ pub fn name_to_utf8(name: u64) -> [u8; 13] {
         t >>= if i == 0 { 4 } else { 5 };
     }
     chars
-}
-
-struct NameVisitor<
-    T: FromStr<Err = ParseNameError> + From<u64> + std::fmt::Display,
->(std::marker::PhantomData<T>);
-
-impl<'de, T> serde::de::Visitor<'de> for NameVisitor<T>
-where
-    T: FromStr<Err = ParseNameError> + From<u64> + std::fmt::Display,
-{
-    type Value = T;
-
-    #[inline]
-    fn expecting(
-        &self,
-        formatter: &mut ::std::fmt::Formatter,
-    ) -> ::std::fmt::Result {
-        formatter.write_str("an EOSIO name string or number")
-    }
-
-    #[inline]
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-    where
-        E: ::serde::de::Error,
-    {
-        value.parse::<T>().map_err(serde::de::Error::custom)
-    }
-
-    #[inline]
-    fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        Ok(value.into())
-    }
 }
 
 macro_rules! declare_name_types {
@@ -286,25 +251,6 @@ macro_rules! declare_name_types {
             #[inline]
             fn eq(&self, other: &String) -> bool {
                 self.to_string().as_str() == other.as_str()
-            }
-        }
-
-        impl<'de> serde::Deserialize<'de> for $ident {
-            #[inline]
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                deserializer.deserialize_any(NameVisitor(std::marker::PhantomData::<Self>))
-            }
-        }
-
-        impl serde::Serialize for $ident {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: serde::Serializer,
-            {
-                serializer.serialize_str(self.to_string().as_str())
             }
         }
     )*)

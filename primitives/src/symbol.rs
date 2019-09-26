@@ -1,10 +1,13 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/symbol.hpp#L234-L337>
 use crate::{NumBytes, Read, SymbolCode, Write};
-use serde::{Deserialize, Serialize};
-use std::convert::TryFrom;
+use alloc::string::String;
+use core::{
+    convert::TryFrom,
+    fmt,
+    str::FromStr,
+};
+#[cfg(feature = "std")]
 use std::error::Error;
-use std::fmt;
-use std::str::FromStr;
 
 /// All possible characters that can be used in EOSIO symbol codes.
 pub const SYMBOL_UTF8_CHARS: [u8; 26] = *b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -24,8 +27,6 @@ pub enum ParseSymbolError {
     /// TODO docs
     BadPrecision,
 }
-
-impl Error for ParseSymbolError {}
 
 impl fmt::Display for ParseSymbolError {
     #[inline]
@@ -50,7 +51,7 @@ impl fmt::Display for ParseSymbolError {
 /// # Examples
 ///
 /// ```
-/// use eosio_core::{symbol_from_str, ParseSymbolError};
+/// use eos_primitives::{symbol_from_str, ParseSymbolError};
 /// assert_eq!(symbol_from_str(4, "EOS"), Ok(1397703940));
 /// assert_eq!(symbol_from_str(0, "TGFT"), Ok(361956332544));
 /// assert_eq!(symbol_from_str(2, "SYS"), Ok(1398362882));
@@ -71,7 +72,7 @@ pub fn symbol_from_str(
 /// # Examples
 ///
 /// ```
-/// use eosio_core::{symbol_from_chars, ParseSymbolError};
+/// use eos_primitives::{symbol_from_chars, ParseSymbolError};
 /// assert_eq!(symbol_from_chars(4, "EOS".chars()), Ok(1397703940));
 /// assert_eq!(symbol_from_chars(0, "TGFT".chars()), Ok(361956332544));
 /// assert_eq!(symbol_from_chars(2, "SYS".chars()), Ok(1398362882));
@@ -110,7 +111,7 @@ where
 /// # Examples
 ///
 /// ```
-/// use eosio_core::symbol_to_string;
+/// use eos_primitives::symbol_to_string;
 /// assert_eq!(symbol_to_string(1397703940), "EOS");
 /// assert_eq!(symbol_to_string(5138124851399447552), "TESTING");
 /// assert_eq!(symbol_to_string(361956332544), "TGFT");
@@ -127,7 +128,7 @@ pub fn symbol_to_string(name: u64) -> String {
 /// # Examples
 ///
 /// ```
-/// use eosio_core::symbol_to_utf8;
+/// use eos_primitives::symbol_to_utf8;
 /// assert_eq!(symbol_to_utf8(1397703940), *b"EOS    ");
 /// assert_eq!(symbol_to_utf8(5138124851399447552), *b"TESTING");
 /// assert_eq!(symbol_to_utf8(361956332544), *b"TGFT   ");
@@ -154,7 +155,7 @@ pub fn symbol_to_utf8(value: u64) -> [u8; SYMBOL_LEN_MAX] {
 /// # Examples
 ///
 /// ```
-/// use eosio_core::symbol_precision;
+/// use eos_primitives::symbol_precision;
 /// assert_eq!(symbol_precision(1397703940), 4); // 4,EOS
 /// assert_eq!(symbol_precision(1398362882), 2); // 2,SYS
 /// assert_eq!(symbol_precision(5138124851399447552), 0); // 0,TESTING
@@ -169,7 +170,7 @@ pub fn symbol_precision(value: u64) -> u8 {
 /// # Examples
 ///
 /// ```
-/// use eosio_core::symbol_code;
+/// use eos_primitives::symbol_code;
 /// assert_eq!(symbol_code(1397703940), 5459781); // 4,EOS
 /// assert_eq!(symbol_code(1398362882), 5462355); // 2,SYS
 /// assert_eq!(symbol_code(5138124851399447552), 20070800200779092); // 0,TESTING
@@ -184,7 +185,7 @@ pub const fn symbol_code(value: u64) -> u64 {
 /// # Examples
 ///
 /// ```
-/// use eosio_core::symbol_code_length;
+/// use eos_primitives::symbol_code_length;
 /// assert_eq!(symbol_code_length(1397703940), 3); // 4,EOS
 /// assert_eq!(symbol_code_length(1398362882), 3); // 2,SYS
 /// assert_eq!(symbol_code_length(5138124851399447552), 7); // 0,TESTING
@@ -202,22 +203,7 @@ pub fn symbol_code_length(symbol: u64) -> usize {
 }
 
 /// Stores information about a symbol, the symbol can be 7 characters long.
-#[derive(
-    Debug,
-    PartialEq,
-    Eq,
-    Clone,
-    Copy,
-    Default,
-    Read,
-    Write,
-    NumBytes,
-    Hash,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Read, Write, NumBytes, Hash, PartialOrd, Ord)]
 #[eosio_core_root_path = "crate"]
 pub struct Symbol(u64);
 
@@ -335,6 +321,7 @@ impl PartialEq<u64> for Symbol {
 mod tests {
     use super::*;
     use eosio_core_macros::s;
+    use alloc::string::ToString;
 
     #[test]
     fn from_int() {
@@ -374,7 +361,7 @@ mod tests {
 
     #[test]
     fn from_str() {
-        use std::str::FromStr;
+        use core::str::FromStr;
 
         fn test_ok(input: &str, expected: u64) {
             let ok = Ok(expected.into());
@@ -403,7 +390,7 @@ mod tests {
 
     #[test]
     fn code_from_str() {
-        use std::str::FromStr;
+        use core::str::FromStr;
 
         fn test_ok(input: &str, expected: u64) {
             let ok = Ok(Symbol::from(expected).code());

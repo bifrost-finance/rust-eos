@@ -3,25 +3,15 @@ use crate::{
     symbol_from_str, symbol_to_string, symbol_to_utf8, NumBytes,
     ParseSymbolError, Read, ScopeName, Symbol, Write,
 };
-use std::convert::TryFrom;
-use std::fmt;
-use std::str::FromStr;
+use alloc::string::String;
+use core::{
+    convert::TryFrom,
+    fmt,
+    str::FromStr,
+};
 
 /// Stores the symbol code as a `u64` value
-#[derive(
-    Debug,
-    PartialEq,
-    Eq,
-    Clone,
-    Copy,
-    Default,
-    Read,
-    Write,
-    NumBytes,
-    Hash,
-    PartialOrd,
-    Ord,
-)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Read, Write, NumBytes, Hash, PartialOrd, Ord)]
 #[eosio_core_root_path = "crate"]
 pub struct SymbolCode(u64);
 
@@ -125,6 +115,7 @@ mod tests {
     use super::*;
     use crate::symbol_code;
     use eosio_core_macros::s;
+    use alloc::string::ToString;
 
     macro_rules! test_to_string {
         ($($name:ident, $value:expr, $expected:expr)*) => ($(

@@ -1,3 +1,7 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
 pub mod action;
 pub mod asset;
 pub mod bytes;
@@ -15,10 +19,22 @@ pub mod unsigned_int;
 pub use eosio_core_derive::*;
 
 pub use self::{
-    action::*, asset::*, bytes::*, error::*, names::*, ops::*, permission_level::*,
-    symbol::*, symbol_code::*, time_point::*, time_point_sec::*, transaction::*,
+    action::*,
+    asset::*,
+    bytes::*,
+    error::*,
+    names::*,
+    ops::*,
+    permission_level::*,
+    symbol::*,
+    symbol_code::*,
+    time_point::*,
+    time_point_sec::*,
+    transaction::*,
     unsigned_int::*,
 };
+use alloc::vec;
+use alloc::vec::Vec;
 
 pub trait SerializeData: Write + NumBytes {
     fn to_serialize_data(&self) -> Vec<u8> {
