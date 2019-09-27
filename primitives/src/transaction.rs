@@ -58,7 +58,7 @@ impl Transaction {
     pub fn sign(&self, sk: SecretKey, chain_id: String) -> Result<SignedTransaction, crate::error::Error> {
         let mut sign_data: Vec<u8>  = Vec::new();
         let mut chain_id_hex = hex::decode(chain_id)
-            .map_err(|err| crate::error::Error::FromHexError(err))?;
+            .map_err(crate::error::Error::FromHexError)?;
         sign_data.append(&mut chain_id_hex);
         sign_data.append(&mut self.to_serialize_data());
         sign_data.append(&mut vec![0u8; 32]);

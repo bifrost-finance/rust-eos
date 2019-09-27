@@ -7,6 +7,7 @@ use core::{
     str::FromStr,
 };
 
+
 /// All possible characters that can be used in EOSIO names.
 pub const NAME_UTF8_CHARS: [u8; 32] = *b".12345abcdefghijklmnopqrstuvwxyz";
 
@@ -167,6 +168,41 @@ pub fn name_to_utf8(name: u64) -> [u8; 13] {
     chars
 }
 
+struct NameVisitor<
+    T: FromStr<Err = ParseNameError> + From<u64> + core::fmt::Display,
+>(core::marker::PhantomData<T>);
+
+impl<'de, T> serde::de::Visitor<'de> for NameVisitor<T>
+    where
+        T: FromStr<Err = ParseNameError> + From<u64> + core::fmt::Display,
+{
+    type Value = T;
+
+    #[inline]
+    fn expecting(
+        &self,
+        formatter: &mut core::fmt::Formatter,
+    ) -> core::fmt::Result {
+        formatter.write_str("an EOSIO name string or number")
+    }
+
+    #[inline]
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: ::serde::de::Error,
+    {
+        value.parse::<T>().map_err(serde::de::Error::custom)
+    }
+
+    #[inline]
+    fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error,
+    {
+        Ok(value.into())
+    }
+}
+
 macro_rules! declare_name_types {
     ($($ident:ident)*) => ($(
         #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Hash, PartialOrd, Ord, Read, Write, NumBytes)]
@@ -214,6 +250,25 @@ macro_rules! declare_name_types {
             #[inline]
             fn try_from(value: &str) -> Result<Self, Self::Error> {
                 Self::from_str(value)
+            }
+        }
+
+        impl<'de> serde::Deserialize<'de> for $ident {
+            #[inline]
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                deserializer.deserialize_any(NameVisitor(core::marker::PhantomData::<Self>))
+            }
+        }
+
+        impl serde::Serialize for $ident {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                serializer.serialize_str(self.to_string().as_str())
             }
         }
 

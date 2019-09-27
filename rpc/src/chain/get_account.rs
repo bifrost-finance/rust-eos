@@ -1,7 +1,10 @@
+use alloc::string::String;
+use alloc::vec::Vec;
 use crate::Client;
-use crate::eosio::{AccountName, PermissionLevel, PermissionName};
-use serde::{Deserialize, Serialize};
+use primitives::names::{AccountName, PermissionName};
+use primitives::permission_level::PermissionLevel;
 use rpc_codegen::Fetch;
+use serde::{Deserialize, Serialize};
 
 
 #[derive(Fetch, Debug, Clone, Serialize)]
@@ -117,7 +120,6 @@ mod test {
     use super::*;
     use crate::HyperClient;
     use std::str::FromStr;
-    use crate::eosio::n;
 
     #[test]
     fn get_account_from_str_should_work() {
@@ -154,7 +156,7 @@ mod test {
         let node: &'static str = "https://eos.greymass.com/";
         let hyper_client = HyperClient::new(node);
 
-        let account_name: AccountName = n!(eosio).into();
+        let account_name: AccountName = AccountName::from_str("eosio").unwrap();
         let response = get_account(account_name).fetch(&hyper_client);
         assert!(response.is_ok())
     }
@@ -164,7 +166,7 @@ mod test {
         let node: &'static str = "https://eos.greymass.com/";
         let hyper_client = HyperClient::new(node);
 
-        let account_name: AccountName = n!(eosio2).into();
+        let account_name: AccountName = AccountName::from_str("eosio2").unwrap();
         let response = get_account(account_name).fetch(&hyper_client);
         if let Err(e) = response {
             // downcast failure::Error to our own error

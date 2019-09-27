@@ -1,7 +1,9 @@
+use alloc::string::{String, ToString};
 use crate::Client;
-use crate::eosio::{AccountName, Symbol};
-use serde::{Deserialize, Serialize};
+use primitives::names::AccountName;
+use primitives::symbol::Symbol;
 use rpc_codegen::Fetch;
+use serde::{Deserialize, Serialize};
 
 
 #[derive(Fetch, Debug, Clone, Serialize)]
@@ -11,7 +13,7 @@ pub struct GetCurrencyStatsParams {
     symbol: String,
 }
 
-pub type GetCurrencyStats = ::std::collections::HashMap<String, CurrencyStats>;
+pub type GetCurrencyStats = alloc::collections::BTreeMap<String, CurrencyStats>;
 
 pub fn get_currency_stats<C: Into<AccountName>, S: Into<Symbol>>(
     code: C,
@@ -35,15 +37,15 @@ pub struct CurrencyStats {
 mod test {
     use super::*;
     use crate::HyperClient;
-    use crate::eosio::{Symbol, s, n};
+    use std::str::FromStr;
 
     #[test]
     fn get_currency_stats_should_work() {
         let node: &'static str = "https://eos.greymass.com/";
         let hyper_client = HyperClient::new(node);
 
-        let code: AccountName = n!(eosio.token).into();
-        let symbol: Symbol = s!(4, EOS).into();
+        let code: AccountName = AccountName::from_str("eosio.token").unwrap();
+        let symbol: Symbol = Symbol::from_str("4,EOS").unwrap();
         let response = get_currency_stats(code, symbol).fetch(&hyper_client);
         assert!(response.is_ok());
     }
@@ -54,8 +56,8 @@ mod test {
         let hyper_client = HyperClient::new(node);
 
         // eosio.tok2 is an invalid account
-        let code: AccountName = n!(eosio.tok2).into();
-        let symbol: Symbol = s!(1, EOS).into();
+        let code: AccountName = AccountName::from_str("eosio.tok2").unwrap();
+        let symbol: Symbol = Symbol::from_str("1,EOS").unwrap();
         let response = get_currency_stats(code, symbol).fetch(&hyper_client);
 
         if let Err(e) = response {

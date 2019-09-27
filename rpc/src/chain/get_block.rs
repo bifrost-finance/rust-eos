@@ -1,7 +1,10 @@
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use crate::Client;
-use crate::eosio::{AccountName, ActionName, PermissionLevel};
-use serde::{Deserialize, Serialize};
+use primitives::names::{AccountName, ActionName};
+use primitives::permission_level::PermissionLevel;
 use rpc_codegen::Fetch;
+use serde::{Deserialize, Serialize};
 
 
 #[derive(Fetch, Debug, Clone, Serialize)]
@@ -84,7 +87,7 @@ pub struct Action {
     pub account: AccountName,
     pub name: ActionName,
     pub authorization: Vec<PermissionLevel>,
-    pub data: ::serde_json::Value,
+    pub data: Vec<u8>,
     pub hex_data: String,
 }
 

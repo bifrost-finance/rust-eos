@@ -1,7 +1,8 @@
+use alloc::string::String;
 use crate::Client;
-use crate::eosio::AccountName;
-use serde::{Deserialize, Serialize};
+use primitives::names::AccountName;
 use rpc_codegen::Fetch;
+use serde::{Deserialize, Serialize};
 
 
 #[derive(Fetch, Debug, Clone, Serialize)]

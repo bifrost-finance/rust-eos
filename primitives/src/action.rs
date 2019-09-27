@@ -31,8 +31,8 @@ impl Action {
         authorization: Vec<PermissionLevel>,
         action_data: S
     ) -> Result<Self, crate::Error> {
-        let account = AccountName::from_str(account.as_ref()).map_err(|err| crate::Error::from(err) )?;
-        let name =  ActionName::from_str(name.as_ref()).map_err(|err| crate::Error::from(err) )?;
+        let account = AccountName::from_str(account.as_ref()).map_err(crate::Error::from)?;
+        let name =  ActionName::from_str(name.as_ref()).map_err(crate::Error::from)?;
         let data = action_data.to_serialize_data();
 
         Ok(Action { account, name, authorization, data })
@@ -58,9 +58,9 @@ impl ActionTransfer {
     pub fn from_str<T: AsRef<str>>(from: T, to: T, amount: T, memo: T)
         -> Result<Self, crate::Error>
     {
-        let from = AccountName::from_str(from.as_ref()).map_err(|err| crate::Error::from(err) )?;
-        let to = AccountName::from_str(to.as_ref()).map_err(|err| crate::Error::from(err) )?;
-        let amount = Asset::from_str(amount.as_ref()).map_err(|err| crate::Error::from(err) )?;
+        let from = AccountName::from_str(from.as_ref()).map_err(crate::Error::from)?;
+        let to = AccountName::from_str(to.as_ref()).map_err(crate::Error::from)?;
+        let amount = Asset::from_str(amount.as_ref()).map_err(crate::Error::from)?;
         let memo = memo.as_ref().to_string();
 
         Ok(ActionTransfer { from, to, amount, memo })

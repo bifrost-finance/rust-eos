@@ -1,7 +1,9 @@
+use alloc::string::String;
+use alloc::vec::Vec;
 use crate::Client;
-use crate::eosio::AccountName;
-use serde::{Deserialize, Serialize};
+use primitives::names::AccountName;
 use rpc_codegen::Fetch;
+use serde::{Deserialize, Serialize};
 
 
 #[derive(Fetch, Debug, Clone, Serialize)]
@@ -96,14 +98,14 @@ pub struct AbiExtension {
 mod test {
     use super::*;
     use crate::HyperClient;
-    use crate::eosio::n;
+    use std::str::FromStr;
 
     #[test]
     fn get_abi_should_work() {
         let node: &'static str = "https://eos.greymass.com/";
         let hyper_client = HyperClient::new(node);
 
-        let account_name: AccountName = n!(eosio.token).into();
+        let account_name: AccountName =AccountName::from_str("eosio.token").unwrap();
         let response = get_abi(account_name).fetch(&hyper_client);
         assert!(response.is_ok());
     }
@@ -114,7 +116,7 @@ mod test {
         let hyper_client = HyperClient::new(node);
 
         // eosio.token1 is an invalid account
-        let account_name: AccountName = n!(eosio.token1).into();
+        let account_name: AccountName = AccountName::from_str("eosio.token1").unwrap();
         let response = get_abi(account_name).fetch(&hyper_client);
         if let Err(e) = response {
             // downcast failure::Error to our own error

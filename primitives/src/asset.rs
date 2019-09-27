@@ -330,7 +330,6 @@ impl_op! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use eosio_core_macros::s;
     use alloc::string::ToString;
 
     macro_rules! test_to_string {
@@ -339,7 +338,7 @@ mod tests {
             fn $name() {
                 let asset = Asset {
                     amount: $amount,
-                    symbol: $symbol.into(),
+                    symbol: $symbol.unwrap(),
                 };
                 assert_eq!(asset.to_string(), $expected);
             }
@@ -347,15 +346,15 @@ mod tests {
     }
 
     test_to_string! {
-        to_string, 1_0000, s!(4, EOS), "1.0000 EOS"
-        to_string_signed, -1_0000, s!(4, EOS), "-1.0000 EOS"
-        to_string_fraction, 1_0001, s!(4, EOS), "1.0001 EOS"
-        to_string_zero_precision, 10_001, s!(0, EOS), "10001 EOS"
-        to_string_zero_precision_unsigned, -10_001, s!(0, EOS), "-10001 EOS"
-        to_string_max_number, i64::max_value(), s!(4, EOS), "922337203685477.5807 EOS"
-        to_string_min_number, i64::min_value(), s!(4, EOS), "-922337203685477.5808 EOS"
-        to_string_very_small_number, 1, s!(255, TST), "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 TST"
-        to_string_very_small_number_neg, -1, s!(255, TST), "-0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 TST"
+        to_string, 1_0000, Symbol::from_str("4,EOS"), "1.0000 EOS"
+        to_string_signed, -1_0000, Symbol::from_str("4,EOS"), "-1.0000 EOS"
+        to_string_fraction, 1_0001, Symbol::from_str("4,EOS"), "1.0001 EOS"
+        to_string_zero_precision, 10_001, Symbol::from_str("0,EOS"), "10001 EOS"
+        to_string_zero_precision_unsigned, -10_001, Symbol::from_str("0,EOS"), "-10001 EOS"
+        to_string_max_number, i64::max_value(), Symbol::from_str("4,EOS"), "922337203685477.5807 EOS"
+        to_string_min_number, i64::min_value(), Symbol::from_str("4,EOS"), "-922337203685477.5808 EOS"
+        to_string_very_small_number, 1, Symbol::from_str("255,TST"), "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 TST"
+        to_string_very_small_number_neg, -1, Symbol::from_str("255,TST"), "-0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 TST"
     }
 
     macro_rules! test_from_str_ok {
@@ -364,7 +363,7 @@ mod tests {
             fn $name() {
                 let ok = Ok(Asset {
                     amount: $expected_amount,
-                    symbol: $expected_symbol.into(),
+                    symbol: $expected_symbol.unwrap(),
                 });
                 assert_eq!(Asset::from_str($input), ok);
                 assert_eq!(Asset::try_from($input), ok);
@@ -373,19 +372,19 @@ mod tests {
     }
 
     test_from_str_ok! {
-        from_str_ok_basic, "1.0000 EOS", 1_0000, s!(4, EOS)
-        from_str_ok_zero_precision, "1 TST", 1, s!(0, TST)
-        from_str_ok_long, "1234567890.12345 TMP", 123_456_789_012_345, s!(5, TMP)
-        from_str_ok_signed_neg, "-1.0000 TLOS", -1_0000, s!(4, TLOS)
-        from_str_ok_signed_zero_precision, "-1 SYS", -1, s!(0, SYS)
-        from_str_ok_signed_long, "-1234567890.12345 TGFT", -123_456_789_012_345, s!(5, TGFT)
-        from_str_ok_pos_sign, "+1 TST", 1, s!(0, TST)
-        from_str_ok_fraction, "0.0001 EOS", 1, s!(4, EOS)
-        from_str_ok_zero, "0.0000 EOS", 0, s!(4, EOS)
-        from_str_whitespace_around, "            1.0000 EOS   ", 1_0000, s!(4, EOS)
-        from_str_zero_padded, "0001.0000 EOS", 1_0000, s!(4, EOS)
-        from_str_very_small_num, "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 TST", 1, s!(255, TST)
-        from_str_very_small_num_neg, "-0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 TST", -1, s!(255, TST)
+        from_str_ok_basic, "1.0000 EOS", 1_0000, Symbol::from_str("4,EOS")
+        from_str_ok_zero_precision, "1 TST", 1, Symbol::from_str("0,TST")
+        from_str_ok_long, "1234567890.12345 TMP", 123_456_789_012_345, Symbol::from_str("5,TMP")
+        from_str_ok_signed_neg, "-1.0000 TLOS", -1_0000, Symbol::from_str("4,TLOS")
+        from_str_ok_signed_zero_precision, "-1 SYS", -1, Symbol::from_str("0,SYS")
+        from_str_ok_signed_long, "-1234567890.12345 TGFT", -123_456_789_012_345, Symbol::from_str("5,TGFT")
+        from_str_ok_pos_sign, "+1 TST", 1, Symbol::from_str("0,TST")
+        from_str_ok_fraction, "0.0001 EOS", 1, Symbol::from_str("4,EOS")
+        from_str_ok_zero, "0.0000 EOS", 0, Symbol::from_str("4,EOS")
+        from_str_whitespace_around, "            1.0000 EOS   ", 1_0000, Symbol::from_str("4,EOS")
+        from_str_zero_padded, "0001.0000 EOS", 1_0000, Symbol::from_str("4,EOS")
+        from_str_very_small_num, "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 TST", 1, Symbol::from_str("255,TST")
+        from_str_very_small_num_neg, "-0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 TST", -1, Symbol::from_str("255,TST")
     }
 
     macro_rules! test_from_str_err {
@@ -414,7 +413,7 @@ mod tests {
     fn test_ops() {
         let mut asset = Asset {
             amount: 10_0000,
-            symbol: s!(4, EOS).into(),
+            symbol: Symbol::from_str("4,EOS").unwrap(),
         };
         asset += 1;
         assert_eq!(asset.amount, 10_0001);

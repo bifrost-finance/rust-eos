@@ -1,7 +1,9 @@
+use alloc::string::String;
+use core::str::FromStr;
 use crate::Client;
-use crate::eosio::{AccountName, ActionName, n};
-use serde::{Deserialize, Serialize};
+use primitives::names::{AccountName, ActionName, ParseNameError};
 use rpc_codegen::Fetch;
+use serde::{Deserialize, Serialize};
 
 
 #[derive(Fetch, Clone, Debug, Deserialize, Serialize)]
@@ -17,17 +19,17 @@ pub fn get_abi_json_to_bin<Args: serde::Serialize>(
     code: impl Into<AccountName>,
     action: Actions,
     args: Args
-) -> GetAbiJsonToBinParams<Args>
+) -> Result<GetAbiJsonToBinParams<Args>, ParseNameError>
 {
     let action: ActionName = match action {
-        Actions::Close => n!(close).into(),
-        Actions::Create => n!(create).into(),
-        Actions::Transfer => n!(transfer).into(),
-        Actions::Open => n!(open).into(),
-        Actions::Retire => n!(retire).into(),
-        Actions::Issue => n!(issue).into(),
+        Actions::Close => ActionName::from_str("close")?,
+        Actions::Create => ActionName::from_str("create")?,
+        Actions::Transfer => ActionName::from_str("transfer")?,
+        Actions::Open => ActionName::from_str("open")?,
+        Actions::Retire => ActionName::from_str("retire")?,
+        Actions::Issue => ActionName::from_str("issue")?,
     };
-    GetAbiJsonToBinParams { code: code.into(), action, args }
+    Ok(GetAbiJsonToBinParams { code: code.into(), action, args })
 }
 
 // defined six action
@@ -84,8 +86,3 @@ pub struct RetireAction {
 pub struct GetAbiJsonToBin {
     pub binargs: String
 }
-
-// #[cfg(test)]
-// mod test {
-//     // unimplemented!();
-// }

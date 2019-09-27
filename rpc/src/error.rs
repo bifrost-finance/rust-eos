@@ -1,9 +1,10 @@
+use alloc::string::String;
+use alloc::vec::Vec;
 use failure::Fail;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 
-pub type Result<T> = std::result::Result<T, failure::Error>;
+pub type Result<T> = core::result::Result<T, failure::Error>;
 
 #[derive(Debug, Fail)]
 pub enum Error {
@@ -46,31 +47,33 @@ pub enum Error {
 #[cfg(feature = "use-hyper")]
 impl From<hyper::Error> for Error {
     fn from(err: hyper::Error) -> Self {
-        println!("HYPER ERROR: {:#?}", err);
         Error::HttpRequestError { request_err: err }
     }
 }
 
 impl From<serde_json::Error> for Error {
     fn from(err: serde_json::Error) -> Self {
-        println!("SERDE ERROR: {:#?}", err);
         Error::ParseJsonError { serde_err: err }
     }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[cfg_attr(not(feature = "std"), derive(Fail))]
+#[cfg_attr(not(feature = "std"), fail(display = "error response due to: {}.", message))]
 pub struct ErrorResponse {
     pub code: u32,
     pub message: String,
     pub error: ErrorMessage,
 }
 
-impl fmt::Display for ErrorResponse {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+#[cfg(feature = "std")]
+impl std::fmt::Display for ErrorResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}, {}, {:?}", self.code, self.message, self.error)
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for ErrorResponse {
     fn description(&self) -> &str {
         &self.message

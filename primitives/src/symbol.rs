@@ -6,8 +6,8 @@ use core::{
     fmt,
     str::FromStr,
 };
-#[cfg(feature = "std")]
-use std::error::Error;
+use serde::{Deserialize, Serialize};
+
 
 /// All possible characters that can be used in EOSIO symbol codes.
 pub const SYMBOL_UTF8_CHARS: [u8; 26] = *b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -203,7 +203,7 @@ pub fn symbol_code_length(symbol: u64) -> usize {
 }
 
 /// Stores information about a symbol, the symbol can be 7 characters long.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Read, Write, NumBytes, Hash, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Read, Write, NumBytes, Hash, PartialOrd, Ord, Deserialize, Serialize)]
 #[eosio_core_root_path = "crate"]
 pub struct Symbol(u64);
 
@@ -224,25 +224,25 @@ impl Symbol {
 
     /// This symbol's precision
     #[inline]
-    pub fn precision(&self) -> u8 {
+    pub fn precision(self) -> u8 {
         symbol_precision(self.as_u64())
     }
 
     /// Returns representation of symbol name
     #[inline]
-    pub fn code(&self) -> SymbolCode {
+    pub fn code(self) -> SymbolCode {
         symbol_code(self.as_u64()).into()
     }
 
     /// TODO docs
     #[inline]
-    pub const fn as_u64(&self) -> u64 {
+    pub const fn as_u64(self) -> u64 {
         self.0
     }
 
     /// Is this symbol valid
     #[inline]
-    pub fn is_valid(&self) -> bool {
+    pub fn is_valid(self) -> bool {
         self.code().is_valid()
     }
 }
@@ -261,27 +261,55 @@ impl FromStr for Symbol {
         let value = s.trim();
         let mut chars = value.chars();
 
-        let precision: u8 = match chars.next() {
-            Some(c) => {
-                if '0' <= c && c <= '9' {
-                    match c.to_digit(10) {
-                        Some(p) => u8::try_from(p)
-                            .map_err(|_| ParseSymbolError::BadPrecision)?,
-                        None => return Err(ParseSymbolError::BadChar(c)),
+        let mut precision: Option<u16> = None;
+        loop {
+            match (precision, chars.next()) {
+                (None, Some(c)) => {
+                    if '0' <= c && c <= '9' {
+                        match c.to_digit(10) {
+                            Some(p) => {
+                                let p = u8::try_from(p).map_err(|_| ParseSymbolError::BadPrecision)?;
+                                precision = Some(u16::from(p));
+                            },
+                            None => return Err(ParseSymbolError::BadChar(c)),
+                        }
+                    } else {
+                        return Err(ParseSymbolError::BadChar(c));
                     }
-                } else {
-                    return Err(ParseSymbolError::BadChar(c));
+                },
+                (Some(_), Some(c)) => {
+                    if '0' <= c && c <= '9' {
+                        match c.to_digit(10) {
+                            Some(p) => {
+                                let p = u8::try_from(p).map_err(|_| ParseSymbolError::BadPrecision)?;
+                                precision = precision.map(|mut pre| {
+                                    pre *= 10;
+                                    pre += u16::from(p);
+                                    pre
+                                });
+                            }
+                            None => return Err(ParseSymbolError::BadChar(c)),
+                        }
+                    } else {
+                        match c {
+                            ',' => break,
+                            ' ' => return Err(ParseSymbolError::IsEmpty),
+                            _ => return Err(ParseSymbolError::BadChar(c)),
+                        }
+                    }
+                },
+                _ => return Err(ParseSymbolError::IsEmpty),
+            };
+        }
+        match precision {
+            Some(p) => {
+                if p.gt(&255) {
+                    return Err(ParseSymbolError::BadPrecision);
                 }
             }
-            None => return Err(ParseSymbolError::IsEmpty),
-        };
-
-        match chars.next() {
-            Some(',') => (),
-            Some(c) => return Err(ParseSymbolError::BadChar(c)),
-            None => return Err(ParseSymbolError::IsEmpty), // TODO better error message
+            None => return Err(ParseSymbolError::BadPrecision)
         }
-
+        let precision = precision.ok_or_else(|| ParseSymbolError::BadPrecision)? as u8;
         let symbol = symbol_from_chars(precision, chars)?;
         Ok(symbol.into())
     }
@@ -320,7 +348,6 @@ impl PartialEq<u64> for Symbol {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use eosio_core_macros::s;
     use alloc::string::ToString;
 
     #[test]
@@ -344,9 +371,9 @@ mod tests {
         fn test(value: u64, expected: &str) {
             assert_eq!(Symbol::from(value).to_string(), expected);
         }
-        test(s!(2, TGFT), "2,TGFT");
-        test(s!(0, TGFT), "0,TGFT");
-        test(s!(4, EOS), "4,EOS");
+        test(Symbol::from_str("2,TGFT").unwrap().as_u64(), "2,TGFT");
+        test(Symbol::from_str("0,TGFT").unwrap().as_u64(), "0,TGFT");
+        test(Symbol::from_str("4,EOS").unwrap().as_u64(), "4,EOS");
     }
 
     #[test]
@@ -354,9 +381,9 @@ mod tests {
         fn test(value: u64, expected: &str) {
             assert_eq!(Symbol::from(value).code().to_string(), expected);
         }
-        test(s!(4, EOS), "EOS");
-        test(s!(0, TGFT), "TGFT");
-        test(s!(9, SYS), "SYS");
+        test(Symbol::from_str("4,EOS").unwrap().as_u64(), "EOS");
+        test(Symbol::from_str("0,TGFT").unwrap().as_u64(), "TGFT");
+        test(Symbol::from_str("9,SYS").unwrap().as_u64(), "SYS");
     }
 
     #[test]
@@ -377,13 +404,12 @@ mod tests {
             assert_eq!(Symbol::from_str(input), err);
         }
 
-        test_ok("4,EOS", s!(4, EOS));
-        test_ok("0,TST", s!(0, TST));
-        test_ok("9,TGFT", s!(9, TGFT));
-        test_ok("   4,EOS    ", s!(4, EOS));
+        test_ok("4,EOS", Symbol::from_str("4,EOS").unwrap().as_u64());
+        test_ok("0,TST", Symbol::from_str("0,TST").unwrap().as_u64());
+        test_ok("9,TGFT", Symbol::from_str("9,TGFT").unwrap().as_u64());
+        test_ok("   4,EOS    ", Symbol::from_str("4,EOS").unwrap().as_u64());
         test_err("4,  EOS", ParseSymbolError::BadChar(' '));
         test_err("   4, EOS    ", ParseSymbolError::BadChar(' '));
-        test_err("10,EOS", ParseSymbolError::BadChar('0'));
         test_err("A", ParseSymbolError::BadChar('A'));
         test_err("a", ParseSymbolError::BadChar('a'));
     }
@@ -404,9 +430,9 @@ mod tests {
             assert_eq!(SymbolCode::try_from(input), err);
         }
 
-        test_ok("TST", s!(0, TST));
-        test_ok("EOS", s!(4, EOS));
-        test_ok("TGFT", s!(0, TGFT));
+        test_ok("TST", Symbol::from_str("0,TST").unwrap().as_u64());
+        test_ok("EOS", Symbol::from_str("4,EOS").unwrap().as_u64());
+        test_ok("TGFT", Symbol::from_str("0,TGFT").unwrap().as_u64());
         test_err("tst", ParseSymbolError::BadChar('t'));
     }
 }

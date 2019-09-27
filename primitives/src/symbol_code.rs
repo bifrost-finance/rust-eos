@@ -66,7 +66,7 @@ impl SymbolCode {
     }
 
     #[inline]
-    pub fn is_valid(&self) -> bool {
+    pub fn is_valid(self) -> bool {
         let chars = symbol_to_utf8(self.0);
         for &c in &chars {
             if c == b' ' {
@@ -80,7 +80,7 @@ impl SymbolCode {
     }
 
     #[inline]
-    pub const fn as_u64(&self) -> u64 {
+    pub const fn as_u64(self) -> u64 {
         self.0
     }
 }
@@ -114,7 +114,6 @@ impl FromStr for SymbolCode {
 mod tests {
     use super::*;
     use crate::symbol_code;
-    use eosio_core_macros::s;
     use alloc::string::ToString;
 
     macro_rules! test_to_string {
@@ -130,9 +129,9 @@ mod tests {
     }
 
     test_to_string! {
-        to_string, s!(4, EOS), "EOS"
-        to_string_zero_precision, s!(0, TGFT), "TGFT"
-        to_string_nine_precision, s!(9, SYS), "SYS"
+        to_string, Symbol::from_str("4,EOS").unwrap().as_u64(), "EOS"
+        to_string_zero_precision, Symbol::from_str("0,TGFT").unwrap().as_u64(), "TGFT"
+        to_string_nine_precision, Symbol::from_str("9,SYS").unwrap().as_u64(), "SYS"
     }
 
     macro_rules! test_from_str_ok {
@@ -147,9 +146,9 @@ mod tests {
     }
 
     test_from_str_ok! {
-        from_str_ok1, "TST", s!(0, TST)
-        from_str_ok2, "EOS", s!(4, EOS)
-        from_str_ok3, "TGFT", s!(0, TGFT)
+        from_str_ok1, "TST", Symbol::from_str("0,TST").unwrap()
+        from_str_ok2, "EOS", Symbol::from_str("4,EOS").unwrap()
+        from_str_ok3, "TGFT", Symbol::from_str("0,TGFT").unwrap()
     }
 
     macro_rules! test_from_str_err {

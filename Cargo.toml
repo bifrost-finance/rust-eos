@@ -1,9 +1,6 @@
 [workspace]
 members = [
-  "eosio-core",
   "eosio-core-derive",
-  "eosio-core-macros",
-  "eosio-core-macros-internal",
   "keys",
   "primitives",
   "rpc",

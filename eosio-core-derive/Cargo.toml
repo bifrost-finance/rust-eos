@@ -36,9 +36,5 @@ syn = "0.15"
 proc-macro2 = "0.4"
 quote = "0.6"
 
-[dev-dependencies]
-eosio-core = { version = "0.2", path = "../eosio-core", default-features = false }
-
 [features]
 default = []
-internal-use-only-root-path-is-eosio = []

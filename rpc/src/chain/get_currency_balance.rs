@@ -1,7 +1,10 @@
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use crate::Client;
-use crate::eosio::{AccountName, Symbol};
-use serde::Serialize;
+use primitives::names::AccountName;
+use primitives::symbol::Symbol;
 use rpc_codegen::Fetch;
+use serde::Serialize;
 
 
 #[derive(Fetch, Debug, Clone, Serialize)]
@@ -36,16 +39,16 @@ pub type GetCurrencyBalance = Vec<String>;
 mod test {
     use super::*;
     use crate::HyperClient;
-    use crate::eosio::{Symbol, s, n};
+    use std::str::FromStr;
 
     #[test]
     fn get_currency_balance_should_work() {
         let node: &'static str = "https://eos.greymass.com/";
         let hyper_client = HyperClient::new(node);
 
-        let code: AccountName = n!(eosio.token).into();
-        let account_name: AccountName = n!(b1).into();
-        let symbol: Symbol = s!(4, EOS).into();
+        let code: AccountName = AccountName::from_str("eosio.token").unwrap();
+        let account_name: AccountName = AccountName::from_str("b1").unwrap();
+        let symbol: Symbol = Symbol::from_str("4,EOS").unwrap();
         let response = get_currency_balance(code, account_name, Some(symbol)).fetch(&hyper_client);
         assert!(response.is_ok());
     }
@@ -56,10 +59,11 @@ mod test {
         let hyper_client = HyperClient::new(node);
 
         // the balance should be empty if get it from an invalid account
-        let code: AccountName = n!(eosio.token).into();
+        let code: AccountName = AccountName::from_str("eosio.token").unwrap();
         // an invalid account
-        let account_name: AccountName = n!(kkkkk).into();
-        let symbol: Symbol = s!(4, EOS).into();
+        let account_name: AccountName = AccountName::from_str("kkkkk").unwrap();
+        let symbol: Symbol = Symbol::from_str("4,EOS").unwrap();
+
         let response = get_currency_balance(code, account_name, Some(symbol)).fetch(&hyper_client);
         assert!(response.is_ok());
 

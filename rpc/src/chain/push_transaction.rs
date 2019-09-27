@@ -1,9 +1,12 @@
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use crate::Client;
-use serde::{Deserialize, Serialize};
+use hex;
 use rpc_codegen::Fetch;
 use primitives::transaction::SignedTransaction;
 use primitives::SerializeData;
-use hex;
+use serde::{Deserialize, Serialize};
+
 
 #[derive(Fetch, Debug, Clone, Serialize)]
 #[api(path="v1/chain/push_transaction", http_method="POST", returns="PushTransaction")]
@@ -99,6 +102,7 @@ mod tests {
     use hex;
     use crate::{HyperClient, GetInfo, GetBlock};
     use crate::{get_info, get_block};
+    use std::time::{Duration, SystemTime,UNIX_EPOCH};
 
     #[test]
     fn push_transaction_should_work() {
@@ -122,8 +126,13 @@ mod tests {
         let ref_block_num = (block.block_num & 0xffff) as u16;
         let ref_block_prefix = block.ref_block_prefix as u32;
 
+        let start = SystemTime::now().checked_add(Duration::from_secs(600)).unwrap();
+        let since_the_epoch = start
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+
         // Construct action
-        let expiration = TimePointSec::now();
+        let expiration = TimePointSec::from_unix_seconds(since_the_epoch.as_secs() as u32);
         let trx_header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
         let permission_level = PermissionLevel::from_str(
             "alice",
