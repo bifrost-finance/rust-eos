@@ -1,0 +1,9 @@
+{
+    "signatures": [
+        "SIG_K1_KYfbrfUkD1YVXY34KAufJXVy1ed2QL6WxbtyJBujv14QSXzXP98rRFs19cjpbxufo95afRDmtv1YkQeA5s28auHda74KfM",
+        "SIG_K1_JwV5tsJxrTV5TzxSnJetYM4ERSXRMsNzVB4qifr6kvko6uu99rdGdkT24GhPAp2XHob1kyxYV4BJ2AXcuPYcXg19N9MYmA"
+    ],
+    "compression": "none",
+    "packed_context_free_data": "",
+    "packed_trx": "a673785df24765af2ab8000000000100a6823403ea3055000000572d3ccdcd01000000000093b1ca00000000a8ed323221000000000093b1ca000000008093b1ca102700000000000004454f53000000000000"
+}

@@ -1,12 +1,9 @@
-use crate::{Action, NumBytes, Read, TimePointSec, UnsignedInt, Write, SerializeData};
+use crate::{Action, NumBytes, Read, TimePointSec, UnsignedInt, Write, SerializeData, Extension};
 use core::iter::{Iterator, IntoIterator};
 use hex;
 use keys::secret::SecretKey;
 use keys::signature::Signature;
 
-#[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default)]
-#[eosio_core_root_path = "crate"]
-pub struct Extension(u16, Vec<char>);
 
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default)]
 #[eosio_core_root_path = "crate"]

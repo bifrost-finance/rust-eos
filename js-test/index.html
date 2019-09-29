@@ -1,0 +1,30 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <!--
+  sha512-cL+IQQaQ586s9DrXfGtDheRpj5iDKh2M+xlpfwbhNjRIp4BGQ1fkM/vB4Ta8mc+f51YBW9sJiPcyMDIreJe6gQ== lib/eosjs-ecc.js
+  sha512-dYFDmK/d9r3/NCp6toLtfkwOjSMRBaEzaGAx1tfRItC0nsI0hVLERk05iNBQR7uDNI7ludYhcBI4vUiFHdjsTQ== lib/eosjs-ecc.min.js
+  sha512-eq1SCoSe38uR1UVuQMwR73VgY8qKTBDc87n2nIiC5WLhn1o2y1U6c5wY8lrigVX7INM8fM0PxDlMX5WvpghKig== lib/eosjs-ecc.min.js.map
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/eosjs-ecc@4.0.4/lib/eosjs-ecc.min.js"
+    integrity="sha512-dYFDmK/d9r3/NCp6toLtfkwOjSMRBaEzaGAx1tfRItC0nsI0hVLERk05iNBQR7uDNI7ludYhcBI4vUiFHdjsTQ=="
+    crossorigin="anonymous"></script>
+
+</head>
+<body>
+  See console object: eosjs_ecc
+  <script>
+    var ecc = eosjs_ecc
+    ecc.randomKey().then(privateKey => {
+        // privateKey = '5KUEhweMaSD2szyjU9EKjAyY642ZdVL2qzHW72dQcNRzUMWx9EL'
+        console.log('Private Key:\t', privateKey) // wif
+        // console.log(ecc.seedPrivate('secret'))
+        console.log('sha:hello: ', ecc.sha256('hello'))
+        console.log(ecc.sign('hello', privateKey))
+        console.log(ecc.signHash(ecc.sha256('hello'), privateKey))
+
+        console.log('Public Key:\t', ecc.privateToPublic(privateKey))
+})
+  </script>
+</body>
+</html>
