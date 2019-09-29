@@ -161,4 +161,61 @@ mod tests {
         let res: PushTransaction = response.unwrap();
         dbg!(res);
     }
+
+	#[test]
+	fn push_transaction_with_mul_sign_should_work() {
+		// import private keys
+		let sk = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3";
+		let sk1 = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3";
+
+		let node: &'static str = "http://47.101.139.226:8888/";
+		let hyper_client = HyperClient::new(node);
+
+		// fetch info
+		let response = get_info().fetch(&hyper_client);
+		let info: GetInfo = response.unwrap();
+		let chain_id = info.chain_id;
+		let head_block_id = info.head_block_id;
+
+		// fetch block
+		let response = get_block(head_block_id).fetch(&hyper_client);
+		let block: GetBlock = response.unwrap();
+		let ref_block_num = (block.block_num & 0xffff) as u16;
+		let ref_block_prefix = block.ref_block_prefix as u32;
+
+		let start = SystemTime::now().checked_add(Duration::from_secs(600)).unwrap();
+		let since_the_epoch = start
+			.duration_since(UNIX_EPOCH)
+			.expect("Time went backwards");
+
+		// Construct action
+		let expiration = TimePointSec::from_unix_seconds(since_the_epoch.as_secs() as u32);
+		let trx_header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
+		let permission_level = PermissionLevel::from_str(
+			"alice",
+			"active"
+		).ok().unwrap();
+		let action_transfer = ActionTransfer::from_str(
+			"alice",
+			"testb",
+			"1.0000 EOS",
+			"a memo"
+		).ok().unwrap();
+		let action = Action::from_str(
+			"eosio.token",
+			"transfer",
+			vec![permission_level],
+			action_transfer
+		).ok().unwrap();
+		let actions = vec![action];
+
+		// Construct transaction
+		let trx = Transaction::new(trx_header, actions);
+		let signed = trx.generate_signature(&sk, &chain_id).ok().unwrap();
+		let signed1 = trx.generate_signature(&sk1, &chain_id).ok().unwrap();
+		let signeds = vec![signed, signed1];
+		let	signed_trx = trx.generate_signed_transaction(signeds);
+		let response = push_transaction(signed_trx).fetch(&hyper_client);
+		assert!(response.is_ok());
+	}
 }

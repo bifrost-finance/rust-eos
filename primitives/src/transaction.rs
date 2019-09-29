@@ -1,9 +1,11 @@
-use crate::{Action, NumBytes, Read, TimePointSec, UnsignedInt, Write, SerializeData};
-use keys::secret::SecretKey;
-use hex;
 use alloc::vec;
 use alloc::vec::Vec;
 use alloc::string::{String, ToString};
+use crate::{Action, NumBytes, Read, TimePointSec, UnsignedInt, Write, SerializeData};
+use core::iter::{Iterator, IntoIterator};
+use hex;
+use keys::secret::SecretKey;
+use keys::signature::Signature;
 
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default)]
 #[eosio_core_root_path = "crate"]
@@ -70,6 +72,30 @@ impl Transaction {
             context_free_data: vec![],
             trx: self.clone(),
         })
+    }
+
+    pub fn generate_signature(&self, sk: impl AsRef<str>, chain_id: impl AsRef<str>) -> Result<Signature, crate::error::Error> {
+        let sk = SecretKey::from_wif(sk.as_ref()).map_err(crate::error::Error::Base58)?;
+        let mut chain_id_hex = hex::decode(chain_id.as_ref())
+            .map_err(crate::error::Error::FromHexError)?;
+        let mut serialized = self.to_serialize_data();
+        let pre_reserved  = chain_id_hex.len() + serialized.len() + 32;
+        let mut sign_data: Vec<u8>  = Vec::with_capacity(pre_reserved);
+        sign_data.append(&mut chain_id_hex);
+        sign_data.append(&mut serialized);
+        sign_data.append(&mut vec![0u8; 32]);
+
+        Ok(sk.sign(&sign_data.as_slice()))
+    }
+
+    pub fn generate_signed_transaction(&self, sks: impl IntoIterator<Item=Signature>) -> SignedTransaction
+    {
+        let sks: Vec<_> = sks.into_iter().map(|sk| sk.to_string()).collect();
+        SignedTransaction {
+            signatures: sks,
+            context_free_data: vec![],
+            trx: self.clone(),
+        }
     }
 }
 
