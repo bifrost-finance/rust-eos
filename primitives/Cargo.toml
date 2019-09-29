@@ -12,5 +12,5 @@ serde = { version = "1.0", default-features = false, features = ["derive", "allo
 
 
 [features]
-default = []
+default = ["std"]
 std = []
