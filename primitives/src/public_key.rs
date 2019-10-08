@@ -8,7 +8,7 @@ pub struct PublicKey {
     /// Type of the public key, could be either K1 or R1
     pub type_: UnsignedInt,
     /// Bytes of the public key
-    pub data: [u8; 34],
+    pub data: [u8; 33],
 }
 
 impl PublicKey {
@@ -16,7 +16,7 @@ impl PublicKey {
         &self.data
     }
 
-    pub const fn to_bytes(&self) -> [u8; 34] {
+    pub const fn to_bytes(&self) -> [u8; 33] {
         self.data
     }
 }
@@ -25,7 +25,7 @@ impl Default for PublicKey {
     fn default() -> Self {
         Self {
             type_: UnsignedInt::default(),
-            data: [0_u8; 34],
+            data: [0_u8; 33],
         }
     }
 }
