@@ -24,6 +24,30 @@ pub struct BlockHeader {
     pub header_extensions: Vec<Extension>,
 }
 
+impl core::fmt::Display for BlockHeader {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "timestamp: {}\n\
+            producer: {}\n\
+            confirmed: {}\n\
+            previous: {}\n\
+            transaction_mroot: {}\n\
+            action_mroot: {}\n\
+            schedule_version: {}\n\
+            new_producers: {:?}\n\
+            header_extensions: {:?}",
+            self.timestamp,
+            self.producer,
+            self.confirmed,
+            self.previous,
+            self.transaction_mroot,
+            self.action_mroot,
+            self.schedule_version,
+            self.new_producers,
+            self.header_extensions,
+        )
+    }
+}
+
 impl BlockHeader {
     pub fn new(
         timestamp: BlockTimestamp,
@@ -68,8 +92,8 @@ impl SignedBlockHeader {
 
 impl core::fmt::Display for SignedBlockHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "block_header: {}\n\
-            producer_signature: {}\n",
+        write!(f, "{}\n\
+            producer_signature: {}",
             self.block_header,
             self.producer_signature,
         )

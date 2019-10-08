@@ -1,6 +1,9 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/time.hpp#L134-L210>
 use crate::{TimePoint, TimePointSec, NumBytes, Read, Write};
 use serde::Serialize;
+use chrono::prelude::DateTime;
+use chrono::Utc;
+use std::time::{UNIX_EPOCH, Duration};
 
 /// This class is used in the block headers to represent the block time
 /// It is a parameterised class that takes an Epoch in milliseconds and
@@ -92,5 +95,15 @@ impl From<TimePointSec> for BlockTimestamp {
     #[inline]
     fn from(t: TimePointSec) -> Self {
         Self(t.into())
+    }
+}
+
+impl core::fmt::Display for BlockTimestamp {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let d = UNIX_EPOCH + Duration::from_secs(self.0 as u64);
+        let datetime = DateTime::<Utc>::from(d);
+        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        write!(f, "{}", timestamp_str)
     }
 }

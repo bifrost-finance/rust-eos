@@ -27,7 +27,7 @@ impl core::fmt::Display for Message {
             Message::NoticeMessage(msg) => format!("{}", msg),
             Message::RequestMessage(msg) => format!("{}", msg),
             Message::SyncRequestMessage(msg) => format!("{}", msg),
-            Message::SignedBlock(msg) =>  format!("SignedBlock"),
+            Message::SignedBlock(msg) => format!("{}", msg),
         };
         write!(f, "{}", msg_str)
     }

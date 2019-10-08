@@ -18,6 +18,18 @@ impl Block {
     }
 }
 
+impl core::fmt::Display for Block {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}\n\
+            transactions: {:?}\n\
+            block_extensions: {:?}",
+            self.signed_block_header,
+            self.transactions,
+            self.block_extensions,
+        )
+    }
+}
+
 impl SerializeData for Block {}
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
