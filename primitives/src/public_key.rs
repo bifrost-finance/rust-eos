@@ -42,3 +42,9 @@ impl std::fmt::Debug for PublicKey {
         std::fmt::Debug::fmt(self.as_bytes(), f)
     }
 }
+
+impl core::fmt::Display for PublicKey {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", hex::encode(self.data.as_ref()))
+    }
+}

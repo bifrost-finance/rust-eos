@@ -13,6 +13,7 @@ pub mod checksum256;
 pub mod checksum512;
 pub mod error;
 pub mod extension;
+pub mod message;
 pub mod names;
 pub mod ops;
 pub mod permission_level;
@@ -41,6 +42,7 @@ pub use self::{
     checksum512::*,
     error::*,
     extension::*,
+    message::*,
     names::*,
     ops::*,
     permission_level::*,

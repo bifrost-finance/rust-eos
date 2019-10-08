@@ -66,4 +66,13 @@ impl SignedBlockHeader {
     }
 }
 
+impl core::fmt::Display for SignedBlockHeader {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "block_header: {}\n\
+            producer_signature: {}\n",
+            self.block_header,
+            self.producer_signature,
+        )
+    }
+}
 

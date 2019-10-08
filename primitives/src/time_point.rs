@@ -1,6 +1,9 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/time.hpp#L49-L77>
 use crate::{NumBytes, Read, Write};
 use core::convert::{TryFrom, TryInto};
+use chrono::prelude::DateTime;
+use chrono::Utc;
+use std::time::{UNIX_EPOCH, Duration};
 
 /// High resolution time point in microseconds
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy, Hash, Default)]
@@ -52,3 +55,13 @@ impl TryFrom<TimePoint> for u64 {
 // )]
 // #[eosio_core_root_path = "crate"]
 // pub struct Duration(i64);
+
+impl core::fmt::Display for TimePoint {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let d = UNIX_EPOCH + Duration::from_nanos(self.0 as u64);
+        let datetime = DateTime::<Utc>::from(d);
+        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        write!(f, "{}", timestamp_str)
+    }
+}

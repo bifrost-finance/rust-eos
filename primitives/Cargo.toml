@@ -9,7 +9,7 @@ eosio-core-derive = { path = "../eosio-core-derive" }
 hex = { version = "0.4", default-features = false }
 keys = { package = "eos-keys", path = "../keys" }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
-
+chrono = "0.4"
 
 [features]
 default = ["std"]

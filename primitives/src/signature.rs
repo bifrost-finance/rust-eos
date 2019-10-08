@@ -44,3 +44,9 @@ impl PartialEq for Signature {
         self.type_ == other.type_
     }
 }
+
+impl core::fmt::Display for Signature {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", hex::encode(self.data.as_ref()))
+    }
+}

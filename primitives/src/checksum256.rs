@@ -28,3 +28,9 @@ impl From<Checksum256> for [u8; 32] {
         value.0
     }
 }
+
+impl core::fmt::Display for Checksum256 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", hex::encode(self.0))
+    }
+}
