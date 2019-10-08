@@ -1,6 +1,6 @@
 use crate::{Extension, SignedBlockHeader, Read, Write, NumBytes, SerializeData, UnsignedInt};
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[eosio_core_root_path = "crate"]
 pub struct Block {
     pub signed_block_header: SignedBlockHeader,
@@ -20,7 +20,7 @@ impl Block {
 
 impl SerializeData for Block {}
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceipt {
     status: u8,
@@ -37,9 +37,9 @@ impl SerializeData for Vec<UnsignedInt> {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{Block, SerializeData, NumBytes, SignedBlockHeader, BlockHeader, BlockTimestamp, AccountName, TimePointSec, UnsignedInt, Read};
+    use crate::{Block, SerializeData, NumBytes, SignedBlockHeader, BlockHeader, BlockTimestamp, AccountName, TimePointSec, UnsignedInt, Checksum256, Read};
     use core::str::FromStr;
-    use std::time::{SystemTime, Duration, UNIX_EPOCH};
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn block_test() {
@@ -51,13 +51,20 @@ mod tests {
         let block_timestamp = BlockTimestamp::from(tps);
         let producer = AccountName::from_str("eosio").unwrap();
         let block_header = BlockHeader::new(
-            block_timestamp, producer, Checksum256::from([10u8; 32]),
-            Checksum256::from([10u8; 32]), Checksum256::from([11u8; 32]),
-            0, None, vec![]);
+            block_timestamp,
+            producer,
+            0,
+            Checksum256::from([10u8; 32]),
+            Checksum256::from([11u8; 32]),
+            Checksum256::from([12u8; 32]),
+            0,
+            None,
+            vec![]
+        );
         let producer_signature = Default::default();
         let signed_block_header = SignedBlockHeader::new(block_header, producer_signature);
 
-        let mut block = Block::new(signed_block_header);
+        let block = Block::new(signed_block_header);
         dbg!(&block);
         dbg!(&block.to_serialize_data());
         dbg!(&block.num_bytes());

@@ -2,7 +2,7 @@
 use crate::{AccountName, NumBytes, PublicKey, Read, Write};
 
 /// Maps producer with its signing key, used for producer schedule
-#[derive(Read, Write, NumBytes, Clone, Default, Debug)]
+#[derive(Read, Write, NumBytes, Clone, Default, Debug, PartialEq)]
 #[eosio_core_root_path = "crate"]
 pub struct ProducerKey {
     /// Name of the producer

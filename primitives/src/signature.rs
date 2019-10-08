@@ -36,3 +36,11 @@ impl core::fmt::Debug for Signature {
         core::fmt::Debug::fmt(self.as_bytes(), f)
     }
 }
+
+impl PartialEq for Signature {
+    #[inline]
+    fn eq(&self, other: &Signature) -> bool {
+        // TODO
+        self.type_ == other.type_
+    }
+}

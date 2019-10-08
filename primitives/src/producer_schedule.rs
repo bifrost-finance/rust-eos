@@ -3,7 +3,7 @@ use crate::{NumBytes, ProducerKey, Read, Write};
 
 /// Defines both the order, account name, and signing keys of the active set
 /// of producers.
-#[derive(Read, Write, NumBytes, Clone, Default, Debug)]
+#[derive(Read, Write, NumBytes, Clone, Default, Debug, PartialEq)]
 #[eosio_core_root_path = "crate"]
 pub struct ProducerSchedule {
     /// Version number of the schedule. It is sequentially incrementing
