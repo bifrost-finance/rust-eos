@@ -19,6 +19,8 @@ pub trait Read: Sized {
 pub enum ReadError {
     /// Not enough bytes.
     NotEnoughBytes,
+    /// Not support message type.
+    NotSupportMessageType,
 }
 
 /// Write bytes.
