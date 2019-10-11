@@ -105,10 +105,6 @@ impl RawMessage {
         self.write(buffer.as_mut_slice(), &mut 0).unwrap();
         buffer
     }
-
-//    pub fn from_buffer(header: MessageHeader, buffer: Vec<u8>) -> Self {
-//
-//    }
 }
 
 impl Read for RawMessage {

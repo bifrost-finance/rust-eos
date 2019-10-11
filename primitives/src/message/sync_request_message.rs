@@ -7,6 +7,15 @@ pub struct SyncRequestMessage {
     pub end_block: u32,
 }
 
+impl SyncRequestMessage {
+    pub fn new(start_block: u32, end_block: u32) -> Self {
+        Self {
+            start_block,
+            end_block,
+        }
+    }
+}
+
 impl core::fmt::Display for SyncRequestMessage {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "\nstart_block: {}, end_block: {}\n",
@@ -32,4 +41,3 @@ mod tests {
         println!("Pos: {}", pos);
     }
 }
-
