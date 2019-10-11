@@ -25,7 +25,7 @@ impl Default for Signature {
     fn default() -> Self {
         Self {
             type_: UnsignedInt::from(0u8),
-            data: [1u8; 65],
+            data: [0u8; 65],
         }
     }
 }
