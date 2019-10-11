@@ -98,6 +98,10 @@ impl SignedBlockHeader {
             producer_signature,
         }
     }
+
+    pub fn block_num(&self) -> u32 {
+        self.block_header.block_num()
+    }
 }
 
 impl core::fmt::Display for SignedBlockHeader {

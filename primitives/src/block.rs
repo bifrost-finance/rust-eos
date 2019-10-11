@@ -24,6 +24,10 @@ impl Block {
             block_extensions: Default::default(),
         }
     }
+
+    pub fn block_num(&self) -> u32 {
+        self.signed_block_header.block_num()
+    }
 }
 
 impl core::fmt::Display for Block {
