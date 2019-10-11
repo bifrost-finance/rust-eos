@@ -1,10 +1,21 @@
-use crate::{Read, Write, NumBytes, SelectIds};
+use crate::{IdListModes, NumBytes, Read, SelectIds, Write};
 
 #[derive(Clone, Debug, Read, Write, NumBytes, Default, PartialEq)]
 #[eosio_core_root_path = "crate"]
 pub struct RequestMessage {
     pub known_trx: SelectIds,
     pub known_blocks: SelectIds,
+}
+
+impl RequestMessage {
+    pub fn new() -> Self {
+        let known_trx = SelectIds::new(IdListModes::None, 0, vec![]);
+        let known_blocks = SelectIds::new(IdListModes::None, 0, vec![]);
+        Self {
+            known_trx,
+            known_blocks,
+        }
+    }
 }
 
 impl core::fmt::Display for RequestMessage {
@@ -19,9 +30,11 @@ impl core::fmt::Display for RequestMessage {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::Read;
     use hex;
+
+    use crate::Read;
+
+    use super::*;
 
     #[test]
     fn request_message_test() {
