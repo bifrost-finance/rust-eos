@@ -1,5 +1,28 @@
 use crate::{Checksum256, Signature, PublicKey, TimePoint, Read, Write, NumBytes};
 
+///
+/// For a while, network version was a 16 bit value equal to the second set of 16 bits
+/// of the current build's git commit id. We are now replacing that with an integer protocol
+/// identifier. Based on historical analysis of all git commit identifiers, the larges gap
+/// between ajacent commit id values is shown below.
+/// these numbers were found with the following commands on the master branch:
+///
+/// git log | grep "^commit" | awk '{print substr($2,5,4)}' | sort -u > sorted.txt
+/// rm -f gap.txt; prev=0; for a in $(cat sorted.txt); do echo $prev $((0x$a - 0x$prev)) $a >> gap.txt; prev=$a; done; sort -k2 -n gap.txt | tail
+///
+/// DO NOT EDIT net_version_base OR net_version_range!
+///
+pub const NET_VERSION_BASE: u16 = 0x04b5;
+pub const NET_VERSION_RANGE: u16 = 106;
+///
+/// If there is a change to network protocol or behavior, increment net version to identify
+/// the need for compatibility hooks
+///
+pub const PROTO_BASE: u16 = 0;
+pub const PROTO_EXPLICIT_SYNC: u16 = 1;
+
+pub const NET_VERSION: u16 = PROTO_EXPLICIT_SYNC;
+
 #[derive(Clone, Debug, Read, Write, NumBytes, Default, PartialEq)]
 #[eosio_core_root_path = "crate"]
 pub struct HandshakeMessage {
@@ -17,7 +40,26 @@ pub struct HandshakeMessage {
     head_id: Checksum256,
     os: String,
     agent: String,
-    generation: i16,
+    pub generation: i16,
+}
+
+impl HandshakeMessage {
+    pub fn populate(hello: &mut HandshakeMessage) {
+        hello.network_version = NET_VERSION_BASE + NET_VERSION;
+        hello.chain_id = [0xcf, 0x05, 0x7b, 0xbf, 0xb7, 0x26, 0x40, 0x47, 0x1f, 0xd9, 0x10, 0xbc, 0xb6, 0x76, 0x39, 0xc2, 0x2d, 0xf9, 0xf9, 0x24, 0x70, 0x93, 0x6c, 0xdd, 0xc1, 0xad, 0xe0, 0xe2, 0xf2, 0xe7, 0xdc, 0x4f].into();
+        hello.node_id  = [0x0d, 0x67, 0xb6, 0xd8, 0xdc, 0xcf, 0x22, 0xb7, 0xcf, 0xb6, 0xd3, 0x86, 0xaa, 0xe2, 0x1d, 0x85, 0x21, 0x92, 0x7f, 0x9a, 0xbf, 0x2f, 0x6e, 0xa6, 0x4f, 0x4c, 0xb0, 0x08, 0xa7, 0x60, 0xb4, 0x54].into();
+        hello.key = Default::default();
+        hello.time = Default::default();
+        hello.token = Default::default();
+        hello.sig = Default::default();
+        hello.p2p_address = format!("127.0.0.1:9877 - {}", hello.node_id.to_string()[..7].to_string());
+        hello.os = "osx".to_owned();
+        hello.agent = "agent".to_owned();
+        hello.head_id = [0x00, 0x00, 0x00, 0x01, 0xbc, 0xf2, 0xf4, 0x48, 0x22, 0x5d, 0x09, 0x96, 0x85, 0xf1, 0x4d, 0xa7, 0x68, 0x03, 0x02, 0x89, 0x26, 0xaf, 0x04, 0xd2, 0x60, 0x7e, 0xaf, 0xcf, 0x60, 0x9c, 0x26, 0x5c].into();
+        hello.head_num = 1;
+        hello.last_irreversible_block_id = [0x00, 0x00, 0x00, 0x01, 0xbc, 0xf2, 0xf4, 0x48, 0x22, 0x5d, 0x09, 0x96, 0x85, 0xf1, 0x4d, 0xa7, 0x68, 0x03, 0x02, 0x89, 0x26, 0xaf, 0x04, 0xd2, 0x60, 0x7e, 0xaf, 0xcf, 0x60, 0x9c, 0x26, 0x5c].into();
+        hello.last_irreversible_block_num = 1;
+    }
 }
 
 impl core::fmt::Display for HandshakeMessage {
