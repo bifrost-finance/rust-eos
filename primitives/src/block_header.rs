@@ -3,10 +3,10 @@ use crate::{
     BlockTimestamp,
     Checksum256,
     Extension,
-    ProducerSchedule,
-    Signature,
     NumBytes,
+    ProducerSchedule,
     Read,
+    Signature,
     Write,
 };
 
@@ -26,7 +26,8 @@ pub struct BlockHeader {
 
 impl core::fmt::Display for BlockHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "timestamp: {}\n\
+        write!(f, "num: {}\n\
+            timestamp: {}\n\
             producer: {}\n\
             confirmed: {}\n\
             previous: {}\n\
@@ -35,6 +36,7 @@ impl core::fmt::Display for BlockHeader {
             schedule_version: {}\n\
             new_producers: {:?}\n\
             header_extensions: {:?}",
+            self.block_num(),
             self.timestamp,
             self.producer,
             self.confirmed,
@@ -71,6 +73,14 @@ impl BlockHeader {
             new_producers,
             header_extensions,
         }
+    }
+
+    pub fn block_num(&self) -> u32 {
+        Self::num_from_id(self.previous) + 1
+    }
+
+    pub fn num_from_id(id: Checksum256) -> u32 {
+        id.hash0()
     }
 }
 

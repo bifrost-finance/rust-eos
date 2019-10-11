@@ -1,4 +1,12 @@
-use crate::{Extension, SignedBlockHeader, Read, Write, NumBytes, SerializeData, UnsignedInt};
+use crate::{
+    Extension,
+    NumBytes,
+    Read,
+    SerializeData,
+    SignedBlockHeader,
+    UnsignedInt,
+    Write
+};
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[eosio_core_root_path = "crate"]
@@ -49,9 +57,10 @@ impl SerializeData for Vec<UnsignedInt> {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{Block, SerializeData, NumBytes, SignedBlockHeader, BlockHeader, BlockTimestamp, AccountName, TimePointSec, UnsignedInt, Checksum256, Read};
     use core::str::FromStr;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    use crate::{AccountName, Block, BlockHeader, BlockTimestamp, Checksum256, NumBytes, Read, SerializeData, SignedBlockHeader, TimePointSec, UnsignedInt};
 
     #[test]
     fn block_test() {
