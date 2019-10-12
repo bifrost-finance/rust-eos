@@ -47,7 +47,12 @@ impl PartialEq for Signature {
 
 impl core::fmt::Display for Signature {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", hex::encode(self.data.as_ref()))
+        let sig = keys::signature::Signature::from_compact(&self.data);
+        if sig.is_ok() {
+            write!(f, "{}", sig.unwrap().to_string())
+        } else {
+            write!(f, "Invalid signature to display")
+        }
     }
 }
 
@@ -68,8 +73,13 @@ mod tests {
     fn unpack_signature_should_work() {
         let data = hex::decode("00206b22f146d8bfe03a7a03b760cb2539409b05f9961543ee41c31f0cf493267b8c244d1517a6aa67cf47f294755d9e2fb5dda6779f5d88d6e4461f380a2b02964b").unwrap();
         let mut pos = 0;
-        let header = Signature::read(&data.as_slice(), &mut pos).unwrap();
-        dbg!(&header);
+        let sig = Signature::read(&data.as_slice(), &mut pos).unwrap();
+        dbg!(&sig);
         dbg!(&pos);
+    }
+
+    #[test]
+    fn signature_display_should_work() {
+        println!("{}", Signature::default());
     }
 }

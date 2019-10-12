@@ -1,7 +1,7 @@
 use std::fmt;
 use crate::{base58, hash, error};
 use std::str::FromStr;
-use secp256k1::recovery::RecoverableSignature;
+use secp256k1::recovery::{RecoveryId, RecoverableSignature};
 
 /// An secp256k1 signature.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -22,6 +22,12 @@ impl Signature {
         data[0] = recovery_id.to_i32() as u8 + 27 + 4;
         data[1..65].copy_from_slice(&sig[..]);
         data
+    }
+
+    pub fn from_compact(data: &[u8; 65]) -> Result<Self, error::Error> {
+        let recv_id = RecoveryId::from_i32(data[0] as i32)?;
+        let recv_sig = RecoverableSignature::from_compact(&data[1..], recv_id)?;
+        Ok(Self(recv_sig))
     }
 }
 
