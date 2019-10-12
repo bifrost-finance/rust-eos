@@ -1,13 +1,17 @@
 use std::net::{TcpStream};
 use std::io::{Read, Write};
 use hex;
+mod spv_client;
 
 fn main() {
     match TcpStream::connect("127.0.0.1:9876") {
         Ok(mut stream) => {
             println!("Successfully connected to server in port 9876");
 
-            let msg = hex::decode("0900000006421b0000a51b0000").unwrap();
+            let msg = hex::decode("4701000000b604cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f853a072780a4981523cfc6b0b887f2779d65f9d036b340c23ae1aa0e56e2c43a0000000000000000000000000000000000000000000000000000000000000000000078d9ddd491c6c9150000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000183132372e302e302e313a39383737202d20383533613037325300000000000053c7d8a106ea464e331585df54682a330f1cbc69d179c4e225f417453954000000000000549dfb58310c3f792cb8651004e94a523235dea11677373a9348c197d6036f73781022454f532054657374204167656e74220100").unwrap();
+//            let msg = hex::decode("1300000004020000005f00000000020000006000000000").unwrap();
+//            let msg = hex::decode("0900000006421b0000a51b0000").unwrap();
+//            let msg = hex::decode("09000000064102000053020000").unwrap();
 
             stream.write(msg.as_slice()).unwrap();
             println!("Sent, awaiting reply...");
@@ -17,16 +21,28 @@ fn main() {
 //            let text = hex::encode(buffer);
 //            println!("Response: {}", text);
 
-            let mut data = [0u8; 18900];
-            match stream.read_exact(&mut data) {
-                Ok(_) => {
-                    let text = hex::encode(&data.as_ref());
+            let mut buffer = Vec::new();
+            match stream.read_to_end(&mut buffer) {
+                Ok(size) => {
+                    let text = hex::encode(&buffer.as_slice());
                     println!("Response: {}", text);
+                    println!("Size: {}", size);
                 },
                 Err(e) => {
                     println!("Failed to receive data: {}", e);
                 }
             }
+
+//            let mut data = [0u8; 180];
+//            match stream.read_exact(&mut data) {
+//                Ok(_) => {
+//                    let text = hex::encode(&data.as_ref());
+//                    println!("Response: {}", text);
+//                },
+//                Err(e) => {
+//                    println!("Failed to receive data: {}", e);
+//                }
+//            }
         },
         Err(e) => {
             println!("Failed to connect: {}", e);
