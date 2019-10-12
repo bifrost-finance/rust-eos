@@ -15,6 +15,14 @@ impl Signature {
     pub fn to_standard(&self) -> secp256k1::Signature {
         self.0.to_standard()
     }
+
+    pub fn serialize_compact(&self) -> [u8; 65] {
+        let (recovery_id, sig) = self.0.serialize_compact();
+        let mut data: [u8; 65] = [0u8; 65];
+        data[0] = recovery_id.to_i32() as u8 + 27 + 4;
+        data[1..65].copy_from_slice(&sig[..]);
+        data
+    }
 }
 
 impl From<RecoverableSignature> for Signature {
