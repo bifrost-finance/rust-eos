@@ -19,7 +19,7 @@ pub struct PushTransactionParams {
 
 pub fn push_transaction(signed_trx: SignedTransaction) -> PushTransactionParams {
     PushTransactionParams {
-        signatures: signed_trx.signatures.map(|sig| hex::encode(sig)),
+        signatures: signed_trx.signatures.iter().map(|sig| sig.to_string()).collect(),
         compression: "none".to_string(),
         packed_context_free_data: "".to_string(),
         packed_trx: hex::encode(&signed_trx.trx.to_serialize_data()),
