@@ -1,7 +1,13 @@
-use crate::{NumBytes, Read, ReadError, Write, WriteError};
+use crate::{NumBytes, PackedTransaction, Read, ReadError, Write, WriteError};
 use crate::{
-    Block, ChainSizeMessage, GoAwayMessage, HandshakeMessage,
-    NoticeMessage, RequestMessage, SyncRequestMessage, TimeMessage,
+    Block,
+    ChainSizeMessage,
+    GoAwayMessage,
+    HandshakeMessage,
+    NoticeMessage,
+    RequestMessage,
+    SyncRequestMessage,
+    TimeMessage,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -14,7 +20,7 @@ pub enum Message {
     RequestMessage(RequestMessage),
     SyncRequestMessage(SyncRequestMessage),
     SignedBlock(Block),
-//    PackedTransaction(PackedTransaction),
+    PackedTransaction(PackedTransaction),
 }
 
 impl NumBytes for Message {
@@ -28,6 +34,7 @@ impl NumBytes for Message {
             Message::RequestMessage(msg) => msg.num_bytes(),
             Message::SyncRequestMessage(msg) => msg.num_bytes(),
             Message::SignedBlock(msg) => msg.num_bytes(),
+            Message::PackedTransaction(msg) => msg.num_bytes(),
         }
     }
 }
@@ -43,6 +50,7 @@ impl Write for Message {
             Message::RequestMessage(msg) => msg.write(bytes, pos),
             Message::SyncRequestMessage(msg) => msg.write(bytes, pos),
             Message::SignedBlock(msg) => msg.write(bytes, pos),
+            Message::PackedTransaction(msg) => msg.write(bytes, pos),
         }
     }
 }
@@ -58,6 +66,7 @@ impl core::fmt::Display for Message {
             Message::RequestMessage(msg) => format!("{}", msg),
             Message::SyncRequestMessage(msg) => format!("{}", msg),
             Message::SignedBlock(msg) => format!("{}", msg),
+            Message::PackedTransaction(msg) => format!("{}", msg),
         };
         write!(f, "{}", msg_str)
     }
@@ -143,6 +152,10 @@ impl Read for RawMessage {
             MessageType::SignedBlock => {
                 let msg = Block::read(bytes, pos)?;
                 Message::SignedBlock(msg)
+            }
+            MessageType::PackedTransaction => {
+                let msg = PackedTransaction::read(bytes, pos)?;
+                Message::PackedTransaction(msg)
             }
             _ => return Err(ReadError::NotSupportMessageType),
         };
@@ -243,6 +256,7 @@ impl From<Message> for MessageType {
             Message::RequestMessage(_) => MessageType::RequestMessage,
             Message::SyncRequestMessage(_) => MessageType::SyncRequestMessage,
             Message::SignedBlock(_) => MessageType::SignedBlock,
+            Message::PackedTransaction(_) => MessageType::PackedTransaction,
         }
     }
 }
@@ -295,11 +309,11 @@ impl From<Block> for MessageType {
     }
 }
 
-//impl From<PackedTransaction> for MessageType {
-//    fn from(_msg: PackedTransaction) -> Self {
-//        MessageType::PackedTransaction
-//    }
-//}
+impl From<PackedTransaction> for MessageType {
+    fn from(_msg: PackedTransaction) -> Self {
+        MessageType::PackedTransaction
+    }
+}
 
 impl Read for MessageType {
     fn read(bytes: &[u8], pos: &mut usize) -> Result<Self, ReadError> {
