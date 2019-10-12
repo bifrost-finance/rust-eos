@@ -132,8 +132,7 @@ fn char_to_symbol(c: char) -> Option<char> {
 /// use eos_primitives::name_to_string;
 /// use std::str::FromStr;
 /// use eos_primitives::ActionName;
-/// dbg!(ActionName::from_str("eosio"));
-/// assert_eq!(name_to_string(6138663591592764928), "eosio");
+/// assert_eq!(name_to_string(6138663577826885632), "eosio");
 /// assert_eq!(name_to_string(6138663581940940800), "eosio.bpay");
 /// assert_eq!(name_to_string(0), "");
 /// assert_eq!(name_to_string(614251535012020768), "123451234512");
