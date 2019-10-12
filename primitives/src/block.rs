@@ -1,6 +1,7 @@
 use crate::{
     Extension,
     NumBytes,
+    PackedTransaction,
     Read,
     SerializeData,
     SignedBlockHeader,
@@ -47,11 +48,18 @@ impl SerializeData for Block {}
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceipt {
-    status: u8,
-    cpu_usage_us: u32,
-    net_usage_words: u32,
+    trx_receipt_header: TransactionReceiptHeader,
+    trx: PackedTransaction,
 }
 
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[eosio_core_root_path = "crate"]
+pub struct TransactionReceiptHeader {
+    status: u8,
+    cpu_usage_us: u32,
+    // TODO net_usage_words maybe use UnsignedInt instead
+    net_usage_words: u16,
+}
 
 impl SerializeData for Option<u8> {}
 impl SerializeData for Option<UnsignedInt> {}
@@ -64,10 +72,11 @@ mod tests {
     use core::str::FromStr;
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    use crate::{AccountName, Block, BlockHeader, BlockTimestamp, Checksum256, NumBytes, Read, SerializeData, SignedBlockHeader, TimePointSec, UnsignedInt};
+    use crate::*;
+    use super::*;
 
     #[test]
-    fn block_test() {
+    fn block_generate_should_work() {
         let start = SystemTime::now();
         let since_the_epoch = start
             .duration_since(UNIX_EPOCH)
@@ -107,12 +116,30 @@ mod tests {
         dbg!(hex::encode(&op4.to_serialize_data()));
         dbg!(hex::encode(&op5.to_serialize_data()));
         dbg!(hex::encode(&op6.to_serialize_data()));
+    }
 
-        let data = hex::decode("dded404a0000000000ea3055000000001b41d39f263026aa8916529450c964a8724a2d71498dbcefead211a24f720000000000000000000000000000000000000000000000000000000000000000bf17e8f5e8024c2f017f7861004750287b861c08ddb74b15c848ebf3bde11afd000000000000001f6db047c02fb436bd3c6d04593b5d3254be0f72a6c747453ef66d4d4c7b7987a128705a976b8f653997849b6c17191866be8d2f384ea01cac75eb1fecf67c7e910000");
-        let data = data.unwrap();
-        let mut pos = 0usize;
-        let bk = Block::read(&data.as_slice(), &mut pos);
+    #[test]
+    fn block_read_should_work() {
+        let data = hex::decode("dded404a0000000000ea3055000000001b41d39f263026aa8916529450c964a8724a2d71498dbcefead211a24f720000000000000000000000000000000000000000000000000000000000000000bf17e8f5e8024c2f017f7861004750287b861c08ddb74b15c848ebf3bde11afd000000000000001f6db047c02fb436bd3c6d04593b5d3254be0f72a6c747453ef66d4d4c7b7987a128705a976b8f653997849b6c17191866be8d2f384ea01cac75eb1fecf67c7e910000").unwrap();
+        let bk = Block::read(&data.as_slice(), &mut 0);
         dbg!(&bk);
+    }
+
+    #[test]
+    fn block_read_with_transaction_should_work() {
+        let data = hex::decode("0f57684a0000000000ea3055000000077cb6d5534a23579751f578148b8f0f2da54cd22243b4d6c17ba398ab8a900096714e43362a3bf531eaf43114603689e5561a36aa08225329eca7d939d22049b91659d7073782d1c456a29dde5ace92dffde0cfa78bb284e8d4d7f976fda1000000000000001f36f6f52520fa593f567826935186688d6bb6de7938ec8102c7f726bafe7cc8ae2b5585a3c8ee3a1e79011726b77a2b5f9a0593391ce7fc42c42b2e4a43cc011001005301000010010100206b22f146d8bfe03a7a03b760cb2539409b05f9961543ee41c31f0cf493267b8c244d1517a6aa67cf47f294755d9e2fb5dda6779f5d88d6e4461f380a2b02964b000053256fa15db57c56c88ddb000000000100a6823403ea3055000000572d3ccdcd010000000000855c3400000000a8ed3232210000000000855c340000000000000e3d102700000000000004454f5300000000000000").unwrap();
+        let mut pos = 0;
+        let block = Block::read(&data.as_slice(), &mut pos).unwrap();
+        dbg!(&block);
+        dbg!(&pos);
+    }
+
+    #[test]
+    fn transaction_receipt_header_should_work() {
+        let data = hex::decode("00530100001001").unwrap();
+        let mut pos = 0;
+        let header = TransactionReceiptHeader::read(&data.as_slice(), &mut pos).unwrap();
+        dbg!(&header);
         dbg!(&pos);
     }
 }
