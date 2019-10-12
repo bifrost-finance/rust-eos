@@ -62,14 +62,14 @@ impl Transaction {
         let sig = sk.sign(&sign_data.as_slice());
 
         Ok(SignedTransaction {
-            signatures: vec![sig.to_string()],
+            signatures: vec![sig.map_err(crate::error::Error::Keys)?.to_string()],
             context_free_data: vec![],
             trx: self.clone(),
         })
     }
 
     pub fn generate_signature(&self, sk: impl AsRef<str>, chain_id: impl AsRef<str>) -> Result<Signature, crate::error::Error> {
-        let sk = SecretKey::from_wif(sk.as_ref()).map_err(crate::error::Error::Base58)?;
+        let sk = SecretKey::from_wif(sk.as_ref()).map_err(crate::error::Error::Keys)?;
         let mut chain_id_hex = hex::decode(chain_id.as_ref())
             .map_err(crate::error::Error::FromHexError)?;
         let mut serialized = self.to_serialize_data();
@@ -79,7 +79,8 @@ impl Transaction {
         sign_data.append(&mut serialized);
         sign_data.append(&mut vec![0u8; 32]);
 
-        Ok(sk.sign(&sign_data.as_slice()))
+        let sig = sk.sign(&sign_data.as_slice()).map_err(crate::error::Error::Keys)?;
+        Ok(sig)
     }
 
     pub fn generate_signed_transaction(&self, sks: impl IntoIterator<Item=Signature>) -> SignedTransaction

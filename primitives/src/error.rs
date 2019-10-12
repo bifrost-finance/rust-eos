@@ -6,5 +6,5 @@ pub enum Error {
     ParseNameErr(ParseNameError),
     ParseAssetErr(ParseAssetError),
     FromHexError(hex::FromHexError),
-    Base58(KeyError::Error),
+    Keys(KeyError::Error),
 }

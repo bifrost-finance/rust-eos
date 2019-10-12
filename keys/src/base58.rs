@@ -4,13 +4,9 @@
 
 extern crate bitcoin_hashes as hashes;
 
-use alloc::vec::Vec;
-use alloc::string::String;
-use alloc::vec;
-use core::{fmt, str, slice, iter};
+use std::{error, fmt, str, slice, iter};
 use byteorder::{ByteOrder, LittleEndian};
 use hashes::{sha256d, Hash};
-
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -44,8 +40,7 @@ impl fmt::Display for Error {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
+impl error::Error for Error {
     fn description(&self) -> &'static str {
         match *self {
             Error::BadByte(_) => "invalid b58 character",
@@ -56,7 +51,7 @@ impl std::error::Error for Error {
             Error::Other(_) => "unknown b58 error"
         }
     }
-    fn cause(&self) -> Option<&dyn std::error::Error> { None }
+    fn cause(&self) -> Option<&dyn error::Error> { None }
 }
 
 /// Vector-like object that holds the first 100 elements on the stack. If more space is needed it
@@ -286,7 +281,7 @@ mod tests {
 
         // Addresses
         assert_eq!(from_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
-                   Some(hex_decode("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap()))
+            Some(hex_decode("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap()))
     }
 
     #[test]
@@ -297,3 +292,4 @@ mod tests {
         assert_eq!(from_check(&check_encode_slice(&v[..])).ok(), Some(v));
     }
 }
+

@@ -1,20 +1,17 @@
-use alloc::vec::Vec;
-use alloc::string::String;
-use alloc::vec;
-use bitcoin_hashes::{sha256, Hash as HashTrait};
-use core::fmt::{self, Write};
-use core::str::FromStr;
+use std::fmt::{self, Write};
+use std::str::FromStr;
+use rand::{CryptoRng, Rng};
+use secp256k1::{self, Secp256k1, key, Message};
 use crate::error;
 use crate::network::Network;
 use crate::base58;
 use crate::network::Network::Mainnet;
 use crate::signature::Signature;
-use rand::Rng;
-use secp256k1;
+use bitcoin_hashes::{sha256, Hash as HashTrait};
 
 
 /// A Secp256k1 private key
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct SecretKey {
     /// Whether this private key should be serialized as compressed
     pub compressed: bool,
@@ -26,17 +23,17 @@ pub struct SecretKey {
 
 impl SecretKey {
     /// Creates a new random secret key. Requires compilation with the "rand" feature.
-    pub fn generate<R>(csprng: &mut R) -> Self where R: Rng {
+    pub fn generate<R>(csprng: &mut R) -> Self where R: CryptoRng + Rng {
         Self {
             compressed: false,
             network: Mainnet,
-            key: secp256k1::SecretKey::random(csprng),
+            key: key::SecretKey::new(csprng),
         }
     }
 
     /// Serialize the private key to bytes
     pub fn to_bytes(&self) -> Vec<u8> {
-        self.key.serialize().to_vec()
+        self.key[..].to_vec()
     }
 
     /// Format the private key to WIF format.
@@ -46,7 +43,7 @@ impl SecretKey {
             Network::Mainnet => 128,
             Network::Testnet => 239,
         };
-        ret[1..33].copy_from_slice(&self.key.serialize());
+        ret[1..33].copy_from_slice(&self.key[..]);
         let privkey = if self.compressed {
             ret[33] = 1;
             base58::check_encode_slice(&ret[..])
@@ -85,7 +82,7 @@ impl SecretKey {
         Ok(SecretKey {
             compressed,
             network,
-            key: secp256k1::SecretKey::parse_slice(&data[1..33])?,
+            key: secp256k1::SecretKey::from_slice(&data[1..33])?,
         })
     }
 
@@ -100,20 +97,26 @@ impl SecretKey {
         Ok(SecretKey {
             compressed,
             network: Mainnet,
-            key: secp256k1::SecretKey::parse_slice(data)?,
+            key: secp256k1::SecretKey::from_slice(data).unwrap(),
         })
     }
 
-    pub fn sign(&self, message_slice: &[u8]) -> Signature {
+    /// Sign a message with secret key
+    pub fn sign(&self, message_slice: &[u8]) -> Result<Signature, error::Error> {
         let msg_hash = sha256::Hash::hash(&message_slice);
-        let msg = secp256k1::Message::parse(&msg_hash.into_inner());
-        let (mut sig, recv_id) = secp256k1::sign(&msg, &self.key);
-        sig.normalize_s();
+        self.sign_hash(&msg_hash)
+    }
 
-        Signature {
-            recv_id,
-            sig,
-        }
+    /// Sign a hash with secret key
+    pub fn sign_hash(&self, hash: &[u8]) -> Result<Signature, error::Error> {
+        let secp = Secp256k1::signing_only();
+        let msg = match Message::from_slice(&hash) {
+            Ok(msg) => msg,
+            Err(err) => return Err(err.into()),
+        };
+        let recv_sig = secp.sign_canonical(&msg, &self.key);
+
+        Ok(Signature::from(recv_sig))
     }
 }
 
@@ -140,15 +143,12 @@ impl FromStr for SecretKey {
 mod test {
     use super::SecretKey;
     use crate::public::PublicKey;
-    use alloc::string::ToString;
-    #[cfg(feature = "std")]
-    use rand::thread_rng;
+    use rand::rngs::OsRng;
 
-    #[cfg(feature = "std")]
     #[test]
     fn sk_generate_should_work() {
-        let mut rng = thread_rng();
-        let _sk = SecretKey::generate(&mut rng);
+        let mut csprng: OsRng = OsRng::new().unwrap();
+        let _sk = SecretKey::generate(&mut csprng);
     }
 
     #[test]
@@ -166,6 +166,9 @@ mod test {
         let pk = PublicKey::from(&sk);
         assert_eq!(pk.to_string(), "EOS55KuLPN3u9qii2hEhJhkdQSdaVLVPTHdwdkEhszhhCWDthQtfi");
         let sig = sk.sign("hello".as_bytes());
-        assert_eq!(sig.to_string(), "SIG_K1_KumC85Ykop62rdA7enDgHHNRNbUqBqzJoyLj5zQHJxeJepZ9EPXqJWSc1KT7Fo5QyX3EavjgYWaqjHpeCg88g457dFQYwh");
+        assert!(sig.is_ok());
+        let sig = sig.unwrap();
+        assert!(sig.is_canonical());
+        assert_eq!(sig.to_string(), "SIG_K1_K5DaZL6EH7L2iDhKBhxNAxTeGsgCWuZs2vJUfctrRoqJTMdo5hCnpmVkY9zt8dQGQebPrgp6fdu6D4KXUk8atYDYngnsUh");
     }
 }
