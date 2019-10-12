@@ -50,3 +50,12 @@ impl core::fmt::Display for Signature {
         write!(f, "{}", hex::encode(self.data.as_ref()))
     }
 }
+
+impl From<keys::signature::Signature> for Signature {
+    fn from(sig: keys::signature::Signature) -> Self {
+        Signature {
+            type_: UnsignedInt::from(0u8),
+            data: sig.serialize_compact()
+        }
+    }
+}
