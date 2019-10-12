@@ -1,9 +1,104 @@
-use crate::{Action, NumBytes, Read, TimePointSec, UnsignedInt, Write, SerializeData, Extension};
-use core::iter::{Iterator, IntoIterator};
-use hex;
-use keys::secret::SecretKey;
-use keys::signature::Signature;
+use core::iter::{IntoIterator, Iterator};
 
+use hex;
+
+use keys::secret::SecretKey;
+
+use crate::{
+    Action,
+    Extension,
+    NumBytes,
+    Read,
+    ReadError,
+    SerializeData,
+    TimePointSec,
+    UnsignedInt,
+    Write,
+    WriteError,
+};
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum CompressionType {
+    None,
+    Zlib,
+}
+
+impl Default for CompressionType {
+    fn default() -> Self {
+        CompressionType::None
+    }
+}
+
+impl From<u8> for CompressionType {
+    fn from(mode: u8) -> Self {
+        match mode {
+            0 => CompressionType::None,
+            1 => CompressionType::Zlib,
+            _ => CompressionType::None,
+        }
+    }
+}
+
+impl From<CompressionType> for u8 {
+    fn from(mode: CompressionType) -> Self {
+        match mode {
+            CompressionType::None => 0,
+            CompressionType::Zlib => 1,
+        }
+    }
+}
+
+impl NumBytes for CompressionType {
+    fn num_bytes(&self) -> usize {
+        1
+    }
+}
+
+impl Read for CompressionType {
+    fn read(bytes: &[u8], pos: &mut usize) -> Result<Self, ReadError> {
+        u8::read(bytes, pos).map(|res| CompressionType::from(res))
+    }
+}
+
+impl Write for CompressionType {
+    fn write(&self, bytes: &mut [u8], pos: &mut usize) -> Result<(), WriteError> {
+        u8::from(self.clone()).write(bytes, pos)
+    }
+}
+
+impl core::fmt::Display for CompressionType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            CompressionType::None => write!(f, "None"),
+            CompressionType::Zlib => write!(f, "Zlib"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[eosio_core_root_path = "crate"]
+pub struct PackedTransaction {
+    pub signatures: Vec<crate::Signature>,
+    pub compression: CompressionType,
+    pub packed_context_free_data: Vec<u8>,
+    pub packed_trx: Vec<u8>,
+}
+
+impl SerializeData for PackedTransaction {}
+
+impl core::fmt::Display for PackedTransaction {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "signatures: {:?}\n\
+            compression: {}\n\
+            packed_context_free_data: {}\n\
+            packed_trx: {}",
+            self.signatures,
+            self.compression,
+            hex::encode(&self.packed_context_free_data),
+            hex::encode(&self.packed_trx),
+        )
+    }
+}
 
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default)]
 #[eosio_core_root_path = "crate"]
@@ -32,7 +127,7 @@ impl TransactionHeader {
     }
 }
 
-#[derive(Write, NumBytes, Read, Debug, Clone, Default)]
+#[derive(NumBytes, Write, Read, Debug, Clone, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct Transaction {
     pub header: TransactionHeader,
@@ -59,16 +154,16 @@ impl Transaction {
         sign_data.append(&mut self.to_serialize_data());
         sign_data.append(&mut vec![0u8; 32]);
 
-        let sig = sk.sign(&sign_data.as_slice());
+        let sig = sk.sign(&sign_data.as_slice()).map_err(crate::error::Error::Keys)?;
 
         Ok(SignedTransaction {
-            signatures: vec![sig.map_err(crate::error::Error::Keys)?.to_string()],
+            signatures: vec![sig.into()],
             context_free_data: vec![],
             trx: self.clone(),
         })
     }
 
-    pub fn generate_signature(&self, sk: impl AsRef<str>, chain_id: impl AsRef<str>) -> Result<Signature, crate::error::Error> {
+    pub fn generate_signature(&self, sk: impl AsRef<str>, chain_id: impl AsRef<str>) -> Result<keys::signature::Signature, crate::error::Error> {
         let sk = SecretKey::from_wif(sk.as_ref()).map_err(crate::error::Error::Keys)?;
         let mut chain_id_hex = hex::decode(chain_id.as_ref())
             .map_err(crate::error::Error::FromHexError)?;
@@ -83,9 +178,9 @@ impl Transaction {
         Ok(sig)
     }
 
-    pub fn generate_signed_transaction(&self, sks: impl IntoIterator<Item=Signature>) -> SignedTransaction
+    pub fn generate_signed_transaction(&self, sks: impl IntoIterator<Item=keys::signature::Signature>) -> SignedTransaction
     {
-        let sks: Vec<_> = sks.into_iter().map(|sk| sk.to_string()).collect();
+        let sks: Vec<crate::Signature> = sks.into_iter().map(|sk| sk.into()).collect();
         SignedTransaction {
             signatures: sks,
             context_free_data: vec![],
@@ -96,11 +191,22 @@ impl Transaction {
 
 impl SerializeData for Transaction {}
 
-#[derive( Debug, Clone, Default)]
+#[derive(NumBytes, Write, Read, Debug, Clone, Default)]
+#[eosio_core_root_path = "crate"]
 pub struct SignedTransaction {
-    pub signatures: Vec<String>,
+    pub signatures: Vec<crate::Signature>,
     pub context_free_data: Vec<u8>,
     pub trx: Transaction,
+}
+
+impl From<PackedTransaction> for SignedTransaction {
+    fn from(packed: PackedTransaction) -> Self {
+        SignedTransaction {
+            signatures: packed.signatures,
+            context_free_data: packed.packed_context_free_data,
+            trx: Transaction::read(packed.packed_trx.as_slice(), &mut 0).unwrap(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -121,10 +227,13 @@ impl From<u128> for DeferredTransactionId {
 #[cfg(feature = "std")]
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::{ActionTransfer, PermissionLevel};
+    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
     use keys::secret::SecretKey;
-    use std::time::{SystemTime, UNIX_EPOCH, Duration};
+
+    use crate::{ActionTransfer, PermissionLevel};
+
+    use super::*;
 
     #[test]
     fn sign_tx_should_work() {
@@ -166,5 +275,13 @@ mod test {
             "000000000000000000000100a6823403ea3055000000572d3ccdcd01000000000093b1ca00000000a8ed323227000000000093b1ca000000008093b1ca102700000000000004454f53000000000661206d656d6f00"
         );
         dbg!(signed_trx.ok().unwrap());
+    }
+
+    #[test]
+    fn packed_trx_to_signed_trx_should_work() {
+        let data = hex::decode("0100206b22f146d8bfe03a7a03b760cb2539409b05f9961543ee41c31f0cf493267b8c244d1517a6aa67cf47f294755d9e2fb5dda6779f5d88d6e4461f380a2b02964b000053256fa15db57c56c88ddb000000000100a6823403ea3055000000572d3ccdcd010000000000855c3400000000a8ed3232210000000000855c340000000000000e3d102700000000000004454f53000000000000").unwrap();
+        let packed_trx = PackedTransaction::read(data.as_slice(), &mut 0).unwrap();
+        let signed_trx: SignedTransaction = packed_trx.into();
+        dbg!(&signed_trx);
     }
 }
