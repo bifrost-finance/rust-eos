@@ -73,8 +73,8 @@ pub struct TransactionReceiptHeader {
 impl core::fmt::Display for TransactionReceiptHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "status: {}\n\
-            {}\n\
-            {}",
+            cpu_usage_us: {}\n\
+            net_usage_words: {}",
             self.status,
             self.cpu_usage_us,
             self.net_usage_words,

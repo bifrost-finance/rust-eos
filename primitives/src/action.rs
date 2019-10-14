@@ -75,7 +75,7 @@ impl core::fmt::Display for Action {
             hex_data: {}",
             self.account,
             self.name,
-            self.authorization.iter().map(|item| format!("{:?}", item)).collect::<String>(),
+            self.authorization.iter().map(|item| format!("{}", item)).collect::<String>(),
             // TODO display data,
             hex::encode(&self.data),
         )
