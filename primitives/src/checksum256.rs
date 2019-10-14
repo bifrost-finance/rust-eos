@@ -1,3 +1,5 @@
+use bitcoin_hashes::{Hash as HashTrait, sha256};
+
 use crate::{NumBytes, Read, Write};
 
 // TODO Read, Write, NumBytes needs a custom implementation based on fixed_bytes
@@ -6,6 +8,10 @@ use crate::{NumBytes, Read, Write};
 pub struct Checksum256([u8; 32]);
 
 impl Checksum256 {
+    pub fn new(data: [u8; 32]) -> Self {
+        Self(data)
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
@@ -14,11 +20,26 @@ impl Checksum256 {
         self.0
     }
 
-    pub fn hash0(&self) -> u32 {
-        (self.0[0] as u32) << 24
-            | (self.0[1] as u32) << 16
-            | (self.0[2] as u32) << 8
-            | (self.0[3] as u32)
+    pub fn hash0(&self) -> u64 {
+        (self.0[0] as u64)
+            | (self.0[1] as u64) << 8
+            | (self.0[2] as u64) << 16
+            | (self.0[3] as u64) << 24
+    }
+
+    pub fn set_hash0(&mut self, hash0: u64) {
+        self.0[0] = hash0 as u8;
+        self.0[1] = (hash0 >> 8) as u8;
+        self.0[2] = (hash0 >> 16) as u8;
+        self.0[3] = (hash0 >> 24) as u8;
+    }
+
+    pub fn hash<T: Write + NumBytes>(t: T) -> core::result::Result<Checksum256, crate::error::Error> {
+        let mut data = vec![0u8; t.num_bytes()];
+        t.write(&mut data, &mut 0).map_err(crate::error::Error::BytesWriteError)?;
+
+        let hash_data = sha256::Hash::hash(&data);
+        Ok(Checksum256(hash_data.into_inner()))
     }
 }
 

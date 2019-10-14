@@ -28,6 +28,8 @@ pub mod time_point;
 pub mod time_point_sec;
 pub mod unsigned_int;
 
+pub mod bitutil;
+
 pub use eosio_core_derive::*;
 
 pub use self::{

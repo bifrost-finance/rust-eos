@@ -189,6 +189,7 @@ dependencies = [
 name = "eos-primitives"
 version = "0.1.0"
 dependencies = [
+ "bitcoin_hashes 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "eos-keys 0.1.0",
  "eosio-core-derive 0.2.1",

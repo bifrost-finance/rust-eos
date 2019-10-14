@@ -1,5 +1,6 @@
 use crate::{
     AccountName,
+    bitutil,
     BlockTimestamp,
     Checksum256,
     Extension,
@@ -27,6 +28,7 @@ pub struct BlockHeader {
 impl core::fmt::Display for BlockHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "block_num: {}\n\
+            id: {}\n\
             timestamp: {}\n\
             producer: {}\n\
             confirmed: {}\n\
@@ -37,6 +39,7 @@ impl core::fmt::Display for BlockHeader {
             new_producers: {:?}\n\
             header_extensions: {:?}",
             self.block_num(),
+            self.id(),
             self.timestamp,
             self.producer,
             self.confirmed,
@@ -75,12 +78,25 @@ impl BlockHeader {
         }
     }
 
+    pub fn digest(&self) -> Checksum256 {
+        Checksum256::hash(self.clone()).unwrap_or(Checksum256::default())
+    }
+
+    pub fn id(&self) -> Checksum256 {
+        let mut result = self.digest();
+        let mut hash0 = result.hash0();
+        hash0 &= 0xffffffff00000000;
+        hash0 += bitutil::endian_reverse_u32(self.block_num()) as u64;
+        result.set_hash0(hash0);
+        result
+    }
+
     pub fn block_num(&self) -> u32 {
         Self::num_from_id(self.previous) + 1
     }
 
     pub fn num_from_id(id: Checksum256) -> u32 {
-        id.hash0()
+        bitutil::endian_reverse_u32(id.hash0() as u32)
     }
 }
 
