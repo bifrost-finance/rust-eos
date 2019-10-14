@@ -1,6 +1,6 @@
 use crate::{NumBytes, PackedTransaction, Read, ReadError, Write, WriteError};
 use crate::{
-    Block,
+    SignedBlock,
     ChainSizeMessage,
     GoAwayMessage,
     HandshakeMessage,
@@ -19,7 +19,7 @@ pub enum Message {
     NoticeMessage(NoticeMessage),
     RequestMessage(RequestMessage),
     SyncRequestMessage(SyncRequestMessage),
-    SignedBlock(Block),
+    SignedBlock(SignedBlock),
     PackedTransaction(PackedTransaction),
 }
 
@@ -150,7 +150,7 @@ impl Read for RawMessage {
                 Message::SyncRequestMessage(msg)
             }
             MessageType::SignedBlock => {
-                let msg = Block::read(bytes, pos)?;
+                let msg = SignedBlock::read(bytes, pos)?;
                 Message::SignedBlock(msg)
             }
             MessageType::PackedTransaction => {
@@ -303,8 +303,8 @@ impl From<SyncRequestMessage> for MessageType {
     }
 }
 
-impl From<Block> for MessageType {
-    fn from(_msg: Block) -> Self {
+impl From<SignedBlock> for MessageType {
+    fn from(_msg: SignedBlock) -> Self {
         MessageType::SignedBlock
     }
 }

@@ -11,13 +11,13 @@ use crate::{
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[eosio_core_root_path = "crate"]
-pub struct Block {
+pub struct SignedBlock {
     pub signed_block_header: SignedBlockHeader,
     pub transactions: Vec<TransactionReceipt>,
     pub block_extensions: Vec<Extension>,
 }
 
-impl Block {
+impl SignedBlock {
     pub fn new(signed_block_header: SignedBlockHeader) -> Self {
         Self {
             signed_block_header,
@@ -31,7 +31,7 @@ impl Block {
     }
 }
 
-impl core::fmt::Display for Block {
+impl core::fmt::Display for SignedBlock {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}\n\
             transactions: {:?}\n\
@@ -43,7 +43,7 @@ impl core::fmt::Display for Block {
     }
 }
 
-impl SerializeData for Block {}
+impl SerializeData for SignedBlock {}
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[eosio_core_root_path = "crate"]
@@ -98,7 +98,7 @@ mod tests {
         let producer_signature = Default::default();
         let signed_block_header = SignedBlockHeader::new(block_header, producer_signature);
 
-        let block = Block::new(signed_block_header);
+        let block = SignedBlock::new(signed_block_header);
         dbg!(&block);
         dbg!(&block.to_serialize_data());
         dbg!(&block.num_bytes());
@@ -121,7 +121,7 @@ mod tests {
     #[test]
     fn block_read_should_work() {
         let data = hex::decode("dded404a0000000000ea3055000000001b41d39f263026aa8916529450c964a8724a2d71498dbcefead211a24f720000000000000000000000000000000000000000000000000000000000000000bf17e8f5e8024c2f017f7861004750287b861c08ddb74b15c848ebf3bde11afd000000000000001f6db047c02fb436bd3c6d04593b5d3254be0f72a6c747453ef66d4d4c7b7987a128705a976b8f653997849b6c17191866be8d2f384ea01cac75eb1fecf67c7e910000").unwrap();
-        let bk = Block::read(&data.as_slice(), &mut 0);
+        let bk = SignedBlock::read(&data.as_slice(), &mut 0);
         dbg!(&bk);
     }
 
@@ -129,7 +129,7 @@ mod tests {
     fn block_read_with_transaction_should_work() {
         let data = hex::decode("0f57684a0000000000ea3055000000077cb6d5534a23579751f578148b8f0f2da54cd22243b4d6c17ba398ab8a900096714e43362a3bf531eaf43114603689e5561a36aa08225329eca7d939d22049b91659d7073782d1c456a29dde5ace92dffde0cfa78bb284e8d4d7f976fda1000000000000001f36f6f52520fa593f567826935186688d6bb6de7938ec8102c7f726bafe7cc8ae2b5585a3c8ee3a1e79011726b77a2b5f9a0593391ce7fc42c42b2e4a43cc011001005301000010010100206b22f146d8bfe03a7a03b760cb2539409b05f9961543ee41c31f0cf493267b8c244d1517a6aa67cf47f294755d9e2fb5dda6779f5d88d6e4461f380a2b02964b000053256fa15db57c56c88ddb000000000100a6823403ea3055000000572d3ccdcd010000000000855c3400000000a8ed3232210000000000855c340000000000000e3d102700000000000004454f5300000000000000").unwrap();
         let mut pos = 0;
-        let block = Block::read(&data.as_slice(), &mut pos).unwrap();
+        let block = SignedBlock::read(&data.as_slice(), &mut pos).unwrap();
         dbg!(&block);
         dbg!(&pos);
     }
