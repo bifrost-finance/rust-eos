@@ -26,7 +26,7 @@ pub struct BlockHeader {
 
 impl core::fmt::Display for BlockHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "num: {}\n\
+        write!(f, "block_num: {}\n\
             timestamp: {}\n\
             producer: {}\n\
             confirmed: {}\n\

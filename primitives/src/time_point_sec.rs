@@ -1,4 +1,7 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/time.hpp#L79-L132>
+use chrono::{SecondsFormat, TimeZone, Utc};
+use chrono::prelude::DateTime;
+
 use crate::{NumBytes, Read, TimePoint, Write};
 
 /// A lower resolution `TimePoint` accurate only to seconds from 1970
@@ -14,6 +17,10 @@ impl TimePointSec {
 
     pub fn from_unix_seconds(sec: u32) -> Self {
         TimePointSec(sec)
+    }
+
+    pub fn sec_since_epoch(&self) -> u32 {
+        self.0
     }
 }
 
@@ -35,5 +42,12 @@ impl From<TimePoint> for TimePointSec {
     #[inline]
     fn from(t: TimePoint) -> Self {
         Self((t.as_i64() as u32) / 1_000_000_u32)
+    }
+}
+
+impl core::fmt::Display for TimePointSec {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let dt = Utc.timestamp(self.sec_since_epoch() as i64, 0);
+        write!(f, "{}", dt.to_rfc3339_opts(SecondsFormat::Secs, true))
     }
 }

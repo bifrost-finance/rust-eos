@@ -2,8 +2,7 @@
 use crate::{TimePoint, TimePointSec, NumBytes, Read, Write};
 use serde::Serialize;
 use chrono::prelude::DateTime;
-use chrono::Utc;
-use std::time::{UNIX_EPOCH, Duration};
+use chrono::{Utc, TimeZone, SecondsFormat};
 
 /// This class is used in the block headers to represent the block time
 /// It is a parameterised class that takes an Epoch in milliseconds and
@@ -16,7 +15,7 @@ impl BlockTimestamp {
     /// Time between blocks.
     pub const BLOCK_INTERVAL_MS: i32 = 500;
     /// Epoch is 2000-01-01T00:00.000Z.
-    pub const BLOCK_TIMESTAMP_EPOCH: i64 = 946_684_800_000;
+    pub const BLOCK_TIMESTAMP_EPOCH: u64 = 946_684_800_000;
 
     /// Gets the milliseconds
     #[inline]
@@ -86,24 +85,24 @@ impl From<BlockTimestamp> for u32 {
 impl From<TimePoint> for BlockTimestamp {
     #[inline]
     fn from(t: TimePoint) -> Self {
-        let t: TimePointSec = t.into();
-        Self(t.into())
+        let micro_since_epoch = t.time_since_epoch();
+        let msec_since_epoch  = micro_since_epoch / 1_000_000;
+        Self(((msec_since_epoch - BlockTimestamp::BLOCK_TIMESTAMP_EPOCH as i64) / BlockTimestamp::BLOCK_INTERVAL_MS as i64) as u32)
     }
 }
 
 impl From<TimePointSec> for BlockTimestamp {
     #[inline]
     fn from(t: TimePointSec) -> Self {
-        Self(t.into())
+        let sec_since_epoch = t.sec_since_epoch();
+        Self((((sec_since_epoch * 1000) as u64 - BlockTimestamp::BLOCK_TIMESTAMP_EPOCH) / BlockTimestamp::BLOCK_INTERVAL_MS as u64) as u32)
     }
 }
 
 impl core::fmt::Display for BlockTimestamp {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        let d = UNIX_EPOCH + Duration::from_secs(self.0 as u64);
-        let datetime = DateTime::<Utc>::from(d);
-        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
-
-        write!(f, "{}", timestamp_str)
+        let sec_since_epoch = (self.0 as i64 * BlockTimestamp::BLOCK_INTERVAL_MS as i64) + BlockTimestamp::BLOCK_TIMESTAMP_EPOCH as i64;
+        let dt = Utc.timestamp_millis(sec_since_epoch);
+        write!(f, "{}", dt.to_rfc3339_opts(SecondsFormat::Millis, true))
     }
 }
