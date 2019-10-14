@@ -34,11 +34,11 @@ impl SignedBlock {
 impl core::fmt::Display for SignedBlock {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}\n\
-            transactions: {:?}\n\
-            block_extensions: {:?}",
+            transactions: {}\n\
+            block_extensions: {}",
             self.signed_block_header,
-            self.transactions,
-            self.block_extensions,
+            self.transactions.iter().map(|item| format!("{}", item)).collect::<String>(),
+            self.block_extensions.iter().map(|item| format!("{}", item)).collect::<String>(),
         )
     }
 }
@@ -52,6 +52,15 @@ pub struct TransactionReceipt {
     trx: PackedTransaction,
 }
 
+impl core::fmt::Display for TransactionReceipt {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}\n{}",
+            self.trx_receipt_header,
+            self.trx,
+        )
+    }
+}
+
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceiptHeader {
@@ -59,6 +68,18 @@ pub struct TransactionReceiptHeader {
     cpu_usage_us: u32,
     // TODO net_usage_words maybe use UnsignedInt instead
     net_usage_words: u16,
+}
+
+impl core::fmt::Display for TransactionReceiptHeader {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "status: {}\n\
+            {}\n\
+            {}",
+            self.status,
+            self.cpu_usage_us,
+            self.net_usage_words,
+        )
+    }
 }
 
 impl SerializeData for Option<u8> {}

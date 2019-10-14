@@ -88,14 +88,16 @@ impl SerializeData for PackedTransaction {}
 
 impl core::fmt::Display for PackedTransaction {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "signatures: {:?}\n\
+        write!(f, "signatures: {}\n\
             compression: {}\n\
             packed_context_free_data: {}\n\
-            packed_trx: {}",
-            self.signatures,
+            packed_trx: {}\n\
+            transaction: {}",
+            self.signatures.iter().map(|item| item.to_string()).collect::<String>(),
             self.compression,
             hex::encode(&self.packed_context_free_data),
             hex::encode(&self.packed_trx),
+            Transaction::from(self.clone()),
         )
     }
 }
@@ -124,6 +126,24 @@ impl TransactionHeader {
             max_cpu_usage_ms: 0,
             delay_sec: 0u32.into(),
         }
+    }
+}
+
+impl core::fmt::Display for TransactionHeader {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "expiration: {}\n\
+            ref_block_num: {}\n\
+            ref_block_prefix: {}\n\
+            max_net_usage_words: {}\n\
+            max_cpu_usage_ms: {}\n\
+            delay_sec: {}",
+            self.expiration,
+            self.ref_block_num,
+            self.ref_block_prefix,
+            self.max_net_usage_words,
+            self.max_cpu_usage_ms,
+            self.delay_sec,
+        )
     }
 }
 
@@ -188,6 +208,27 @@ impl Transaction {
         }
     }
 }
+
+impl From<PackedTransaction> for Transaction {
+    fn from(packed: PackedTransaction) -> Self {
+        Transaction::read(packed.packed_trx.as_slice(), &mut 0).unwrap()
+    }
+}
+
+impl core::fmt::Display for Transaction {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}\n\
+            context_free_actions: {}\n\
+            actions: {}\n\
+            transaction_extensions: {}",
+            self.header,
+            self.context_free_actions.iter().map(|item| format!("{}", item)).collect::<String>(),
+            self.actions.iter().map(|item| format!("{}", item)).collect::<String>(),
+            self.transaction_extensions.iter().map(|item| format!("{:?}", item)).collect::<String>(),
+        )
+    }
+}
+
 
 impl SerializeData for Transaction {}
 

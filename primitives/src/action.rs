@@ -67,6 +67,21 @@ impl ActionTransfer {
     }
 }
 
+impl core::fmt::Display for Action {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "account: {}\n\
+            name: {}\n\
+            authorization: {}\n\
+            hex_data: {}",
+            self.account,
+            self.name,
+            self.authorization.iter().map(|item| format!("{:?}", item)).collect::<String>(),
+            // TODO display data,
+            hex::encode(&self.data),
+        )
+    }
+}
+
 impl SerializeData for ActionTransfer {}
 
 pub trait ToAction: Write + NumBytes {

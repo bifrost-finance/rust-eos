@@ -1,7 +1,6 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/time.hpp#L134-L210>
 use crate::{TimePoint, TimePointSec, NumBytes, Read, Write};
 use serde::Serialize;
-use chrono::prelude::DateTime;
 use chrono::{Utc, TimeZone, SecondsFormat};
 
 /// This class is used in the block headers to represent the block time

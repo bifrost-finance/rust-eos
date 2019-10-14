@@ -92,6 +92,13 @@ impl Write for UnsignedInt {
     }
 }
 
+impl core::fmt::Display for UnsignedInt {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+
 macro_rules! write_read_tests {
     ($($i:ident, $v:expr, $n:expr)*) => ($(
         #[cfg(test)]

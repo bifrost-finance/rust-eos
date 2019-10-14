@@ -2,7 +2,6 @@
 use core::convert::{TryFrom, TryInto};
 
 use chrono::{SecondsFormat, TimeZone, Utc};
-use chrono::prelude::DateTime;
 
 use crate::{NumBytes, Read, Write};
 

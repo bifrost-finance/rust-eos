@@ -23,3 +23,13 @@ impl PermissionLevel {
         Ok(PermissionLevel { actor, permission })
     }
 }
+
+impl core::fmt::Display for PermissionLevel {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "actor: {}\n\
+            permission: {}",
+            self.actor,
+            self.permission,
+        )
+    }
+}
