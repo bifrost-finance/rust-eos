@@ -49,9 +49,9 @@ impl core::fmt::Display for Signature {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         let sig = keys::signature::Signature::from_compact(&self.data);
         if sig.is_ok() {
-            write!(f, "{}", sig.unwrap().to_string())
+            write!(f, "{}", sig.unwrap())
         } else {
-            write!(f, "Invalid signature to display")
+            write!(f, "{}", hex::encode(self.data.as_ref()))
         }
     }
 }
