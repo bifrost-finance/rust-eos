@@ -111,7 +111,7 @@ impl RawMessage {
 
     pub fn serialize(&self) -> Vec<u8> {
         let mut buffer = vec![0u8; self.num_bytes()];
-        self.write(buffer.as_mut_slice(), &mut 0).unwrap();
+        self.write(buffer.as_mut_slice(), &mut 0).expect("Raw message serialize failed.");
         buffer
     }
 }

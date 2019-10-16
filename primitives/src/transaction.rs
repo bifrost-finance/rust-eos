@@ -86,6 +86,20 @@ pub struct PackedTransaction {
     pub packed_trx: Vec<u8>,
 }
 
+impl From<SignedTransaction> for PackedTransaction {
+    fn from(signed: SignedTransaction) -> Self {
+        let mut packed_trx = vec![0u8; signed.trx.num_bytes()];
+        signed.trx.write(&mut packed_trx, &mut 0).expect("Convert transaction to packed failed");
+
+        PackedTransaction {
+            signatures: signed.signatures,
+            compression: Default::default(),
+            packed_context_free_data: signed.context_free_data,
+            packed_trx,
+        }
+    }
+}
+
 impl SerializeData for PackedTransaction {}
 
 impl core::fmt::Display for PackedTransaction {
@@ -169,7 +183,20 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub fn new(header: TransactionHeader, actions: Vec<Action>, ) -> Self {
+    pub fn new(header: TransactionHeader, actions: Vec<Action>) -> Self {
+        Transaction {
+            header,
+            context_free_actions: vec![],
+            actions,
+            transaction_extensions: vec![],
+        }
+    }
+
+    pub fn build(expiration: TimePointSec, block_id: Checksum256, actions: Vec<Action>) -> Self {
+        let mut header = TransactionHeader::default();
+        header.expiration = expiration;
+        header.set_reference_block(&block_id);
+
         Transaction {
             header,
             context_free_actions: vec![],

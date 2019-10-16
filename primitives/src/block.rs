@@ -1,4 +1,5 @@
 use crate::{
+    Checksum256,
     Extension,
     NumBytes,
     PackedTransaction,
@@ -24,6 +25,10 @@ impl SignedBlock {
             transactions: Default::default(),
             block_extensions: Default::default(),
         }
+    }
+
+    pub fn id(&self) -> Checksum256 {
+        self.signed_block_header.id()
     }
 
     pub fn block_num(&self) -> u32 {

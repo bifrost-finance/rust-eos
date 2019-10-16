@@ -115,6 +115,10 @@ impl SignedBlockHeader {
         }
     }
 
+    pub fn id(&self) -> Checksum256 {
+        self.block_header.id()
+    }
+
     pub fn block_num(&self) -> u32 {
         self.block_header.block_num()
     }
