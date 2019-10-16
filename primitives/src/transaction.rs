@@ -6,6 +6,8 @@ use keys::secret::SecretKey;
 
 use crate::{
     Action,
+    bitutil,
+    Checksum256,
     Extension,
     NumBytes,
     Read,
@@ -117,7 +119,7 @@ pub struct TransactionHeader {
 }
 
 impl TransactionHeader {
-    pub fn new(expiration: TimePointSec, ref_block_num: u16, ref_block_prefix: u32, ) -> Self {
+    pub fn new(expiration: TimePointSec, ref_block_num: u16, ref_block_prefix: u32) -> Self {
         TransactionHeader {
             expiration,
             ref_block_num,
@@ -126,6 +128,16 @@ impl TransactionHeader {
             max_cpu_usage_ms: 0,
             delay_sec: 0u32.into(),
         }
+    }
+
+    pub fn set_reference_block(&mut self, reference_block_id: &Checksum256) {
+        self.ref_block_num = bitutil::endian_reverse_u32(reference_block_id.hash0() as u32) as u16;
+        self.ref_block_prefix = reference_block_id.hash1() as u32;
+    }
+
+    pub fn verify_reference_block(&self, reference_block_id: &Checksum256) -> bool {
+        self.ref_block_num == bitutil::endian_reverse_u32(reference_block_id.hash0() as u32) as u16
+            && self.ref_block_prefix == reference_block_id.hash1() as u32
     }
 }
 
@@ -211,7 +223,7 @@ impl Transaction {
 
 impl From<PackedTransaction> for Transaction {
     fn from(packed: PackedTransaction) -> Self {
-        Transaction::read(packed.packed_trx.as_slice(), &mut 0).unwrap()
+        Transaction::read(packed.packed_trx.as_slice(), &mut 0).expect("Transaction read from packed trx failed.")
     }
 }
 
@@ -245,7 +257,7 @@ impl From<PackedTransaction> for SignedTransaction {
         SignedTransaction {
             signatures: packed.signatures,
             context_free_data: packed.packed_context_free_data,
-            trx: Transaction::read(packed.packed_trx.as_slice(), &mut 0).unwrap(),
+            trx: Transaction::read(packed.packed_trx.as_slice(), &mut 0).expect("Transaction read from packed trx failed."),
         }
     }
 }
@@ -324,5 +336,17 @@ mod test {
         let packed_trx = PackedTransaction::read(data.as_slice(), &mut 0).unwrap();
         let signed_trx: SignedTransaction = packed_trx.into();
         dbg!(&signed_trx);
+    }
+
+    #[test]
+    fn set_and_verify_reference_block_should_work() {
+        let mut data = [0u8; 32];
+        data.copy_from_slice(hex::decode("0011dfc5d73d7b00b0c262c7ce4c4eea0494bc1790e8e71a85a2a7c6742320a1").unwrap().as_slice());
+        let block_id = Checksum256::from(data);
+        let mut trx_header = TransactionHeader::default();
+        trx_header.set_reference_block(&block_id);
+        assert_eq!(trx_header.ref_block_num, 57285);
+        assert_eq!(trx_header.ref_block_prefix, 3345138352);
+        assert_eq!(trx_header.verify_reference_block(&block_id), true);
     }
 }

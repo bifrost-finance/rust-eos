@@ -25,6 +25,21 @@ impl Checksum256 {
             | (self.0[1] as u64) << 8
             | (self.0[2] as u64) << 16
             | (self.0[3] as u64) << 24
+            | (self.0[4] as u64) << 32
+            | (self.0[5] as u64) << 40
+            | (self.0[6] as u64) << 48
+            | (self.0[7] as u64) << 56
+    }
+
+    pub fn hash1(&self) -> u64 {
+        (self.0[8] as u64)
+            | (self.0[9] as u64) << 8
+            | (self.0[10] as u64) << 16
+            | (self.0[11] as u64) << 24
+            | (self.0[12] as u64) << 32
+            | (self.0[13] as u64) << 40
+            | (self.0[14] as u64) << 48
+            | (self.0[15] as u64) << 56
     }
 
     pub fn set_hash0(&mut self, hash0: u64) {
