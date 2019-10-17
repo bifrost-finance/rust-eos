@@ -2,7 +2,7 @@
 use crate::{TimePoint, TimePointSec, NumBytes, Read, Write};
 use chrono::{Utc, TimeZone, SecondsFormat};
 #[cfg(feature = "std")]
-use serde::{Deserialize, ser::{Serialize, Serializer}};
+use serde::ser::{Serialize, Serializer};
 
 /// This class is used in the block headers to represent the block time
 /// It is a parameterised class that takes an Epoch in milliseconds and
