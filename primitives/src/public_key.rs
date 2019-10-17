@@ -4,6 +4,7 @@ use crate::{NumBytes, Read, UnsignedInt, Write};
 use serde::{Deserialize, ser::{Serialize, Serializer}};
 #[cfg(feature = "std")]
 use crate::BigArray;
+use std::convert::TryFrom;
 
 /// EOSIO Public Key
 #[derive(Read, Write, NumBytes, Clone)]
@@ -37,6 +38,13 @@ impl PublicKey {
     }
 }
 
+impl TryFrom<PublicKey> for keys::public::PublicKey {
+    type Error = crate::error::Error;
+    fn try_from(pk: PublicKey) -> Result<Self, Self::Error> {
+        keys::public::PublicKey::from_slice(&pk.data).map_err(Self::Error::PublicKeyError)
+    }
+}
+
 impl Default for PublicKey {
     fn default() -> Self {
         Self {
@@ -61,6 +69,10 @@ impl std::fmt::Debug for PublicKey {
 
 impl core::fmt::Display for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", hex::encode(self.data.as_ref()))
+        if let Ok(pk) = keys::public::PublicKey::try_from(self.clone()) {
+            write!(f, "{}", pk.to_string())
+        } else {
+            write!(f, "{}", hex::encode(self.data.as_ref()))
+        }
     }
 }

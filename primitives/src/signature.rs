@@ -63,9 +63,8 @@ impl PartialEq for Signature {
 
 impl core::fmt::Display for Signature {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        let sig = keys::signature::Signature::from_compact(&self.data);
-        if sig.is_ok() {
-            write!(f, "{}", sig.unwrap())
+        if let Ok(sig) = keys::signature::Signature::from_compact(&self.data) {
+            write!(f, "{}", sig)
         } else {
             write!(f, "{}", hex::encode(self.data.as_ref()))
         }
