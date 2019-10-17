@@ -1,6 +1,9 @@
 use crate::{Checksum256, Read, Write, NumBytes, ReadError, WriteError};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Read, Write, NumBytes, Default, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct GoAwayMessage {
     reason: u32,

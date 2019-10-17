@@ -1,6 +1,9 @@
 use crate::{Read, Write, NumBytes, ReadError, WriteError};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 pub enum IdListModes {
     None,
     CatchUp,

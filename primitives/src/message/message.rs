@@ -9,8 +9,11 @@ use crate::{
     SyncRequestMessage,
     TimeMessage,
 };
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 pub enum Message {
     HandshakeMessage(HandshakeMessage),
     ChainSizeMessage(ChainSizeMessage),
@@ -73,6 +76,7 @@ impl core::fmt::Display for Message {
 }
 
 #[derive(Clone, Debug, Read, Write, NumBytes, Default)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct MessageHeader {
     pub size: u32,
@@ -95,6 +99,7 @@ impl core::fmt::Display for MessageHeader {
 }
 
 #[derive(Clone, Debug, NumBytes, Write)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct RawMessage {
     pub header: MessageHeader,
@@ -168,6 +173,7 @@ impl Read for RawMessage {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 pub enum MessageType {
     HandshakeMessage,
     ChainSizeMessage,

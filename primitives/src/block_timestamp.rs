@@ -1,14 +1,25 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/time.hpp#L134-L210>
 use crate::{TimePoint, TimePointSec, NumBytes, Read, Write};
-use serde::Serialize;
 use chrono::{Utc, TimeZone, SecondsFormat};
+#[cfg(feature = "std")]
+use serde::{Deserialize, ser::{Serialize, Serializer}};
 
 /// This class is used in the block headers to represent the block time
 /// It is a parameterised class that takes an Epoch in milliseconds and
 /// and an interval in milliseconds and computes the number of slots.
-#[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy, Hash, Default, Serialize)]
+#[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy, Hash, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct BlockTimestamp(u32);
+
+#[cfg(feature = "std")]
+impl Serialize for BlockTimestamp {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
 
 impl BlockTimestamp {
     /// Time between blocks.

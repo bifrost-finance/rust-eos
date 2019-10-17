@@ -9,8 +9,11 @@ use crate::{
     UnsignedInt,
     Write
 };
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct SignedBlock {
     pub signed_block_header: SignedBlockHeader,
@@ -51,6 +54,7 @@ impl core::fmt::Display for SignedBlock {
 impl SerializeData for SignedBlock {}
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceipt {
     trx_receipt_header: TransactionReceiptHeader,
@@ -67,6 +71,7 @@ impl core::fmt::Display for TransactionReceipt {
 }
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceiptHeader {
     status: u8,

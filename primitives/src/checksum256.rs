@@ -1,11 +1,23 @@
 use bitcoin_hashes::{Hash as HashTrait, sha256};
-
 use crate::{NumBytes, Read, Write};
+#[cfg(feature = "std")]
+use serde::{Deserialize, ser::{Serialize, Serializer}};
 
 // TODO Read, Write, NumBytes needs a custom implementation based on fixed_bytes
 #[derive(Read, Write, NumBytes, Default, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
-pub struct Checksum256([u8; 32]);
+pub struct Checksum256(pub [u8; 32]);
+
+#[cfg(feature = "std")]
+impl Serialize for Checksum256 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
 
 impl Checksum256 {
     pub fn new(data: [u8; 32]) -> Self {

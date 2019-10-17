@@ -1,6 +1,9 @@
 use crate::{Read, Write, NumBytes};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Read, Write, NumBytes, Default, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct SyncRequestMessage {
     pub start_block: u32,

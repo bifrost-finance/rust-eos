@@ -1,14 +1,25 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/time.hpp#L49-L77>
-use core::convert::{TryFrom, TryInto};
-
-use chrono::{SecondsFormat, TimeZone, Utc};
-
 use crate::{NumBytes, Read, Write};
+use core::convert::{TryFrom, TryInto};
+use chrono::{SecondsFormat, TimeZone, Utc};
+#[cfg(feature = "std")]
+use serde::{Deserialize, ser::{Serialize, Serializer}};
 
 /// High resolution time point in microseconds
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy, Hash, Default)]
+#[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
 pub struct TimePoint(i64);
+
+#[cfg(feature = "std")]
+impl Serialize for TimePoint {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
 
 impl TimePoint {
     /// Gets the microseconds

@@ -1,9 +1,3 @@
-use core::iter::{IntoIterator, Iterator};
-
-use hex;
-
-use keys::secret::SecretKey;
-
 use crate::{
     Action,
     bitutil,
@@ -18,8 +12,14 @@ use crate::{
     Write,
     WriteError,
 };
+use core::iter::{IntoIterator, Iterator};
+use hex;
+use keys::secret::SecretKey;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 pub enum CompressionType {
     None,
     Zlib,
@@ -78,6 +78,7 @@ impl core::fmt::Display for CompressionType {
 }
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct PackedTransaction {
     pub signatures: Vec<crate::Signature>,

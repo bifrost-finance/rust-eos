@@ -10,8 +10,14 @@ use crate::{
     Signature,
     Write,
 };
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+//use serde::{Deserialize, ser::{Serialize, Serializer}};
+//#[cfg(feature = "std")]
+//use serde::ser::{self, Serializer, SerializeStruct};
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct BlockHeader {
     pub timestamp: BlockTimestamp,
@@ -101,6 +107,7 @@ impl BlockHeader {
 }
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct SignedBlockHeader {
     pub block_header: BlockHeader,

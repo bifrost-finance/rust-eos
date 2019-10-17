@@ -1,4 +1,6 @@
 use crate::{Checksum256, Signature, PublicKey, TimePoint, Read, Write, NumBytes};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 ///
 /// For a while, network version was a 16 bit value equal to the second set of 16 bits
@@ -24,6 +26,7 @@ pub const PROTO_EXPLICIT_SYNC: u16 = 1;
 pub const NET_VERSION: u16 = PROTO_EXPLICIT_SYNC;
 
 #[derive(Clone, Debug, Read, Write, NumBytes, Default, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct HandshakeMessage {
     network_version: u16,

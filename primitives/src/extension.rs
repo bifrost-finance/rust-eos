@@ -1,6 +1,9 @@
 use crate::{Read, Write, NumBytes};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct Extension(u16, Vec<u8>);
 
