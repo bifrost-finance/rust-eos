@@ -35,11 +35,12 @@ features = [
 keys = { package = "eos-keys", path = "../keys" }
 
 [features]
-default = []
+default = ["std"]
 use-web-sys = ["wasm-bindgen", "wasm-bindgen-futures", "js-sys", "web-sys"]
 use-hyper = ["hyper", "hyper-tls", "tokio"]
 use-stdweb = ["stdweb"]
 std = [
     "primitives/std",
     "serde/std",
+    "use-hyper",
 ]

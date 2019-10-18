@@ -140,7 +140,7 @@ mod tests {
         ).ok().unwrap();
         let action_transfer = ActionTransfer::from_str(
             "alice",
-            "testb",
+            "bob",
             "1.0000 EOS",
             "a memo"
         ).ok().unwrap();

@@ -9,7 +9,7 @@ bitcoin_hashes = "0.7"
 chrono = "0.4"
 eosio-core-derive = { path = "../eosio-core-derive" }
 hex = { version = "0.4", default-features = false }
-keys = { package = "eos-keys", path = "../keys" }
+keys = { package = "eos-keys", path = "../keys", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde-big-array = { version = "0.2", optional = true }
 
@@ -17,6 +17,7 @@ serde-big-array = { version = "0.2", optional = true }
 default = ["std"]
 std = [
     "hex/std",
+    "keys/std",
     "serde/std",
     "serde-big-array",
 ]
