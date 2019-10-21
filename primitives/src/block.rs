@@ -57,8 +57,8 @@ impl SerializeData for SignedBlock {}
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceipt {
-    trx_receipt_header: TransactionReceiptHeader,
-    trx: PackedTransaction,
+    pub trx_receipt_header: TransactionReceiptHeader,
+    pub trx: PackedTransaction,
 }
 
 impl core::fmt::Display for TransactionReceipt {

@@ -44,10 +44,10 @@ impl SerializeData for Action {}
 #[derive(Clone, Debug, Read, Write, NumBytes, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct ActionTransfer {
-    from: AccountName,
-    to: AccountName,
-    amount: Asset,
-    memo: String,
+    pub from: AccountName,
+    pub to: AccountName,
+    pub amount: Asset,
+    pub memo: String,
 }
 
 impl ActionTransfer {
