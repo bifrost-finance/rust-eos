@@ -105,7 +105,7 @@ impl From<TimePointSec> for BlockTimestamp {
     #[inline]
     fn from(t: TimePointSec) -> Self {
         let sec_since_epoch = t.sec_since_epoch();
-        Self((((sec_since_epoch * 1000) as u64 - BlockTimestamp::BLOCK_TIMESTAMP_EPOCH) / BlockTimestamp::BLOCK_INTERVAL_MS as u64) as u32)
+        Self((((sec_since_epoch as u64 * 1000) - BlockTimestamp::BLOCK_TIMESTAMP_EPOCH) / BlockTimestamp::BLOCK_INTERVAL_MS as u64) as u32)
     }
 }
 
