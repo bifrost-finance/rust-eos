@@ -21,6 +21,11 @@ impl TimePointSec {
     pub fn sec_since_epoch(&self) -> u32 {
         self.0
     }
+
+    pub fn now() -> Self {
+        let now = Utc::now().timestamp();
+        Self::from_unix_seconds(now as u32)
+    }
 }
 
 impl From<u32> for TimePointSec {

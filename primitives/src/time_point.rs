@@ -31,6 +31,15 @@ impl TimePoint {
     pub fn time_since_epoch(&self) -> i64 {
         self.0
     }
+
+    pub fn from_unix_nano_seconds(nano_sec: i64) -> Self {
+        Self(nano_sec)
+    }
+
+    pub fn now() -> Self {
+        let now = Utc::now().timestamp_nanos();
+        Self::from_unix_nano_seconds(now)
+    }
 }
 
 impl From<i64> for TimePoint {

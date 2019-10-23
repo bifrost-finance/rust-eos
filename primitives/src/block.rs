@@ -101,18 +101,12 @@ impl SerializeData for Vec<UnsignedInt> {}
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;
-    use std::time::{SystemTime, UNIX_EPOCH};
-
     use crate::*;
     use super::*;
 
     #[test]
     fn block_generate_should_work() {
-        let start = SystemTime::now();
-        let since_the_epoch = start
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards");
-        let tps = TimePointSec::from_unix_seconds(since_the_epoch.as_secs() as u32);
+        let tps = TimePointSec::now();
         let block_timestamp = BlockTimestamp::from(tps);
         let producer = AccountName::from_str("eosio").unwrap();
         let block_header = BlockHeader::new(
