@@ -5,9 +5,9 @@ use alloc::vec::Vec;
 use core::str::FromStr;
 
 #[cfg(feature = "std")]
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 #[cfg(feature = "std")]
-use serde::ser::{Serialize, Serializer, SerializeStruct};
+use serde::ser::{Serializer, SerializeStruct};
 
 use crate::{AccountName, ActionName, Asset, NumBytes, PermissionLevel, Read, SerializeData, Write};
 
@@ -48,32 +48,6 @@ impl Action {
 
 impl SerializeData for Action {}
 
-#[derive(Clone, Debug, Read, Write, NumBytes, Default)]
-#[eosio_core_root_path = "crate"]
-pub struct ActionTransfer {
-    pub from: AccountName,
-    pub to: AccountName,
-    pub amount: Asset,
-    pub memo: String,
-}
-
-impl ActionTransfer {
-    pub fn new(from: AccountName, to: AccountName, amount: Asset, memo: String) -> Self {
-        ActionTransfer { from, to, amount, memo }
-    }
-
-    pub fn from_str<T: AsRef<str>>(from: T, to: T, amount: T, memo: T)
-        -> Result<Self, crate::Error>
-    {
-        let from = AccountName::from_str(from.as_ref()).map_err(crate::Error::from)?;
-        let to = AccountName::from_str(to.as_ref()).map_err(crate::Error::from)?;
-        let amount = Asset::from_str(amount.as_ref()).map_err(crate::Error::from)?;
-        let memo = memo.as_ref().to_string();
-
-        Ok(ActionTransfer { from, to, amount, memo })
-    }
-}
-
 impl core::fmt::Display for Action {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "account: {}\n\
@@ -90,14 +64,48 @@ impl core::fmt::Display for Action {
 }
 
 #[cfg(feature = "std")]
-impl Serialize for Action {
+impl serde::ser::Serialize for Action {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        let mut state = serializer.serialize_struct("Action", 4)?;
+        let mut state = serializer.serialize_struct("Action", 5)?;
         state.serialize_field("account", &self.account)?;
         state.serialize_field("name", &self.name)?;
         state.serialize_field("authorization", &self.authorization)?;
-        state.serialize_field("data", &hex::encode(&self.data))?;
+        state.serialize_field("hex_data", &hex::encode(&self.data))?;
+        match (self.account.to_string().as_str(), self.name.to_string().as_str()) {
+            ("eosio.token", "transfer") => {
+                let data = ActionTransfer::read(&self.data, &mut 0).expect("Action read from data failed.");
+                state.serialize_field("data", &data)?;
+            },
+            _ => {}
+        }
         state.end()
+    }
+}
+
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug, Read, Write, NumBytes, Default)]
+#[eosio_core_root_path = "crate"]
+pub struct ActionTransfer {
+    pub from: AccountName,
+    pub to: AccountName,
+    pub quantity: Asset,
+    pub memo: String,
+}
+
+impl ActionTransfer {
+    pub fn new(from: AccountName, to: AccountName, quantity: Asset, memo: String) -> Self {
+        ActionTransfer { from, to, quantity, memo }
+    }
+
+    pub fn from_str<T: AsRef<str>>(from: T, to: T, quantity: T, memo: T)
+        -> Result<Self, crate::Error>
+    {
+        let from = AccountName::from_str(from.as_ref()).map_err(crate::Error::from)?;
+        let to = AccountName::from_str(to.as_ref()).map_err(crate::Error::from)?;
+        let quantity = Asset::from_str(quantity.as_ref()).map_err(crate::Error::from)?;
+        let memo = memo.as_ref().to_string();
+
+        Ok(ActionTransfer { from, to, quantity, memo })
     }
 }
 

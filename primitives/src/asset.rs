@@ -1,9 +1,5 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/asset.hpp#L18-L369>
-use crate::{
-    symbol_from_chars, CheckedAdd, CheckedDiv, CheckedMul, CheckedRem,
-    CheckedSub, NumBytes, ParseSymbolError, Read, Symbol, Write,
-};
-use alloc::{string::String, format};
+use alloc::{format, string::String};
 use core::{
     convert::TryFrom,
     fmt,
@@ -11,7 +7,16 @@ use core::{
     str::FromStr,
 };
 
+#[cfg(feature = "std")]
+use serde::{Deserialize};
+
+use crate::{
+    CheckedAdd, CheckedDiv, CheckedMul, CheckedRem, CheckedSub,
+    NumBytes, ParseSymbolError, Read, Symbol, symbol_from_chars, Write,
+};
+
 /// Stores information for owner of asset
+#[cfg_attr(feature = "std", derive(Deserialize))]
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Default, Read, Write, NumBytes)]
 #[eosio_core_root_path = "crate"]
 pub struct Asset {
@@ -49,6 +54,13 @@ impl fmt::Display for Asset {
             let fraction = formatted.get(index..).unwrap_or_else(|| "");
             write!(f, "{}.{} {}", whole, fraction, symbol_code)
         }
+    }
+}
+
+#[cfg(feature = "std")]
+impl serde::ser::Serialize for Asset {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: serde::ser::Serializer {
+        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -329,8 +341,9 @@ impl_op! {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use alloc::string::ToString;
+
+    use super::*;
 
     macro_rules! test_to_string {
         ($($name:ident, $amount:expr, $symbol:expr, $expected:expr)*) => ($(
