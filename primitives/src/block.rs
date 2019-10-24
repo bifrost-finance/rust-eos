@@ -1,4 +1,8 @@
 use crate::{
+    Action,
+    ActionName,
+    AccountName,
+    ActionTransfer,
     Checksum256,
     Extension,
     NumBytes,
@@ -6,11 +10,13 @@ use crate::{
     Read,
     SerializeData,
     SignedBlockHeader,
+    Transaction,
     UnsignedInt,
     Write
 };
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
@@ -97,6 +103,83 @@ impl SerializeData for Option<UnsignedInt> {}
 impl SerializeData for UnsignedInt {}
 impl SerializeData for Vec<UnsignedInt> {}
 
+#[derive(Clone, Debug)]
+pub struct FilterTransaction {
+    pub account: AccountName,
+    pub name: ActionName,
+}
+
+// filter transactions by account and name
+impl PartialEq<Action> for FilterTransaction {
+    fn eq(&self, rhs: &Action) -> bool {
+        self.account.eq(&rhs.account) && self.name.eq(&rhs.name)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum SeparateTransactions {
+    Deposit(ActionTransferStr),
+    Redeem(ActionTransferStr),
+}
+
+#[derive(Clone, Debug)]
+pub struct ActionTransferStr {
+    pub from: String,
+    pub to: String,
+    pub amount: String,
+    pub memo: String,
+}
+
+impl From<ActionTransfer> for ActionTransferStr {
+    fn from(tf: ActionTransfer) -> Self {
+        Self {
+            from: tf.from.to_string(),
+            to: tf.to.to_string(),
+            amount: tf.amount.to_string(),
+            memo: tf.memo.to_string(),
+        }
+    }
+}
+
+impl FilterTransaction {
+    pub fn from_str<T: AsRef<str>>(account: T, name: T) -> Result<Self, crate::error::Error> {
+        Ok(
+            Self {
+                account: AccountName::from_str(account.as_ref())?,
+                name: ActionName::from_str(name.as_ref())?,
+            }
+        )
+    }
+
+    pub fn filter_transactions(&self, blocks: &SignedBlock, banker: impl AsRef<str>)
+        -> Result<(Vec<SeparateTransactions>, Vec<SeparateTransactions>), crate::error::Error>
+    {
+        let mut deposit_data: Vec<SeparateTransactions> = vec![];
+        let mut redeem_data: Vec<SeparateTransactions> = vec![];
+        if !blocks.transactions.is_empty() {
+            for trx_receipt in &blocks.transactions {
+                let packet_trx = trx_receipt.trx.clone();
+                let trx = Transaction::from(packet_trx);
+                for ac in &trx.actions {
+                    if *self == *ac {
+                        let action_transfer = ActionTransfer::read(&ac.data, &mut 0)
+                                              .map_err(crate::error::Error::BytesReadError)?;
+                        if action_transfer.from.to_string().eq(banker.as_ref()) {
+                            deposit_data.push(
+                                SeparateTransactions::Deposit(ActionTransferStr::from(action_transfer))
+                            );
+                        } else {
+                            redeem_data.push(
+                                SeparateTransactions::Redeem(ActionTransferStr::from(action_transfer))
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        Ok((deposit_data, redeem_data))
+    }
+}
 
 #[cfg(test)]
 mod tests {
