@@ -25,7 +25,12 @@ impl Signature {
     }
 
     pub fn from_compact(data: &[u8; 65]) -> Result<Self, error::Error> {
-        let recv_id = RecoveryId::from_i32(data[0] as i32)?;
+        let id = if data[0] >= 31 {
+            (data[0] - 4 - 27) as i32
+        } else {
+            data[0] as i32
+        };
+        let recv_id = RecoveryId::from_i32(id)?;
         let recv_sig = RecoverableSignature::from_compact(&data[1..], recv_id)?;
         Ok(Self(recv_sig))
     }
