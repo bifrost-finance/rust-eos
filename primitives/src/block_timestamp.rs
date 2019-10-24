@@ -32,6 +32,10 @@ impl BlockTimestamp {
     pub const fn as_u32(self) -> u32 {
         self.0
     }
+
+    pub fn now() -> Self {
+        TimePointSec::now().into()
+    }
 }
 
 struct BlockTimestampVisitor;
@@ -114,5 +118,17 @@ impl core::fmt::Display for BlockTimestamp {
         let sec_since_epoch = (self.0 as i64 * BlockTimestamp::BLOCK_INTERVAL_MS as i64) + BlockTimestamp::BLOCK_TIMESTAMP_EPOCH as i64;
         let dt = Utc.timestamp_millis(sec_since_epoch);
         write!(f, "{}", dt.to_rfc3339_opts(SecondsFormat::Millis, true))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn time_should_work() {
+        let tps = TimePointSec::now();
+        let block_timestamp = BlockTimestamp::from(tps);
+        dbg!(&block_timestamp);
     }
 }

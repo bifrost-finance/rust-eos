@@ -1,3 +1,13 @@
+use core::iter::{IntoIterator, Iterator};
+
+use hex;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "std")]
+use serde::ser::{Serializer, SerializeStruct};
+
+use keys::secret::SecretKey;
+
 use crate::{
     Action,
     bitutil,
@@ -12,11 +22,6 @@ use crate::{
     Write,
     WriteError,
 };
-use core::iter::{IntoIterator, Iterator};
-use hex;
-use keys::secret::SecretKey;
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
@@ -78,7 +83,7 @@ impl core::fmt::Display for CompressionType {
 }
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
-#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
 pub struct PackedTransaction {
     pub signatures: Vec<crate::Signature>,
@@ -119,6 +124,21 @@ impl core::fmt::Display for PackedTransaction {
     }
 }
 
+#[cfg(feature = "std")]
+impl serde::ser::Serialize for PackedTransaction {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        let mut state = serializer.serialize_struct("PackedTransaction", 5)?;
+        state.serialize_field("signatures", &self.signatures)?;
+        state.serialize_field("compression", &self.compression)?;
+        state.serialize_field("packed_context_free_data", &self.packed_context_free_data)?;
+        state.serialize_field("packed_trx", &hex::encode(&self.packed_trx))?;
+        state.serialize_field("transaction", &Transaction::read(&self.packed_trx.as_slice(), &mut 0)
+            .expect("Transaction read from packed trx failed."))?;
+        state.end()
+    }
+}
+
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionHeader {
@@ -174,6 +194,7 @@ impl core::fmt::Display for TransactionHeader {
     }
 }
 
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[derive(NumBytes, Write, Read, Debug, Clone, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct Transaction {
@@ -184,7 +205,10 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub fn new(header: TransactionHeader, actions: Vec<Action>) -> Self {
+    pub fn new(delay_secs: u32, ref_block_num: u16, ref_block_prefix: u32, actions: Vec<Action>) -> Self {
+        let expiration = TimePointSec::now().add_seconds(delay_secs);
+        let header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
+
         Transaction {
             header,
             context_free_actions: vec![],
@@ -272,6 +296,7 @@ impl core::fmt::Display for Transaction {
 
 impl SerializeData for Transaction {}
 
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[derive(NumBytes, Write, Read, Debug, Clone, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct SignedTransaction {
@@ -308,8 +333,6 @@ impl From<u128> for DeferredTransactionId {
 #[cfg(feature = "std")]
 #[cfg(test)]
 mod test {
-    use std::time::{Duration, SystemTime, UNIX_EPOCH};
-
     use keys::secret::SecretKey;
 
     use crate::{ActionTransfer, PermissionLevel};
@@ -318,17 +341,6 @@ mod test {
 
     #[test]
     fn sign_tx_should_work() {
-        let sk = SecretKey::from_wif("5KUEhweMaSD2szyjU9EKjAyY642ZdVL2qzHW72dQcNRzUMWx9EL").unwrap();
-
-        let start = SystemTime::now().checked_add(Duration::from_secs(600)).unwrap();
-        let since_the_epoch = start
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards");
-
-        let expiration = TimePointSec::from_unix_seconds(since_the_epoch.as_secs() as u32);
-        let ref_block_num = 0;
-        let ref_block_prefix = 0;
-        let trx_header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
         let permission_level = PermissionLevel::from_str(
             "testa",
             "active"
@@ -346,16 +358,17 @@ mod test {
             action_transfer
         ).ok().unwrap();
         let actions = vec![action];
+        let trx = Transaction::new(300, 0, 0, actions);
 
         let chain_id = "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f".to_string();
-        let trx = Transaction::new(trx_header, actions);
+        let sk = SecretKey::from_wif("5KUEhweMaSD2szyjU9EKjAyY642ZdVL2qzHW72dQcNRzUMWx9EL").unwrap();
         let signed_trx = trx.sign(sk, chain_id);
         assert!(signed_trx.is_ok());
         assert_eq!(
             hex::encode(&trx.to_serialize_data()[4..]),
             "000000000000000000000100a6823403ea3055000000572d3ccdcd01000000000093b1ca00000000a8ed323227000000000093b1ca000000008093b1ca102700000000000004454f53000000000661206d656d6f00"
         );
-        dbg!(signed_trx.ok().unwrap());
+        println!("{}", serde_json::to_string_pretty(&signed_trx.ok().unwrap()).unwrap());
     }
 
     #[test]

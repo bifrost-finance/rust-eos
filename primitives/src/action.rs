@@ -1,12 +1,19 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/contracts/eosio/action.hpp#L249-L274>
-use crate::{AccountName, ActionName, NumBytes, PermissionLevel, Read, Write, Asset, SerializeData};
+use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
-use alloc::string::{String, ToString};
 use core::str::FromStr;
+
+#[cfg(feature = "std")]
+use serde::Deserialize;
+#[cfg(feature = "std")]
+use serde::ser::{Serialize, Serializer, SerializeStruct};
+
+use crate::{AccountName, ActionName, Asset, NumBytes, PermissionLevel, Read, SerializeData, Write};
 
 /// This is the packed representation of an action along with meta-data about
 /// the authorization levels.
+#[cfg_attr(feature = "std", derive(Deserialize))]
 #[derive(Clone, Debug, Read, Write, NumBytes, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct Action {
@@ -82,6 +89,18 @@ impl core::fmt::Display for Action {
     }
 }
 
+#[cfg(feature = "std")]
+impl Serialize for Action {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        let mut state = serializer.serialize_struct("Action", 4)?;
+        state.serialize_field("account", &self.account)?;
+        state.serialize_field("name", &self.name)?;
+        state.serialize_field("authorization", &self.authorization)?;
+        state.serialize_field("data", &hex::encode(&self.data))?;
+        state.end()
+    }
+}
+
 impl SerializeData for ActionTransfer {}
 
 pub trait ToAction: Write + NumBytes {
@@ -107,8 +126,9 @@ pub trait ToAction: Write + NumBytes {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use hex;
+
+    use super::*;
 
     #[test]
     fn action_should_work() {

@@ -1,9 +1,13 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/time.hpp#L79-L132>
+
 use chrono::{SecondsFormat, TimeZone, Utc};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 use crate::{NumBytes, Read, TimePoint, Write};
 
 /// A lower resolution `TimePoint` accurate only to seconds from 1970
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy, Hash, Default)]
 #[eosio_core_root_path = "crate"]
 pub struct TimePointSec(u32);
@@ -25,6 +29,11 @@ impl TimePointSec {
     pub fn now() -> Self {
         let now = Utc::now().timestamp();
         Self::from_unix_seconds(now as u32)
+    }
+
+    pub fn add_seconds(&mut self, t: u32) -> Self {
+        self.0 += t;
+        *self
     }
 }
 
