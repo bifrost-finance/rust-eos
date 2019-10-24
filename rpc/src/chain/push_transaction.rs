@@ -126,14 +126,7 @@ mod tests {
         let ref_block_num = (block.block_num & 0xffff) as u16;
         let ref_block_prefix = block.ref_block_prefix as u32;
 
-        let start = SystemTime::now().checked_add(Duration::from_secs(600)).unwrap();
-        let since_the_epoch = start
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards");
-
         // Construct action
-        let expiration = TimePointSec::from_unix_seconds(since_the_epoch.as_secs() as u32);
-        let trx_header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
         let permission_level = PermissionLevel::from_str(
             "alice",
             "active"
@@ -153,7 +146,7 @@ mod tests {
         let actions = vec![action];
 
         // Construct transaction
-        let trx = Transaction::new(trx_header, actions);
+        let trx = Transaction::new(300, ref_block_num, ref_block_prefix, actions);
         let signed_trx = trx.sign(sk, chain_id).ok().unwrap();
         dbg!(hex::encode(trx.to_serialize_data()));
         dbg!(signed_trx.clone());
@@ -183,14 +176,7 @@ mod tests {
 		let ref_block_num = (block.block_num & 0xffff) as u16;
 		let ref_block_prefix = block.ref_block_prefix as u32;
 
-		let start = SystemTime::now().checked_add(Duration::from_secs(600)).unwrap();
-		let since_the_epoch = start
-			.duration_since(UNIX_EPOCH)
-			.expect("Time went backwards");
-
 		// Construct action
-		let expiration = TimePointSec::from_unix_seconds(since_the_epoch.as_secs() as u32);
-		let trx_header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
 		let permission_level = PermissionLevel::from_str(
 			"alice",
 			"active"
@@ -210,7 +196,7 @@ mod tests {
 		let actions = vec![action];
 
 		// Construct transaction
-		let trx = Transaction::new(trx_header, actions);
+		let trx = Transaction::new(300, ref_block_num, ref_block_prefix, actions);
 		let signed = trx.generate_signature(&sk, &chain_id).ok().unwrap();
 		let signed1 = trx.generate_signature(&sk1, &chain_id).ok().unwrap();
 		let signeds = vec![signed, signed1];
