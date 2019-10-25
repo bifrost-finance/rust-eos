@@ -1,7 +1,10 @@
 use std::fmt;
-use crate::{base58, hash, error};
 use std::str::FromStr;
-use secp256k1::recovery::{RecoveryId, RecoverableSignature};
+
+use byteorder::{ByteOrder, LittleEndian};
+use secp256k1::recovery::{RecoverableSignature, RecoveryId};
+
+use crate::{base58, error, hash};
 
 /// An secp256k1 signature.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -51,13 +54,29 @@ impl FromStr for Signature {
         }
 
         let s_hex = base58::from(&s[7..])?;
+        // recovery id length: 1
+        // signature length: 64
+        // checksum length: 4
+        if s_hex.len() != 1 + 64 + 4 {
+            return Err(secp256k1::Error::InvalidSignature.into());
+        }
+
         let recid = match secp256k1::recovery::RecoveryId::from_i32((s_hex[0] - 4 - 27) as i32) {
             Ok(recid) => recid,
             Err(err) => return Err(err.into()),
         };
-        // TODO verify with checksum
         let data = &s_hex[1..65];
-        let _checksum = &s_hex[65..];
+
+        // Verify checksum
+        let mut checksum_data = [0u8; 67];
+        checksum_data[..65].copy_from_slice(&s_hex[..65]);
+        checksum_data[65..67].copy_from_slice(b"K1");
+        let expected = LittleEndian::read_u32(&hash::ripemd160(&checksum_data)[..4]);
+        let actual = LittleEndian::read_u32(&s_hex[65..69]);
+        if expected != actual {
+            return Err(base58::Error::BadChecksum(expected, actual).into());
+        }
+
         let rec_sig = match secp256k1::recovery::RecoverableSignature::from_compact(&data, recid) {
             Ok(rec_sig) => rec_sig,
             Err(err) => return Err(err.into()),
@@ -75,7 +94,7 @@ impl fmt::Display for Signature {
         let mut checksum_data: [u8; 67] = [0u8; 67];
         checksum_data[0] = recovery_id.to_i32() as u8 + 27 + 4;
         checksum_data[1..65].copy_from_slice(&sig[..]);
-        checksum_data[65..].copy_from_slice(b"K1");
+        checksum_data[65..67].copy_from_slice(b"K1");
 
         // Compute ripemd160 checksum
         let checksum_h160 = hash::ripemd160(&checksum_data);
@@ -84,7 +103,7 @@ impl fmt::Display for Signature {
         // Signature slice
         let mut sig_slice: [u8; 69] = [0u8; 69];
         sig_slice[..65].copy_from_slice(&checksum_data[..65]);
-        sig_slice[65..].copy_from_slice(&checksum[..]);
+        sig_slice[65..69].copy_from_slice(&checksum[..]);
 
         write!(f, "SIG_K1_{}", base58::encode_slice(&sig_slice))?;
 
@@ -94,8 +113,9 @@ impl fmt::Display for Signature {
 
 #[cfg(test)]
 mod test {
-    use super::Signature;
     use std::str::FromStr;
+
+    use super::Signature;
 
     #[test]
     fn sig_from_str_should_work() {

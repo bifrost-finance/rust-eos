@@ -41,7 +41,7 @@ impl PublicKey {
     /// Serialize the public key to Eos format string
     pub fn to_eos_fmt(&self) -> String {
         let h160 = hash::ripemd160(&self.key.serialize());
-        let mut public_key: [u8; PUBLIC_KEY_WITH_CHECKSUM_SIZE] = [0u8; PUBLIC_KEY_WITH_CHECKSUM_SIZE];
+        let mut public_key = [0u8; PUBLIC_KEY_WITH_CHECKSUM_SIZE];
         public_key[..PUBLIC_KEY_SIZE].copy_from_slice(self.to_bytes().as_ref());
         public_key[PUBLIC_KEY_SIZE..].copy_from_slice(&h160.take()[..PUBLIC_KEY_CHECKSUM_SIZE]);
 
@@ -98,15 +98,18 @@ impl FromStr for PublicKey {
     type Err = error::Error;
     fn from_str(s: &str) -> Result<PublicKey, error::Error> {
         if !s.starts_with("EOS") {
-            return Err(error::Error::Secp256k1(secp256k1::Error::InvalidPublicKey));
+            return Err(secp256k1::Error::InvalidPublicKey.into());
         }
 
         let s_hex = base58::from(&s[3..])?;
+        if s_hex.len() != PUBLIC_KEY_WITH_CHECKSUM_SIZE {
+            return Err(secp256k1::Error::InvalidPublicKey.into());
+        }
         let raw = &s_hex[..PUBLIC_KEY_SIZE];
 
         // Verify checksum
         let expected = LittleEndian::read_u32(&hash::ripemd160(raw)[..4]);
-        let actual = LittleEndian::read_u32(&s_hex[PUBLIC_KEY_SIZE..]);
+        let actual = LittleEndian::read_u32(&s_hex[PUBLIC_KEY_SIZE..PUBLIC_KEY_WITH_CHECKSUM_SIZE]);
         if expected != actual {
             return Err(base58::Error::BadChecksum(expected, actual).into());
         }
