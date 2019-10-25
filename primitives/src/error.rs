@@ -4,6 +4,8 @@ use keys::error as KeyError;
 
 use crate::{ParseAssetError, ParseNameError, ReadError, WriteError};
 
+pub type Result<T> = core::result::Result<T, Error>;
+
 #[derive(Clone, Debug)]
 pub enum Error {
     BytesReadError(ReadError),
@@ -14,4 +16,3 @@ pub enum Error {
     ParseNameErr(ParseNameError),
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
