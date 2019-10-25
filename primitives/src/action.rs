@@ -45,8 +45,8 @@ impl Action {
         Ok(Action { account, name, authorization, data })
     }
 
-    pub fn transfer(from: &str, to: &str, quantity: &str, memo: &str) -> crate::Result<Action> {
-        let permission_level = PermissionLevel::from_str(from, "active")?;
+    pub fn transfer<T: AsRef<str>>(from: T, to: T, quantity: T, memo: T) -> crate::Result<Action> {
+        let permission_level = PermissionLevel::from_str(from.as_ref(), "active")?;
         let action_transfer = ActionTransfer::from_str(from, to, quantity, memo)?;
         Action::from_str(
             "eosio.token",
