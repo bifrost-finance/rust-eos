@@ -96,13 +96,11 @@ pub struct ActionReceipt {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use primitives::{SerializeData, TimePointSec, TransactionHeader, PermissionLevel,
-        ActionTransfer, Action, Transaction};
+    use primitives::{SerializeData, Action, Transaction};
     use keys::secret::SecretKey;
     use hex;
     use crate::{HyperClient, GetInfo, GetBlock};
     use crate::{get_info, get_block};
-    use std::time::{Duration, SystemTime,UNIX_EPOCH};
 
     #[test]
     fn push_transaction_should_work() {
@@ -127,22 +125,7 @@ mod tests {
         let ref_block_prefix = block.ref_block_prefix as u32;
 
         // Construct action
-        let permission_level = PermissionLevel::from_str(
-            "alice",
-            "active"
-        ).ok().unwrap();
-        let action_transfer = ActionTransfer::from_str(
-            "alice",
-            "bob",
-            "1.0000 EOS",
-            "a memo"
-        ).ok().unwrap();
-        let action = Action::from_str(
-            "eosio.token",
-            "transfer",
-            vec![permission_level],
-            action_transfer
-        ).ok().unwrap();
+        let action = Action::transfer("alice", "bob", "1.0000 EOS", "a memo").ok().unwrap();
         let actions = vec![action];
 
         // Construct transaction
@@ -177,23 +160,8 @@ mod tests {
 		let ref_block_prefix = block.ref_block_prefix as u32;
 
 		// Construct action
-		let permission_level = PermissionLevel::from_str(
-			"alice",
-			"active"
-		).ok().unwrap();
-		let action_transfer = ActionTransfer::from_str(
-			"alice",
-			"testb",
-			"1.0000 EOS",
-			"a memo"
-		).ok().unwrap();
-		let action = Action::from_str(
-			"eosio.token",
-			"transfer",
-			vec![permission_level],
-			action_transfer
-		).ok().unwrap();
-		let actions = vec![action];
+        let action = Action::transfer("alice", "testb", "1.0000 EOS", "a memo").ok().unwrap();
+        let actions = vec![action];
 
 		// Construct transaction
 		let trx = Transaction::new(300, ref_block_num, ref_block_prefix, actions);
