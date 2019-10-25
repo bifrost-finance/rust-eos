@@ -61,7 +61,7 @@ impl PartialEq for PublicKey {
 }
 
 impl std::fmt::Debug for PublicKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         std::fmt::Debug::fmt(&self.type_, f)?;
         std::fmt::Debug::fmt(self.as_bytes(), f)
     }

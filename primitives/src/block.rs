@@ -135,14 +135,14 @@ impl From<ActionTransfer> for ActionTransferStr {
         Self {
             from: tf.from.to_string(),
             to: tf.to.to_string(),
-            amount: tf.amount.to_string(),
+            amount: tf.quantity.to_string(),
             memo: tf.memo.to_string(),
         }
     }
 }
 
 impl FilterTransaction {
-    pub fn from_str<T: AsRef<str>>(account: T, name: T) -> Result<Self, crate::error::Error> {
+    pub fn from_str<T: AsRef<str>>(account: T, name: T) -> crate::Result<Self> {
         Ok(
             Self {
                 account: AccountName::from_str(account.as_ref())?,
@@ -152,7 +152,7 @@ impl FilterTransaction {
     }
 
     pub fn filter_transactions(&self, blocks: &SignedBlock, banker: impl AsRef<str>)
-        -> Result<(Vec<SeparateTransactions>, Vec<SeparateTransactions>), crate::error::Error>
+        -> crate::Result<(Vec<SeparateTransactions>, Vec<SeparateTransactions>)>
     {
         let mut deposit_data: Vec<SeparateTransactions> = vec![];
         let mut redeem_data: Vec<SeparateTransactions> = vec![];

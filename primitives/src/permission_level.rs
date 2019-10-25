@@ -16,7 +16,7 @@ impl PermissionLevel {
         PermissionLevel { actor, permission }
     }
 
-    pub fn from_str<T: AsRef<str>>(actor: T, permission: T) -> Result<Self, crate::Error> {
+    pub fn from_str<T: AsRef<str>>(actor: T, permission: T) -> crate::Result<Self> {
         let actor = AccountName::from_str(actor.as_ref()).map_err(crate::Error::from)?;
         let permission = PermissionName::from_str(permission.as_ref()).map_err(crate::Error::from)?;
 

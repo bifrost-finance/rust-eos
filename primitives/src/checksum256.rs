@@ -61,7 +61,7 @@ impl Checksum256 {
         self.0[3] = (hash0 >> 24) as u8;
     }
 
-    pub fn hash<T: Write + NumBytes>(t: T) -> core::result::Result<Checksum256, crate::error::Error> {
+    pub fn hash<T: Write + NumBytes>(t: T) -> crate::Result<Checksum256> {
         let mut data = vec![0u8; t.num_bytes()];
         t.write(&mut data, &mut 0).map_err(crate::error::Error::BytesWriteError)?;
 

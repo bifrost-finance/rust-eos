@@ -230,7 +230,7 @@ impl Transaction {
         }
     }
 
-    pub fn sign(&self, sk: SecretKey, chain_id: String) -> Result<SignedTransaction, crate::error::Error> {
+    pub fn sign(&self, sk: SecretKey, chain_id: String) -> crate::Result<SignedTransaction> {
         let mut sign_data: Vec<u8>  = Vec::new();
         let mut chain_id_hex = hex::decode(chain_id)
             .map_err(crate::error::Error::FromHexError)?;
@@ -247,7 +247,7 @@ impl Transaction {
         })
     }
 
-    pub fn generate_signature(&self, sk: impl AsRef<str>, chain_id: impl AsRef<str>) -> Result<keys::signature::Signature, crate::error::Error> {
+    pub fn generate_signature(&self, sk: impl AsRef<str>, chain_id: impl AsRef<str>) -> crate::Result<keys::signature::Signature> {
         let sk = SecretKey::from_wif(sk.as_ref()).map_err(crate::error::Error::Keys)?;
         let mut chain_id_hex = hex::decode(chain_id.as_ref())
             .map_err(crate::error::Error::FromHexError)?;

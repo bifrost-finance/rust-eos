@@ -6,10 +6,12 @@ use crate::{ParseAssetError, ParseNameError, ReadError, WriteError};
 
 #[derive(Clone, Debug)]
 pub enum Error {
-    ParseNameErr(ParseNameError),
-    ParseAssetErr(ParseAssetError),
-    FromHexError(hex::FromHexError),
-    Keys(KeyError::Error),
     BytesReadError(ReadError),
     BytesWriteError(WriteError),
+    FromHexError(hex::FromHexError),
+    Keys(KeyError::Error),
+    ParseAssetErr(ParseAssetError),
+    ParseNameErr(ParseNameError),
 }
+
+pub type Result<T> = std::result::Result<T, Error>;

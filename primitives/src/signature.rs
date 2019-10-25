@@ -47,7 +47,7 @@ impl Default for Signature {
 }
 
 impl core::fmt::Debug for Signature {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         std::fmt::Debug::fmt(&self.type_, f)?;
         core::fmt::Debug::fmt(self.as_bytes(), f)
     }
