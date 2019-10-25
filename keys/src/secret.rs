@@ -64,19 +64,19 @@ impl SecretKey {
     }
 
     /// Parse WIF encoded private key.
-    pub fn from_wif(wif: &str) -> Result<SecretKey, error::Error> {
+    pub fn from_wif(wif: &str) -> crate::Result<SecretKey> {
         let data = base58::from_check(wif)?;
 
         let compressed = match data.len() {
             33 => false,
             34 => true,
-            _ => { return Err(error::Error::Base58(base58::Error::InvalidLength(data.len()))); }
+            _ => { return Err(base58::Error::InvalidLength(data.len()).into()); }
         };
 
         let network = match data[0] {
             128 => Network::Mainnet,
             239 => Network::Testnet,
-            x => { return Err(error::Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
+            x => { return Err(base58::Error::InvalidVersion(vec![x]).into()); }
         };
 
         Ok(SecretKey {
@@ -87,7 +87,7 @@ impl SecretKey {
     }
 
     /// Deserialize a secret key from a slice
-    pub fn from_slice(data: &[u8]) -> Result<SecretKey, error::Error> {
+    pub fn from_slice(data: &[u8]) -> crate::Result<SecretKey> {
         let compressed: bool = match data.len() {
             33 => true,
             65 => false,
@@ -97,23 +97,20 @@ impl SecretKey {
         Ok(SecretKey {
             compressed,
             network: Mainnet,
-            key: secp256k1::SecretKey::from_slice(data).unwrap(),
+            key: secp256k1::SecretKey::from_slice(data)?,
         })
     }
 
     /// Sign a message with secret key
-    pub fn sign(&self, message_slice: &[u8]) -> Result<Signature, error::Error> {
+    pub fn sign(&self, message_slice: &[u8]) -> crate::Result<Signature> {
         let msg_hash = sha256::Hash::hash(&message_slice);
         self.sign_hash(&msg_hash)
     }
 
     /// Sign a hash with secret key
-    pub fn sign_hash(&self, hash: &[u8]) -> Result<Signature, error::Error> {
+    pub fn sign_hash(&self, hash: &[u8]) -> crate::Result<Signature> {
         let secp = Secp256k1::signing_only();
-        let msg = match Message::from_slice(&hash) {
-            Ok(msg) => msg,
-            Err(err) => return Err(err.into()),
-        };
+        let msg = Message::from_slice(&hash)?;
         let recv_sig = secp.sign_canonical(&msg, &self.key);
 
         Ok(Signature::from(recv_sig))
@@ -134,7 +131,7 @@ impl fmt::Debug for SecretKey {
 
 impl FromStr for SecretKey {
     type Err = error::Error;
-    fn from_str(s: &str) -> Result<SecretKey, error::Error> {
+    fn from_str(s: &str) -> crate::Result<SecretKey> {
         SecretKey::from_wif(s)
     }
 }

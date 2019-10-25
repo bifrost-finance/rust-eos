@@ -49,24 +49,22 @@ impl PublicKey {
     }
 
     /// Verify a signature on a message with public key.
-    pub fn verify(&self, message_slice: &[u8], signature: &Signature) -> Result<(), error::Error> {
+    pub fn verify(&self, message_slice: &[u8], signature: &Signature) -> crate::Result<()> {
         let msg_hash = sha256::Hash::hash(&message_slice);
         self.verify_hash(&msg_hash, &signature)
     }
 
     /// Verify a signature on a hash with public key.
-    pub fn verify_hash(&self, hash: &[u8], signature: &Signature) -> Result<(), error::Error> {
+    pub fn verify_hash(&self, hash: &[u8], signature: &Signature) -> crate::Result<()> {
         let secp = Secp256k1::verification_only();
         let msg = Message::from_slice(&hash).unwrap();
+        secp.verify(&msg, &signature.to_standard(), &self.key)?;
 
-        match secp.verify(&msg, &signature.to_standard(), &self.key) {
-            Ok(()) => Ok(()),
-            Err(err) => Err(err.into()),
-        }
+        Ok(())
     }
 
     /// Deserialize a public key from a slice
-    pub fn from_slice(data: &[u8]) -> Result<PublicKey, error::Error> {
+    pub fn from_slice(data: &[u8]) -> crate::Result<PublicKey> {
         let compressed: bool = match data.len() {
             PUBLIC_KEY_SIZE => true,
             UNCOMPRESSED_PUBLIC_KEY_SIZE => false,
@@ -96,7 +94,7 @@ impl fmt::Display for PublicKey {
 
 impl FromStr for PublicKey {
     type Err = error::Error;
-    fn from_str(s: &str) -> Result<PublicKey, error::Error> {
+    fn from_str(s: &str) -> crate::Result<PublicKey> {
         if !s.starts_with("EOS") {
             return Err(secp256k1::Error::InvalidPublicKey.into());
         }

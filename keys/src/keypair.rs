@@ -1,6 +1,5 @@
 use rand::{CryptoRng, Rng};
 use crate::constant::*;
-use crate::error;
 use crate::public::PublicKey;
 use crate::secret::SecretKey;
 use crate::signature::Signature;
@@ -25,7 +24,7 @@ impl Keypair {
     }
 
     /// Generate an secp256k1 keypair from secret in WIF format
-    pub fn from_secret_wif(wif: &str) -> Result<Keypair, error::Error> {
+    pub fn from_secret_wif(wif: &str) -> crate::Result<Keypair> {
         let sk = SecretKey::from_wif(wif)?;
         let pk = PublicKey::from(&sk);
 
@@ -43,12 +42,12 @@ impl Keypair {
     }
 
     /// Sign a message with this keypair's secret key.
-    pub fn sign(&self, message: &[u8]) -> Result<Signature, error::Error> {
+    pub fn sign(&self, message: &[u8]) -> crate::Result<Signature> {
         self.sk.sign(&message)
     }
 
     /// Verify a signature on a message with this keypair's public key
-    pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), error::Error> {
+    pub fn verify(&self, message: &[u8], signature: &Signature) -> crate::Result<()> {
         self.pk.verify(&message, &signature)
     }
 }

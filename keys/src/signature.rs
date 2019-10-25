@@ -27,7 +27,7 @@ impl Signature {
         data
     }
 
-    pub fn from_compact(data: &[u8; 65]) -> Result<Self, error::Error> {
+    pub fn from_compact(data: &[u8; 65]) -> crate::Result<Self> {
         let id = if data[0] >= 31 {
             (data[0] - 4 - 27) as i32
         } else {
@@ -48,9 +48,9 @@ impl From<RecoverableSignature> for Signature {
 impl FromStr for Signature {
     type Err = error::Error;
 
-    fn from_str(s: &str) -> Result<Signature, error::Error> {
+    fn from_str(s: &str) -> crate::Result<Signature> {
         if !s.starts_with("SIG_K1_") {
-            return Err(error::Error::Secp256k1(secp256k1::Error::InvalidSignature));
+            return Err(secp256k1::Error::InvalidSignature.into());
         }
 
         let s_hex = base58::from(&s[7..])?;
@@ -61,10 +61,7 @@ impl FromStr for Signature {
             return Err(secp256k1::Error::InvalidSignature.into());
         }
 
-        let recid = match secp256k1::recovery::RecoveryId::from_i32((s_hex[0] - 4 - 27) as i32) {
-            Ok(recid) => recid,
-            Err(err) => return Err(err.into()),
-        };
+        let recid = secp256k1::recovery::RecoveryId::from_i32((s_hex[0] - 4 - 27) as i32)?;
         let data = &s_hex[1..65];
 
         // Verify checksum
@@ -77,10 +74,7 @@ impl FromStr for Signature {
             return Err(base58::Error::BadChecksum(expected, actual).into());
         }
 
-        let rec_sig = match secp256k1::recovery::RecoverableSignature::from_compact(&data, recid) {
-            Ok(rec_sig) => rec_sig,
-            Err(err) => return Err(err.into()),
-        };
+        let rec_sig = secp256k1::recovery::RecoverableSignature::from_compact(&data, recid)?;
 
         Ok(Signature(rec_sig))
     }

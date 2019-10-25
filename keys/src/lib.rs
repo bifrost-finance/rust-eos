@@ -8,3 +8,5 @@ mod constant;
 mod hash;
 mod base58;
 mod network;
+
+use error::Result;

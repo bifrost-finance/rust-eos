@@ -3,11 +3,13 @@ use std::fmt;
 use secp256k1;
 use crate::base58;
 
+pub type Result<T> = core::result::Result<T, Error>;
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),
-    /// secp-related error
+    /// secp256k1-related error
     Secp256k1(secp256k1::Error),
 }
 
