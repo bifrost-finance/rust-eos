@@ -68,7 +68,6 @@ impl core::fmt::Display for Action {
             self.account,
             self.name,
             self.authorization.iter().map(|item| format!("{}", item)).collect::<String>(),
-            // TODO display data,
             hex::encode(&self.data),
         )
     }

@@ -1,12 +1,14 @@
-use std::{io, fmt, str::FromStr};
-use secp256k1::{self, Secp256k1, Message};
-use crate::constant::*;
-use crate::{error, hash};
-use crate::secret::SecretKey;
-use crate::base58;
-use crate::signature::Signature;
-use bitcoin_hashes::{sha256, Hash as HashTrait};
+use std::{fmt, io, str::FromStr};
 
+use bitcoin_hashes::{Hash as HashTrait, sha256};
+use byteorder::{ByteOrder, LittleEndian};
+use secp256k1::{self, Message, Secp256k1};
+
+use crate::{error, hash};
+use crate::base58;
+use crate::constant::*;
+use crate::secret::SecretKey;
+use crate::signature::Signature;
 
 /// A Secp256k1 public key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -101,8 +103,14 @@ impl FromStr for PublicKey {
 
         let s_hex = base58::from(&s[3..])?;
         let raw = &s_hex[..PUBLIC_KEY_SIZE];
-        // TODO verify with checksum
-        let _checksum = &s_hex[PUBLIC_KEY_SIZE..];
+
+        // Verify checksum
+        let expected = LittleEndian::read_u32(&hash::ripemd160(raw)[..4]);
+        let actual = LittleEndian::read_u32(&s_hex[PUBLIC_KEY_SIZE..]);
+        if expected != actual {
+            return Err(base58::Error::BadChecksum(expected, actual).into());
+        }
+
         let key = secp256k1::PublicKey::from_slice(&raw)?;
 
         Ok(PublicKey { key, compressed: true })
@@ -123,12 +131,15 @@ impl<'a> From<&'a SecretKey> for PublicKey {
 
 #[cfg(test)]
 mod test {
-    use super::PublicKey;
     use std::str::FromStr;
-    use crate::error;
-    use crate::signature::Signature;
+
     use secp256k1::Error::IncorrectSignature;
+
+    use crate::error;
     use crate::error::Error::Secp256k1;
+    use crate::signature::Signature;
+
+    use super::PublicKey;
 
     #[test]
     fn pk_from_str_should_work() {
