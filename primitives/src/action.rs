@@ -44,6 +44,17 @@ impl Action {
 
         Ok(Action { account, name, authorization, data })
     }
+
+    pub fn transfer(from: &str, to: &str, quantity: &str, memo: &str) -> crate::Result<Action> {
+        let permission_level = PermissionLevel::from_str(from, "active")?;
+        let action_transfer = ActionTransfer::from_str(from, to, quantity, memo)?;
+        Action::from_str(
+            "eosio.token",
+            "transfer",
+            vec![permission_level],
+            action_transfer
+        )
+    }
 }
 
 impl SerializeData for Action {}
@@ -138,23 +149,7 @@ mod tests {
 
     #[test]
     fn action_should_work() {
-        let permission_level = PermissionLevel::from_str(
-            "testa",
-            "active"
-        ).ok().unwrap();
-        let action_transfer = ActionTransfer::from_str(
-            "testa",
-            "testb",
-            "1.0000 EOS",
-            "a memo"
-        ).ok().unwrap();
-        let action = Action::from_str(
-            "eosio.token",
-            "transfer",
-            vec![permission_level],
-            action_transfer
-        ).ok().unwrap();
-
+        let action = Action::transfer("testa", "testb", "1.0000 EOS", "a memo").ok().unwrap();
         let data = action.to_serialize_data();
         assert_eq!(
             hex::encode(data),

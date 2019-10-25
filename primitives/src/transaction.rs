@@ -335,28 +335,11 @@ impl From<u128> for DeferredTransactionId {
 mod test {
     use keys::secret::SecretKey;
 
-    use crate::{ActionTransfer, PermissionLevel};
-
     use super::*;
 
     #[test]
     fn sign_tx_should_work() {
-        let permission_level = PermissionLevel::from_str(
-            "testa",
-            "active"
-        ).ok().unwrap();
-        let action_transfer = ActionTransfer::from_str(
-            "testa",
-            "testb",
-            "1.0000 EOS",
-            "a memo"
-        ).ok().unwrap();
-        let action = Action::from_str(
-            "eosio.token",
-            "transfer",
-            vec![permission_level],
-            action_transfer
-        ).ok().unwrap();
+        let action = Action::transfer("testa", "testb", "1.0000 EOS", "a memo").ok().unwrap();
         let actions = vec![action];
         let trx = Transaction::new(300, 0, 0, actions);
 
