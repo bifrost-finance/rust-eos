@@ -41,7 +41,7 @@ impl PublicKey {
 impl TryFrom<PublicKey> for keys::public::PublicKey {
     type Error = crate::error::Error;
     fn try_from(pk: PublicKey) -> Result<Self, Self::Error> {
-        keys::public::PublicKey::from_slice(&pk.data).map_err(Self::Error::PublicKeyError)
+        keys::public::PublicKey::from_slice(&pk.data).map_err(Self::Error::Keys)
     }
 }
 

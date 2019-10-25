@@ -12,5 +12,4 @@ pub enum Error {
     Keys(KeyError::Error),
     BytesReadError(ReadError),
     BytesWriteError(WriteError),
-    PublicKeyError(KeyError::Error),
 }
