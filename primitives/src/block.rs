@@ -104,44 +104,25 @@ impl SerializeData for UnsignedInt {}
 impl SerializeData for Vec<UnsignedInt> {}
 
 #[derive(Clone, Debug)]
-pub struct FilterTransaction {
+pub struct ActionFilter {
     pub account: AccountName,
     pub name: ActionName,
 }
 
 // filter transactions by account and name
-impl PartialEq<Action> for FilterTransaction {
+impl PartialEq<Action> for ActionFilter {
     fn eq(&self, rhs: &Action) -> bool {
         self.account.eq(&rhs.account) && self.name.eq(&rhs.name)
     }
 }
 
 #[derive(Clone, Debug)]
-pub enum SeparateTransactions {
-    Deposit(ActionTransferStr),
-    Redeem(ActionTransferStr),
+pub enum ActionType {
+    Deposit(ActionTransfer),
+    Withdraw(ActionTransfer),
 }
 
-#[derive(Clone, Debug)]
-pub struct ActionTransferStr {
-    pub from: String,
-    pub to: String,
-    pub amount: String,
-    pub memo: String,
-}
-
-impl From<ActionTransfer> for ActionTransferStr {
-    fn from(tf: ActionTransfer) -> Self {
-        Self {
-            from: tf.from.to_string(),
-            to: tf.to.to_string(),
-            amount: tf.quantity.to_string(),
-            memo: tf.memo.to_string(),
-        }
-    }
-}
-
-impl FilterTransaction {
+impl ActionFilter {
     pub fn from_str<T: AsRef<str>>(account: T, name: T) -> crate::Result<Self> {
         Ok(
             Self {
@@ -151,11 +132,11 @@ impl FilterTransaction {
         )
     }
 
-    pub fn filter_transactions(&self, blocks: &SignedBlock, banker: impl AsRef<str>)
-        -> crate::Result<(Vec<SeparateTransactions>, Vec<SeparateTransactions>)>
+    pub fn filter(&self, blocks: &SignedBlock, banker: &AccountName)
+        -> crate::Result<(Vec<ActionType>, Vec<ActionType>)>
     {
-        let mut deposit_data: Vec<SeparateTransactions> = vec![];
-        let mut redeem_data: Vec<SeparateTransactions> = vec![];
+        let mut deposits: Vec<ActionType> = vec![];
+        let mut withdraws: Vec<ActionType> = vec![];
         if !blocks.transactions.is_empty() {
             for trx_receipt in &blocks.transactions {
                 let packet_trx = trx_receipt.trx.clone();
@@ -163,28 +144,27 @@ impl FilterTransaction {
                 for ac in &trx.actions {
                     if *self == *ac {
                         let action_transfer = ActionTransfer::read(&ac.data, &mut 0)
-                                              .map_err(crate::error::Error::BytesReadError)?;
-                        if action_transfer.from.to_string().eq(banker.as_ref()) {
-                            deposit_data.push(
-                                SeparateTransactions::Deposit(ActionTransferStr::from(action_transfer))
-                            );
-                        } else {
-                            redeem_data.push(
-                                SeparateTransactions::Redeem(ActionTransferStr::from(action_transfer))
-                            );
+                            .map_err(crate::Error::BytesReadError)?;
+                        if action_transfer.from.eq(banker) {
+                            deposits.push(ActionType::Withdraw(action_transfer));
+                        } else if action_transfer.to.eq(banker) {
+                            withdraws.push(ActionType::Deposit(action_transfer));
                         }
                     }
                 }
             }
         }
-        Ok((deposit_data, redeem_data))
+        Ok((deposits, withdraws))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;
-    use crate::*;
+    use crate::{
+        TransactionReceipt, SignedTransaction, Transaction, Action, ActionTransfer,
+        AccountName, ActionName, BlockHeader, BlockTimestamp, Asset
+    };
     use super::*;
 
     #[test]
@@ -231,5 +211,60 @@ mod tests {
         let header = TransactionReceiptHeader::read(&data.as_slice(), &mut pos).unwrap();
         dbg!(&header);
         dbg!(&pos);
+    }
+
+    #[test]
+    fn action_filter_should_work() {
+        let alice = AccountName::from_str("alice").unwrap();
+        let bob = AccountName::from_str("bob").unwrap();
+
+        let account = AccountName::from_str("eosio.token").unwrap();
+        let name = ActionName::from_str("transfer").unwrap();
+
+        let transfer = ActionTransfer {
+            from: alice,
+            to: bob,
+            quantity: Asset::from_str("1.0000 EOS").unwrap(),
+            memo: "test transfer".to_string()
+        };
+        let action = Action {
+            account,
+            name,
+            data: transfer.to_serialize_data(),
+            ..Default::default()
+        };
+        let raw_trx = Transaction {
+            actions: vec![action],
+            ..Default::default()
+        };
+
+        let signed_trx = SignedTransaction {
+            trx: raw_trx,
+            ..Default::default()
+        };
+
+        let tx_receipt = TransactionReceipt {
+            trx: PackedTransaction::from(signed_trx),
+            ..Default::default()
+        };
+
+        let block = SignedBlock {
+            transactions: vec![tx_receipt],
+            ..Default::default()
+        };
+
+        let filter = ActionFilter {
+            account,
+            name,
+        };
+
+        let output = filter.filter(&block, &alice).unwrap();
+
+        match output.0[0] {
+            ActionType::Withdraw(_) => assert!(true),
+            _ => assert!(false),
+        }
+
+        assert_eq!(output.1.len(), 0);
     }
 }
