@@ -132,11 +132,8 @@ impl ActionFilter {
         )
     }
 
-    pub fn filter(&self, blocks: &SignedBlock, banker: &AccountName)
-        -> crate::Result<(Vec<ActionType>, Vec<ActionType>)>
-    {
-        let mut deposits: Vec<ActionType> = vec![];
-        let mut withdraws: Vec<ActionType> = vec![];
+    pub fn filter(&self, blocks: &SignedBlock, banker: &AccountName) -> crate::Result<Vec<ActionType>> {
+        let mut output: Vec<ActionType> = vec![];
         if !blocks.transactions.is_empty() {
             for trx_receipt in &blocks.transactions {
                 let packet_trx = trx_receipt.trx.clone();
@@ -146,15 +143,15 @@ impl ActionFilter {
                         let action_transfer = ActionTransfer::read(&ac.data, &mut 0)
                             .map_err(crate::Error::BytesReadError)?;
                         if action_transfer.from.eq(banker) {
-                            deposits.push(ActionType::Withdraw(action_transfer));
+                            output.push(ActionType::Withdraw(action_transfer));
                         } else if action_transfer.to.eq(banker) {
-                            withdraws.push(ActionType::Deposit(action_transfer));
+                            output.push(ActionType::Deposit(action_transfer));
                         }
                     }
                 }
             }
         }
-        Ok((deposits, withdraws))
+        Ok(output)
     }
 }
 
@@ -260,11 +257,10 @@ mod tests {
 
         let output = filter.filter(&block, &alice).unwrap();
 
-        match output.0[0] {
+        assert_eq!(output.len(), 1);
+        match output[0] {
             ActionType::Withdraw(_) => assert!(true),
             _ => assert!(false),
         }
-
-        assert_eq!(output.1.len(), 0);
     }
 }
