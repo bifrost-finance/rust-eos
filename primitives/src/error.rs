@@ -2,7 +2,7 @@ use hex;
 
 use keys::error as KeyError;
 
-use crate::{ParseAssetError, ParseNameError, ReadError, WriteError};
+use crate::{ParseAssetError, ParseNameError, ParseSymbolError, ReadError, WriteError};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -14,5 +14,6 @@ pub enum Error {
     Keys(KeyError::Error),
     ParseAssetErr(ParseAssetError),
     ParseNameErr(ParseNameError),
+    ParseSymbolError(ParseSymbolError),
 }
 
