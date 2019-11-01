@@ -1,11 +1,13 @@
+use alloc::collections::BTreeMap as Map;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use core::{fmt, marker::PhantomData, str::FromStr};
 use crate::Client;
 use primitives::names::{AccountName, ActionName};
 use primitives::permission_level::PermissionLevel;
 use rpc_codegen::Fetch;
-use serde::{Deserialize, Serialize};
-
+use serde::{Deserialize, Deserializer, Serialize};
+use serde::de::{self, Visitor, MapAccess};
 
 #[derive(Fetch, Debug, Clone, Serialize)]
 #[api(path="v1/chain/get_block", http_method="POST", returns="GetBlock")]
@@ -56,10 +58,13 @@ pub struct Transaction {
     pub status: String,
     pub cpu_usage_us: u64,
     pub net_usage_words: u64,
+    #[serde(deserialize_with = "string_or_struct")]
+    // sometimes, trx like 34e9b611b4fe7e6d82c30735f758d2def71e4c4af94e1fa691dc113179265338,
+    // sometimes like a json object, need to customize deserialize the field trx.
     pub trx: Trx,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct Trx {
     pub id: String,
     pub signatures: Vec<String>,
@@ -69,7 +74,52 @@ pub struct Trx {
     pub transaction: TransactionInner,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+impl FromStr for Trx {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Trx {
+            id: s.to_string(),
+            ..Default::default()
+        })
+    }
+}
+
+fn string_or_struct<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+    where
+        T: Deserialize<'de> + FromStr<Err = ()>,
+        D: Deserializer<'de>,
+{
+    struct StringOrStruct<T>(PhantomData<fn() -> T>);
+
+    impl<'de, T> Visitor<'de> for StringOrStruct<T>
+        where
+            T: Deserialize<'de> + FromStr<Err = ()>,
+    {
+        type Value = T;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("string or map")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<T, E>
+            where
+                E: de::Error,
+        {
+            Ok(FromStr::from_str(value).unwrap())
+        }
+
+        fn visit_map<M>(self, map: M) -> Result<T, M::Error>
+            where
+                M: MapAccess<'de>,
+        {
+            Deserialize::deserialize(de::value::MapAccessDeserializer::new(map))
+        }
+    }
+
+    deserializer.deserialize_any(StringOrStruct(PhantomData))
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TransactionInner {
     pub expiration: String,
     pub ref_block_num: u64,
@@ -87,7 +137,16 @@ pub struct Action {
     pub account: AccountName,
     pub name: ActionName,
     pub authorization: Vec<PermissionLevel>,
-    pub data: Vec<u8>,
+    // actually, data is like this
+    // "data": {
+    //      "from": "eeoosssanguo",
+    //      "opid": 2413859,
+    //      "op": "mountadopt",
+    //      "sig": "SIG_K1_KfBESRhJv7inodgdbAcYNf7ARmCgEDwCVHxZX8ci7pAdtfRdRDcXztgSMzUhF6KUhNeTvnv1jbQoUfdM7kgFC12sAxwaj9"
+    //  },
+    // need a customized deserialization
+    // Todo, need to deserialize data as u8 array
+    // pub data: Vec<u8>,
     pub hex_data: String,
 }
 
@@ -96,6 +155,23 @@ pub struct Action {
 mod test {
     use super::*;
     use crate::HyperClient;
+
+    #[test]
+    fn test_block_deserialization() {
+        let node: &'static str = "https://eos.greymass.com/";
+        let hyper_client = HyperClient::new(node);
+
+        // fetch a block that has lots of transactions.
+        // ensure there's no problem on deserialization on GetBlock
+        let mut block_id = "85638240";
+        let response = get_block(block_id).fetch(&hyper_client);
+        assert!(response.is_ok());
+
+        // fetch a block with no transaction.
+        block_id = "1";
+        let response = get_block(block_id).fetch(&hyper_client);
+        assert!(response.is_ok());
+    }
 
     #[test]
     fn get_block_by_id_should_work() {
