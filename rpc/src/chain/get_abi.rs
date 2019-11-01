@@ -5,7 +5,6 @@ use primitives::names::AccountName;
 use rpc_codegen::Fetch;
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Fetch, Debug, Clone, Serialize)]
 #[api(path="v1/chain/get_abi", http_method="POST", returns="GetAbi")]
 pub struct GetAbiParams {
@@ -118,14 +117,9 @@ mod test {
         // eosio.token1 is an invalid account
         let account_name: AccountName = AccountName::from_str("eosio.token1").unwrap();
         let response = get_abi(account_name).fetch(&hyper_client);
-        if let Err(e) = response {
-            // downcast failure::Error to our own error
-            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
-                assert_eq!(eos_err.code, 500);
-                assert_eq!(eos_err.message, "Internal Service Error");
-            } else {
-                assert!(true);
-            }
+        if let Err(crate::Error::EosError{ ref eos_err }) = response {
+            assert_eq!(eos_err.code, 500);
+            assert_eq!(eos_err.message, "Internal Service Error");
         } else {
             assert!(true);
         }

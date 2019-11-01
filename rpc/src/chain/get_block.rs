@@ -1,4 +1,3 @@
-use alloc::collections::BTreeMap as Map;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::{fmt, marker::PhantomData, str::FromStr};
@@ -200,14 +199,9 @@ mod test {
 
         let block_num = -1;
         let response = get_block(block_num).fetch(&hyper_client);
-        if let Err(e) = response {
-            // downcast failure::Error to our own error
-            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
-                assert_eq!(eos_err.code, 500);
-                assert_eq!(eos_err.error.what, "Invalid block ID");
-            } else {
-                assert!(true);
-            }
+        if let Err(crate::Error::EosError{ ref eos_err }) = response {
+            assert_eq!(eos_err.code, 500);
+            assert_eq!(eos_err.error.what, "Invalid block ID");
         } else {
             assert!(true);
         }
@@ -221,14 +215,9 @@ mod test {
         // an invalid block id
         let block_id = "04bf8ea548296524ee3913b21763f6b2207476598efb627292c8843b971e6121";
         let response = get_block(block_id).fetch(&hyper_client);
-        if let Err(e) = response {
-            // downcast failure::Error to our own error
-            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
-                assert_eq!(eos_err.code, 500);
-                assert_eq!(eos_err.error.what, "Invalid block ID");
-            } else {
-                assert!(true);
-            }
+        if let Err(crate::Error::EosError{ ref eos_err }) = response {
+            assert_eq!(eos_err.code, 500);
+            assert_eq!(eos_err.error.what, "Invalid block ID");
         } else {
             assert!(true);
         }

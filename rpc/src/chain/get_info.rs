@@ -4,7 +4,6 @@ use primitives::names::AccountName;
 use rpc_codegen::Fetch;
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Fetch, Debug, Clone, Serialize)]
 #[api(path="v1/chain/get_info", http_method="POST", returns="GetInfo")]
 pub struct GetInfoParams {}
@@ -62,14 +61,9 @@ mod test {
         let hyper_client = HyperClient::new(node);
 
         let response = get_info().fetch(&hyper_client);
-        if let Err(e) = response {
-            // downcast failure::Error to our own error
-            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
-                assert_eq!(eos_err.code, 404);
-                assert_eq!(eos_err.message, "Not Found");
-            } else {
-                assert!(true);
-            }
+        if let Err(crate::Error::EosError{ ref eos_err }) = response {
+            assert_eq!(eos_err.code, 404);
+            assert_eq!(eos_err.message, "Not Found");
         } else {
             assert!(true);
         }

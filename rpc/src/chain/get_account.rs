@@ -138,14 +138,9 @@ mod test {
 
         let account_name = AccountName::from_str("eosio1").unwrap();
         let response = get_account(account_name).fetch(&hyper_client);
-        if let Err(e) = response {
-            // downcast failure::Error to our own error
-            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
-                assert_eq!(eos_err.code, 500);
-                assert_eq!(eos_err.message, "Internal Service Error");
-            } else {
-                assert!(true);
-            }
+        if let Err(crate::Error::EosError{ ref eos_err }) = response {
+            assert_eq!(eos_err.code, 500);
+            assert_eq!(eos_err.message, "Internal Service Error");
         } else {
             assert!(true);
         }
@@ -168,14 +163,9 @@ mod test {
 
         let account_name: AccountName = AccountName::from_str("eosio2").unwrap();
         let response = get_account(account_name).fetch(&hyper_client);
-        if let Err(e) = response {
-            // downcast failure::Error to our own error
-            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
-                assert_eq!(eos_err.code, 500);
-                assert_eq!(eos_err.message, "Internal Service Error");
-            } else {
-                assert!(true);
-            }
+        if let Err(crate::Error::EosError{ ref eos_err }) = response {
+            assert_eq!(eos_err.code, 500);
+            assert_eq!(eos_err.message, "Internal Service Error");
         } else {
             assert!(true);
         }

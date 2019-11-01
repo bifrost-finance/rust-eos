@@ -4,7 +4,6 @@ use syn::{ parse_macro_input, DeriveInput, Meta, Lit, NestedMeta, LitStr, Type }
 use quote::quote;
 use proc_macro2::{Ident, Span};
 
-
 #[proc_macro_derive(Fetch, attributes(api))]
 pub fn derive_show(item: TokenStream) -> TokenStream {
     // parse the whole token tree
@@ -76,7 +75,9 @@ pub fn derive_show(item: TokenStream) -> TokenStream {
     let expanded_fetch = quote! {
         impl #impl_generics #struct_name #ty_generics #where_clause {
             #[inline]
-            pub fn fetch<C: Client>(&self, client: &C) -> Result<#return_ty, failure::Error> {
+            pub fn fetch<C: Client>(&self, client: &C)
+                -> Result<#return_ty, crate::error::Error>
+            {
                 client.fetch(#path_ident, self)
             }
         }

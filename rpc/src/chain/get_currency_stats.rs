@@ -5,7 +5,6 @@ use primitives::symbol::Symbol;
 use rpc_codegen::Fetch;
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Fetch, Debug, Clone, Serialize)]
 #[api(path="v1/chain/get_currency_stats", http_method="POST", returns="GetCurrencyStats")]
 pub struct GetCurrencyStatsParams {
@@ -60,15 +59,10 @@ mod test {
         let symbol: Symbol = Symbol::from_str("1,EOS").unwrap();
         let response = get_currency_stats(code, symbol).fetch(&hyper_client);
 
-        if let Err(e) = response {
-            // downcast failure::Error to our own error
-            if let Some(crate::Error::EosError{ ref eos_err }) = e.downcast_ref::<crate::Error>() {
-                assert_eq!(eos_err.code, 500);
-                assert_eq!(eos_err.error.what, "Account Query Exception");
-                assert_eq!(eos_err.error.code, 3_060_002);
-            } else {
-                assert!(true);
-            }
+        if let Err(crate::Error::EosError{ ref eos_err }) = response {
+            assert_eq!(eos_err.code, 500);
+            assert_eq!(eos_err.error.what, "Account Query Exception");
+            assert_eq!(eos_err.error.code, 3_060_002);
         } else {
             assert!(true);
         }

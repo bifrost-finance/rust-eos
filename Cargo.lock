@@ -205,7 +205,6 @@ version = "0.1.0"
 dependencies = [
  "eos-keys 0.1.0",
  "eos-primitives 0.1.0",
- "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.12.34 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper-tls 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -851,7 +850,6 @@ dependencies = [
 name = "rpc_codegen"
 version = "0.1.0"
 dependencies = [
- "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",

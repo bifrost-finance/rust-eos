@@ -5,19 +5,18 @@ authors = ["Edwin Wang <lark930@gmail.com>", "Jamie Deng <djptux@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
-serde_json = { version = "1.0", default-features = false }
-wasm-bindgen = { version = "0.2", features = ["serde-serialize"], optional = true }
-js-sys = { version = "0.3.5", optional = true }
-wasm-bindgen-futures = { version = "0.3.5", optional = true }
+hex = { version = "0.4", default-features = false }
 hyper = { version = "0.12", optional = true }
 hyper-tls = { version = "0.3", optional = true }
+js-sys = { version = "0.3.5", optional = true }
+primitives = { package = "eos-primitives", path = "../primitives" }
+rpc_codegen = { version = "0.1", path = "rpc_codegen" }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1.0", default-features = false }
 stdweb = { version = "0.4.14", optional = true }
 tokio = { version = "0.1", optional = true }
-failure = "0.1"
-rpc_codegen = { version = "0.1", path = "rpc_codegen" }
-primitives = { package = "eos-primitives", path = "../primitives" }
-hex = { version = "0.4", default-features = false }
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"], optional = true }
+wasm-bindgen-futures = { version = "0.3.5", optional = true }
 
 [dependencies.web-sys]
 version = "0.3.4"

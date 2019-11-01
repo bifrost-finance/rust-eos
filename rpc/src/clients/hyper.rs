@@ -1,11 +1,9 @@
 #![cfg(feature = "use-hyper")]
-
 use crate::error::Error;
 use crate::client::Client;
 use hyper::rt::{Future, Stream};
 use hyper_tls::HttpsConnector;
 use serde::{Deserialize, Serialize};
-
 
 #[derive(Clone, Debug)]
 pub struct HyperClient {
@@ -28,10 +26,10 @@ impl Client for HyperClient {
     fn fetch<T>(&self, path: impl AsRef<str>, params: impl Serialize) -> crate::Result<T>
         where T: 'static + for<'b> Deserialize<'b> + Send + Sync
     {
-        let https = HttpsConnector::new(4)?;
+        let https = HttpsConnector::new(4).map_err(|tls_err| Error::HyperTlsError{tls_err})?;
         let client = hyper::Client::builder().build::<_, hyper::Body>(https);
         let url = self.node.to_string() + path.as_ref();
-        let url: hyper::Uri = url.parse()?;
+        let url: hyper::Uri = url.parse().map_err(|invalid_uri| Error::InvalidUri {invalid_uri})?;
 
         let json = serde_json::to_string(&params)?;
         let mut req = hyper::Request::new(hyper::Body::from(json));
@@ -52,7 +50,9 @@ impl Client for HyperClient {
             .from_err::<Error>();
 
         // get returned body
-        let resp_body = tokio::runtime::Runtime::new()?.block_on(fut)?;
+        let resp_body = tokio::runtime::Runtime::new()
+            .map_err(|tokio_err| Error::TokioError {tokio_err})?
+            .block_on(fut)?;
         let body_bytes = resp_body.into_bytes();
         //try to parse error information if request is illegal
         let block_err = serde_json::from_slice(&body_bytes);
