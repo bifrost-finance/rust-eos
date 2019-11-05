@@ -4,6 +4,7 @@ use core::{fmt, marker::PhantomData, str::FromStr};
 use crate::Client;
 use primitives::names::{AccountName, ActionName};
 use primitives::permission_level::PermissionLevel;
+use primitives::producer_schedule::ProducerSchedule;
 use rpc_codegen::Fetch;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde::de::{self, Visitor, MapAccess};
@@ -29,7 +30,7 @@ pub struct GetBlock {
     pub transaction_mroot: String,
     pub action_mroot: String,
     pub schedule_version: u16,
-    pub new_producers: Option<NewProducers>,
+    pub new_producers: Option<ProducerSchedule>,
     pub header_extensions: Vec<Extension>,
     pub producer_signature: String,
     pub transactions: Vec<Transaction>,
@@ -37,12 +38,6 @@ pub struct GetBlock {
     pub id: String,
     pub block_num: u64,
     pub ref_block_prefix: u64,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct NewProducers {
-    pub version: u32,
-    pub producers: Vec<AccountName>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -221,5 +216,112 @@ mod test {
         } else {
             assert!(true);
         }
+    }
+
+    #[test]
+    fn get_new_producers_from_block() {
+        let block = br#"{
+        "timestamp": "2018-11-23T17:21:02.000",
+        "producer": "eosio",
+        "confirmed": 0,
+        "previous": "00001a38e7e07793dd42bbe4ab050d5f36df3c7d7ad7126e2de7554c36072145",
+        "transaction_mroot": "0000000000000000000000000000000000000000000000000000000000000000",
+        "action_mroot": "611f53d8861ff2ba3c8b143100bb3fe99c06810db6d0189639f52a99e70e01b4",
+        "schedule_version": 0,
+        "new_producers": {
+        "version": 1,
+        "producers": [{
+            "producer_name": "batinthedark",
+            "block_signing_key": "EOS6dwoM8XGMQn49LokUcLiony7JDkbHrsFDvh5svLvPDkXtvM7oR"
+            },{
+            "producer_name": "bighornsheep",
+            "block_signing_key": "EOS5xfwWr4UumKm4PqUGnyCrFWYo6j5cLioNGg5yf4GgcTp2WcYxf"
+            },{
+            "producer_name": "bigpolarbear",
+            "block_signing_key": "EOS6oZi9WjXUcLionUtSiKRa4iwCW5cT6oTzoWZdENXq1p2pq53Nv"
+            },{
+            "producer_name": "clevermonkey",
+            "block_signing_key": "EOS5mp5wmRyL5RH2JUeEh3eoZxkJ2ZZJ9PVd1BcLioNuq4PRCZYxQ"
+            },{
+            "producer_name": "funnyhamster",
+            "block_signing_key": "EOS7A9BoRetjpKtE3sqA6HRykRJ955MjQ5XdRmCLionVte2uERL8h"
+            },{
+            "producer_name": "gorillapower",
+            "block_signing_key": "EOS8X5NCx1Xqa1xgQgBa9s6EK7M1SjGaDreAcLion4kDVLsjhQr9n"
+            },{
+            "producer_name": "hippopotamus",
+            "block_signing_key": "EOS7qDcxm8YtAZUA3t9kxNGuzpCLioNnzpTRigi5Dwsfnszckobwc"
+            },{
+            "producer_name": "hungryolddog",
+            "block_signing_key": "EOS6tw3AqqVUsCbchYRmxkPLqGct3vC63cEzKgVzLFcLionoY8YLQ"
+            },{
+            "producer_name": "iliketurtles",
+            "block_signing_key": "EOS6itYvNZwhqS7cLion3xp3rLJNJAvKKegxeS7guvbBxG1XX5uwz"
+            },{
+            "producer_name": "jumpingfrogs",
+            "block_signing_key": "EOS7oVWG413cLioNG7RU5Kv7NrPZovAdRSP6GZEG4LFUDWkgwNXHW"
+            },{
+            "producer_name": "lioninjungle",
+            "block_signing_key": "EOS5BcLionmbgEtcmu7qY6XKWaE1q31qCQSsd89zXij7FDXQnKjwk"
+            },{
+            "producer_name": "littlerabbit",
+            "block_signing_key": "EOS65orCLioNFkVT5uDF7J63bNUk97oF8T83iWfuvbSKWYUUq9EWd"
+            },{
+            "producer_name": "proudrooster",
+            "block_signing_key": "EOS5qBd3T6nmLRsuACLion346Ue8UkCwvsoS5f3EDC1jwbrEiBDMX"
+            },{
+            "producer_name": "pythoncolors",
+            "block_signing_key": "EOS8R7GB5CLionUEy8FgGksGAGtc2cbcQWgty3MTAgzJvGTmtqPLz"
+            },{
+            "producer_name": "soaringeagle",
+            "block_signing_key": "EOS6iuBqJKqSK82QYCGuM96gduQpQG8xJsPDU1CLionPMGn2bT4Yn"
+            },{
+            "producer_name": "spideronaweb",
+            "block_signing_key": "EOS6M4CYEDt3JDKS6nsxMnUcdCLioNcbyEzeAwZsQmDcoJCgaNHT8"
+            },{
+            "producer_name": "ssssssssnake",
+            "block_signing_key": "EOS8SDhZ5CLioNLie9mb7kDu1gHfDXLwTvYBSxR1ccYSJERvutLqG"
+            },{
+            "producer_name": "thebluewhale",
+            "block_signing_key": "EOS6Wfo1wwTPzzBVT8fe3jpz8vxCnf77YscLionBnw39iGzFWokZm"
+            },{
+            "producer_name": "thesilentowl",
+            "block_signing_key": "EOS7y4hU89NJ658H1KmAdZ6A585bEVmSV8xBGJ3SbQM4Pt3pcLion"
+            },{
+            "producer_name": "wealthyhorse",
+            "block_signing_key": "EOS5i1HrfxfHLRJqbExgRodhrZwp4dcLioNn4xZWCyhoBK6DNZgZt"
+            }
+        ]},
+        "header_extensions": [],
+        "producer_signature": "SIG_K1_KgdybmKf6gTj8TAX6Cu1yQuRK8P15pEJWa7Xp1cFeCE84NXNpGd6UPkwPJjYGKVstgH7JSf5xCoV1WjKxReRmtVB7vvysp",
+        "transactions": [],
+        "block_extensions": [],
+        "id": "00001a398a9e6015296bb50045d861c656c42a5888476ede73b8350ab564f89d",
+        "block_num": 6713,
+        "ref_block_prefix": 11889449
+        }"#;
+
+        let result: Result<GetBlock, _> = serde_json::from_slice(block);
+        assert!(result.is_ok());
+        let block = result.unwrap();
+        assert!(block.new_producers.is_some());
+        let new_producers = block.new_producers.unwrap();
+        assert_eq!(new_producers.version, 1u32);
+        assert_eq!(new_producers.producers.len(), 20usize);
+        let first_producer = Some(primitives::ProducerKey {
+            producer_name: AccountName::from_str("batinthedark").unwrap(),
+            block_signing_key: primitives::PublicKey::from_str("EOS6dwoM8XGMQn49LokUcLiony7JDkbHrsFDvh5svLvPDkXtvM7oR").unwrap()
+        });
+        assert_eq!(new_producers.producers.first(), first_producer.as_ref());
+        assert_ne!(new_producers.producers.last(), first_producer.as_ref());
+
+        let last_producer = Some(primitives::ProducerKey {
+            producer_name: AccountName::from_str("wealthyhorse").unwrap(),
+            block_signing_key: primitives::PublicKey::from_str("EOS5i1HrfxfHLRJqbExgRodhrZwp4dcLioNn4xZWCyhoBK6DNZgZt").unwrap()
+        });
+        assert_eq!(new_producers.producers.last(), last_producer.as_ref());
+
+        let producer = new_producers.producers.get(10).unwrap();
+        assert_eq!(&producer.block_signing_key.to_string(), "EOS5BcLionmbgEtcmu7qY6XKWaE1q31qCQSsd89zXij7FDXQnKjwk");
     }
 }

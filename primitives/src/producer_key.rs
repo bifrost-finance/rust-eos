@@ -11,5 +11,6 @@ pub struct ProducerKey {
     /// Name of the producer
     pub producer_name: AccountName,
     /// Block signing key used by this producer
+    #[serde(deserialize_with = "super::string_to_public_key")]
     pub block_signing_key: PublicKey,
 }
