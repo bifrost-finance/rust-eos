@@ -77,30 +77,44 @@ impl Default for TrxKinds {
 
 impl NumBytes for TrxKinds {
     fn num_bytes(&self) -> usize {
+        let kind_len = 1;
         match self {
-            TrxKinds::TransactionId(id) => id.num_bytes(),
-            TrxKinds::PackedTransaction(packed) => packed.num_bytes(),
+            TrxKinds::TransactionId(id) => id.num_bytes() + kind_len,
+            TrxKinds::PackedTransaction(packed) => packed.num_bytes() + kind_len,
         }
     }
 }
 
 impl Read for TrxKinds {
     fn read(bytes: &[u8], pos: &mut usize) -> Result<Self, ReadError> {
-        match PackedTransaction::read(bytes, pos) {
-            Ok(packed) => Ok(TrxKinds::PackedTransaction(packed)),
-            Err(_) => match Checksum256::read(bytes, pos) {
-                Ok(id) => Ok(TrxKinds::TransactionId(id)),
-                Err(err) => Err(err),
-            }
-        }
+        // read kind from first byte
+        let kind = u8::read(bytes, pos)?;
+        let result = match kind {
+            0x00 => {
+                let id = Checksum256::read(bytes, pos)?;
+                TrxKinds::TransactionId(id)
+            },
+            0x01 => {
+                let packed = PackedTransaction::read(bytes, pos)?;
+                TrxKinds::PackedTransaction(packed)
+            },
+            _ => return Err(ReadError::NotSupportMessageType)
+        };
+        Ok(result)
     }
 }
 
 impl Write for TrxKinds {
     fn write(&self, bytes: &mut [u8], pos: &mut usize) -> Result<(), WriteError> {
         match self {
-            TrxKinds::TransactionId(id) => id.write(bytes, pos),
-            TrxKinds::PackedTransaction(packed) => packed.write(bytes, pos),
+            TrxKinds::TransactionId(id) => {
+                0x00u8.write(bytes, pos)?;
+                id.write(bytes, pos)
+            },
+            TrxKinds::PackedTransaction(packed) => {
+                0x01u8.write(bytes, pos)?;
+                packed.write(bytes, pos)
+            },
         }
     }
 }
@@ -148,8 +162,7 @@ impl core::fmt::Display for TransactionReceipt {
 pub struct TransactionReceiptHeader {
     pub status: u8,
     pub cpu_usage_us: u32,
-    // TODO net_usage_words maybe use UnsignedInt instead
-    pub net_usage_words: u16,
+    pub net_usage_words: UnsignedInt,
 }
 
 impl core::fmt::Display for TransactionReceiptHeader {
@@ -264,7 +277,6 @@ mod tests {
         let data = hex::decode("0f57684a0000000000ea3055000000077cb6d5534a23579751f578148b8f0f2da54cd22243b4d6c17ba398ab8a900096714e43362a3bf531eaf43114603689e5561a36aa08225329eca7d939d22049b91659d7073782d1c456a29dde5ace92dffde0cfa78bb284e8d4d7f976fda1000000000000001f36f6f52520fa593f567826935186688d6bb6de7938ec8102c7f726bafe7cc8ae2b5585a3c8ee3a1e79011726b77a2b5f9a0593391ce7fc42c42b2e4a43cc011001005301000010010100206b22f146d8bfe03a7a03b760cb2539409b05f9961543ee41c31f0cf493267b8c244d1517a6aa67cf47f294755d9e2fb5dda6779f5d88d6e4461f380a2b02964b000053256fa15db57c56c88ddb000000000100a6823403ea3055000000572d3ccdcd010000000000855c3400000000a8ed3232210000000000855c340000000000000e3d102700000000000004454f5300000000000000").unwrap();
         let mut pos = 0;
         let block = SignedBlock::read(&data.as_slice(), &mut pos).unwrap();
-        println!("{}", serde_json::to_string_pretty(&block).unwrap());
 
         let trxs: Vec<TransactionReceipt> = block.transactions;
         let mut trxs_digests: Vec<Checksum256> = Vec::new();
@@ -272,11 +284,6 @@ mod tests {
             trxs_digests.push(trx.digest().unwrap());
         }
         let merkle_root = merkle(trxs_digests.clone()).unwrap();
-        dbg!(&trxs_digests[0].to_string());
-        dbg!(&merkle_root.to_string());
-        dbg!(&block.signed_block_header.block_header.transaction_mroot.to_string());
-        dbg!(&block.signed_block_header.block_header.action_mroot.to_string());
-
         assert_eq!(merkle_root, block.signed_block_header.block_header.transaction_mroot);
     }
 
