@@ -1,8 +1,8 @@
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use crate::Client;
-use primitives::names::AccountName;
-use primitives::symbol::Symbol;
+use chain::names::AccountName;
+use chain::symbol::Symbol;
 use rpc_codegen::Fetch;
 use serde::Serialize;
 

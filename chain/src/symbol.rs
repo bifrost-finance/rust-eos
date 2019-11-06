@@ -51,7 +51,7 @@ impl fmt::Display for ParseSymbolError {
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::{symbol_from_str, ParseSymbolError};
+/// use eos_chain::{symbol_from_str, ParseSymbolError};
 /// assert_eq!(symbol_from_str(4, "EOS"), Ok(1397703940));
 /// assert_eq!(symbol_from_str(0, "TGFT"), Ok(361956332544));
 /// assert_eq!(symbol_from_str(2, "SYS"), Ok(1398362882));
@@ -72,7 +72,7 @@ pub fn symbol_from_str(
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::{symbol_from_chars, ParseSymbolError};
+/// use eos_chain::{symbol_from_chars, ParseSymbolError};
 /// assert_eq!(symbol_from_chars(4, "EOS".chars()), Ok(1397703940));
 /// assert_eq!(symbol_from_chars(0, "TGFT".chars()), Ok(361956332544));
 /// assert_eq!(symbol_from_chars(2, "SYS".chars()), Ok(1398362882));
@@ -111,7 +111,7 @@ where
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::symbol_to_string;
+/// use eos_chain::symbol_to_string;
 /// assert_eq!(symbol_to_string(1397703940), "EOS");
 /// assert_eq!(symbol_to_string(5138124851399447552), "TESTING");
 /// assert_eq!(symbol_to_string(361956332544), "TGFT");
@@ -128,7 +128,7 @@ pub fn symbol_to_string(name: u64) -> String {
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::symbol_to_utf8;
+/// use eos_chain::symbol_to_utf8;
 /// assert_eq!(symbol_to_utf8(1397703940), *b"EOS    ");
 /// assert_eq!(symbol_to_utf8(5138124851399447552), *b"TESTING");
 /// assert_eq!(symbol_to_utf8(361956332544), *b"TGFT   ");
@@ -155,7 +155,7 @@ pub fn symbol_to_utf8(value: u64) -> [u8; SYMBOL_LEN_MAX] {
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::symbol_precision;
+/// use eos_chain::symbol_precision;
 /// assert_eq!(symbol_precision(1397703940), 4); // 4,EOS
 /// assert_eq!(symbol_precision(1398362882), 2); // 2,SYS
 /// assert_eq!(symbol_precision(5138124851399447552), 0); // 0,TESTING
@@ -170,7 +170,7 @@ pub fn symbol_precision(value: u64) -> u8 {
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::symbol_code;
+/// use eos_chain::symbol_code;
 /// assert_eq!(symbol_code(1397703940), 5459781); // 4,EOS
 /// assert_eq!(symbol_code(1398362882), 5462355); // 2,SYS
 /// assert_eq!(symbol_code(5138124851399447552), 20070800200779092); // 0,TESTING
@@ -185,7 +185,7 @@ pub const fn symbol_code(value: u64) -> u64 {
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::symbol_code_length;
+/// use eos_chain::symbol_code_length;
 /// assert_eq!(symbol_code_length(1397703940), 3); // 4,EOS
 /// assert_eq!(symbol_code_length(1398362882), 3); // 2,SYS
 /// assert_eq!(symbol_code_length(5138124851399447552), 7); // 0,TESTING

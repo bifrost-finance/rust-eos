@@ -1,8 +1,8 @@
 [workspace]
 members = [
+  "chain",
   "eosio-core-derive",
   "keys",
-  "primitives",
   "rpc",
   "rpc/rpc_codegen",
 ]

@@ -53,7 +53,7 @@ impl From<ParseNameError> for crate::error::Error {
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::{name_from_str, ParseNameError};
+/// use eos_chain::{name_from_str, ParseNameError};
 /// assert_eq!(name_from_str(""), Ok(0));
 /// assert_eq!(name_from_str("a"), Ok(3458764513820540928));
 /// assert_eq!(name_from_str("123456789012"), Err(ParseNameError::BadChar('6')));
@@ -74,7 +74,7 @@ pub fn name_from_str(value: &str) -> Result<u64, ParseNameError> {
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::{name_from_chars, ParseNameError};
+/// use eos_chain::{name_from_chars, ParseNameError};
 /// assert_eq!(name_from_chars("".chars()), Ok(0));
 /// assert_eq!(name_from_chars("a".chars()), Ok(3458764513820540928));
 /// assert_eq!(name_from_chars("123456789012".chars()), Err(ParseNameError::BadChar('6')));
@@ -129,9 +129,9 @@ fn char_to_symbol(c: char) -> Option<char> {
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::name_to_string;
+/// use eos_chain::name_to_string;
 /// use std::str::FromStr;
-/// use eos_primitives::ActionName;
+/// use eos_chain::ActionName;
 /// assert_eq!(name_to_string(6138663577826885632), "eosio");
 /// assert_eq!(name_to_string(6138663581940940800), "eosio.bpay");
 /// assert_eq!(name_to_string(0), "");
@@ -149,7 +149,7 @@ pub fn name_to_string(name: u64) -> String {
 /// # Examples
 ///
 /// ```
-/// use eos_primitives::name_to_utf8;
+/// use eos_chain::name_to_utf8;
 /// assert_eq!(name_to_utf8(6138663591592764928), *b"eosio.token..");
 /// assert_eq!(name_to_utf8(6138663581940940800), *b"eosio.bpay...");
 /// assert_eq!(name_to_utf8(0), *b".............");

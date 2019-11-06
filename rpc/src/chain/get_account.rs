@@ -1,8 +1,8 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 use crate::Client;
-use primitives::names::{AccountName, PermissionName};
-use primitives::permission_level::PermissionLevel;
+use chain::names::{AccountName, PermissionName};
+use chain::permission_level::PermissionLevel;
 use rpc_codegen::Fetch;
 use serde::{Deserialize, Serialize};
 

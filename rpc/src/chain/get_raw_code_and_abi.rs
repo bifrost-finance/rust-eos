@@ -1,6 +1,6 @@
 use alloc::string::String;
 use crate::Client;
-use primitives::names::AccountName;
+use chain::names::AccountName;
 use rpc_codegen::Fetch;
 use serde::{Deserialize, Serialize};
 

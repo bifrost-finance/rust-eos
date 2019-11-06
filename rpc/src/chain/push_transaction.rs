@@ -3,8 +3,8 @@ use alloc::vec::Vec;
 use crate::Client;
 use hex;
 use rpc_codegen::Fetch;
-use primitives::transaction::SignedTransaction;
-use primitives::SerializeData;
+use chain::transaction::SignedTransaction;
+use chain::SerializeData;
 use serde::{Deserialize, Serialize};
 
 
@@ -102,7 +102,7 @@ pub struct ActionReceipt {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use primitives::{SerializeData, Action, Transaction};
+    use chain::{SerializeData, Action, Transaction};
     use keys::secret::SecretKey;
     use hex;
     use crate::{HyperClient, GetInfo, GetBlock};

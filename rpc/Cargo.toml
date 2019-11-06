@@ -9,7 +9,7 @@ hex = { version = "0.4", default-features = false }
 hyper = { version = "0.12", optional = true }
 hyper-tls = { version = "0.3", optional = true }
 js-sys = { version = "0.3.5", optional = true }
-primitives = { package = "eos-primitives", path = "../primitives" }
+chain = { package = "eos-chain", path = "../chain" }
 rpc_codegen = { version = "0.1", path = "rpc_codegen" }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false }
@@ -39,7 +39,7 @@ use-web-sys = ["wasm-bindgen", "wasm-bindgen-futures", "js-sys", "web-sys"]
 use-hyper = ["hyper", "hyper-tls", "tokio"]
 use-stdweb = ["stdweb"]
 std = [
-    "primitives/std",
+    "chain/std",
     "serde/std",
     "use-hyper",
 ]

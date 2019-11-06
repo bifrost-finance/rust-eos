@@ -1,7 +1,7 @@
 use alloc::string::String;
 use core::str::FromStr;
 use crate::Client;
-use primitives::names::{AccountName, ActionName, ParseNameError};
+use chain::names::{AccountName, ActionName, ParseNameError};
 use rpc_codegen::Fetch;
 use serde::{Deserialize, Serialize};
 

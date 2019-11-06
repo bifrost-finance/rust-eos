@@ -2,9 +2,9 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::{fmt, marker::PhantomData, str::FromStr};
 use crate::Client;
-use primitives::names::{AccountName, ActionName};
-use primitives::permission_level::PermissionLevel;
-use primitives::producer_schedule::ProducerSchedule;
+use chain::names::{AccountName, ActionName};
+use chain::permission_level::PermissionLevel;
+use chain::producer_schedule::ProducerSchedule;
 use rpc_codegen::Fetch;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde::de::{self, Visitor, MapAccess};
@@ -308,16 +308,16 @@ mod test {
         let new_producers = block.new_producers.unwrap();
         assert_eq!(new_producers.version, 1u32);
         assert_eq!(new_producers.producers.len(), 20usize);
-        let first_producer = Some(primitives::ProducerKey {
+        let first_producer = Some(chain::ProducerKey {
             producer_name: AccountName::from_str("batinthedark").unwrap(),
-            block_signing_key: primitives::PublicKey::from_str("EOS6dwoM8XGMQn49LokUcLiony7JDkbHrsFDvh5svLvPDkXtvM7oR").unwrap()
+            block_signing_key: chain::PublicKey::from_str("EOS6dwoM8XGMQn49LokUcLiony7JDkbHrsFDvh5svLvPDkXtvM7oR").unwrap()
         });
         assert_eq!(new_producers.producers.first(), first_producer.as_ref());
         assert_ne!(new_producers.producers.last(), first_producer.as_ref());
 
-        let last_producer = Some(primitives::ProducerKey {
+        let last_producer = Some(chain::ProducerKey {
             producer_name: AccountName::from_str("wealthyhorse").unwrap(),
-            block_signing_key: primitives::PublicKey::from_str("EOS5i1HrfxfHLRJqbExgRodhrZwp4dcLioNn4xZWCyhoBK6DNZgZt").unwrap()
+            block_signing_key: chain::PublicKey::from_str("EOS5i1HrfxfHLRJqbExgRodhrZwp4dcLioNn4xZWCyhoBK6DNZgZt").unwrap()
         });
         assert_eq!(new_producers.producers.last(), last_producer.as_ref());
 
