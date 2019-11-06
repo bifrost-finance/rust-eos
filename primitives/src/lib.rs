@@ -13,6 +13,7 @@ pub mod checksum256;
 pub mod checksum512;
 pub mod error;
 pub mod extension;
+pub mod merkle;
 pub mod names;
 pub mod ops;
 pub mod permission_level;
@@ -22,9 +23,9 @@ pub mod public_key;
 pub mod signature;
 pub mod symbol;
 pub mod symbol_code;
-pub mod transaction;
 pub mod time_point;
 pub mod time_point_sec;
+pub mod transaction;
 pub mod unsigned_int;
 
 pub mod bitutil;
@@ -42,6 +43,7 @@ pub use self::{
     checksum256::*,
     checksum512::*,
     error::*,
+    merkle::*,
     extension::*,
     names::*,
     ops::*,
