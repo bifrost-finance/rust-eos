@@ -12,9 +12,6 @@ use crate::{
 };
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-//use serde::{Deserialize, ser::{Serialize, Serializer}};
-//#[cfg(feature = "std")]
-//use serde::ser::{self, Serializer, SerializeStruct};
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
@@ -45,7 +42,7 @@ impl core::fmt::Display for BlockHeader {
             new_producers: {:?}\n\
             header_extensions: {:?}",
             self.block_num(),
-            self.id(),
+            self.id().unwrap(),
             self.timestamp,
             self.producer,
             self.confirmed,
@@ -84,17 +81,17 @@ impl BlockHeader {
         }
     }
 
-    pub fn digest(&self) -> Checksum256 {
-        Checksum256::hash(self.clone()).unwrap_or(Checksum256::default())
+    pub fn digest(&self) -> crate::Result<Checksum256> {
+        Checksum256::hash(self.clone())
     }
 
-    pub fn id(&self) -> Checksum256 {
-        let mut result = self.digest();
+    pub fn id(&self) -> crate::Result<Checksum256> {
+        let mut result = self.digest()?;
         let mut hash0 = result.hash0();
         hash0 &= 0xffffffff00000000;
         hash0 += bitutil::endian_reverse_u32(self.block_num()) as u64;
         result.set_hash0(hash0);
-        result
+        Ok(result)
     }
 
     pub fn block_num(&self) -> u32 {
@@ -122,7 +119,7 @@ impl SignedBlockHeader {
         }
     }
 
-    pub fn id(&self) -> Checksum256 {
+    pub fn id(&self) -> crate::Result<Checksum256> {
         self.block_header.id()
     }
 

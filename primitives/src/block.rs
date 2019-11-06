@@ -39,7 +39,7 @@ impl SignedBlock {
         }
     }
 
-    pub fn id(&self) -> Checksum256 {
+    pub fn id(&self) -> crate::Result<Checksum256> {
         self.signed_block_header.id()
     }
 
@@ -113,6 +113,26 @@ pub struct TransactionReceipt {
     pub trx: TrxKinds,
 }
 
+impl TransactionReceipt {
+    pub fn digest(&self) -> crate::Result<Checksum256> {
+        let (digest_len, digest) = match self.trx {
+            TrxKinds::TransactionId(ref id) => (id.num_bytes(), *id),
+            TrxKinds::PackedTransaction(ref packed) => {
+                let digest = packed.packed_digest()?;
+                (digest.num_bytes(), digest)
+            },
+        };
+
+        let enc_size = self.trx_receipt_header.num_bytes() + digest_len;
+        let mut enc_data = vec![0u8; enc_size];
+        let mut pos = 0;
+        self.trx_receipt_header.write(&mut enc_data, &mut pos).map_err(crate::Error::BytesWriteError)?;
+        digest.write(&mut enc_data, &mut pos).map_err(crate::Error::BytesWriteError)?;
+
+        Ok(Checksum256::hash_from_slice(&enc_data))
+    }
+}
+
 impl core::fmt::Display for TransactionReceipt {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}",
@@ -126,10 +146,10 @@ impl core::fmt::Display for TransactionReceipt {
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceiptHeader {
-    status: u8,
-    cpu_usage_us: u32,
+    pub status: u8,
+    pub cpu_usage_us: u32,
     // TODO net_usage_words maybe use UnsignedInt instead
-    net_usage_words: u16,
+    pub net_usage_words: u16,
 }
 
 impl core::fmt::Display for TransactionReceiptHeader {
@@ -206,7 +226,7 @@ mod tests {
     use core::str::FromStr;
     use crate::{
         TransactionReceipt, SignedTransaction, Transaction, Action, ActionTransfer,
-        AccountName, ActionName, BlockHeader, BlockTimestamp, Asset
+        AccountName, ActionName, BlockHeader, BlockTimestamp, Asset, merkle::merkle,
     };
     use super::*;
 
@@ -245,6 +265,19 @@ mod tests {
         let mut pos = 0;
         let block = SignedBlock::read(&data.as_slice(), &mut pos).unwrap();
         println!("{}", serde_json::to_string_pretty(&block).unwrap());
+
+        let trxs: Vec<TransactionReceipt> = block.transactions;
+        let mut trxs_digests: Vec<Checksum256> = Vec::new();
+        for trx in trxs {
+            trxs_digests.push(trx.digest().unwrap());
+        }
+        let merkle_root = merkle(trxs_digests.clone()).unwrap();
+        dbg!(&trxs_digests[0].to_string());
+        dbg!(&merkle_root.to_string());
+        dbg!(&block.signed_block_header.block_header.transaction_mroot.to_string());
+        dbg!(&block.signed_block_header.block_header.action_mroot.to_string());
+
+        assert_eq!(merkle_root, block.signed_block_header.block_header.transaction_mroot);
     }
 
     #[test]

@@ -94,6 +94,26 @@ pub struct PackedTransaction {
     pub packed_trx: Vec<u8>,
 }
 
+impl PackedTransaction {
+    pub fn packed_digest(&self) -> crate::Result<Checksum256> {
+        let prunable_size = self.signatures.num_bytes() + self.packed_context_free_data.num_bytes();
+        let mut prunable_data = vec![0u8; prunable_size];
+        let mut pos = 0;
+        self.signatures.write(&mut prunable_data, &mut pos).map_err(crate::Error::BytesWriteError)?;
+        self.packed_context_free_data.write(&mut prunable_data, &mut pos).map_err(crate::Error::BytesWriteError)?;
+        let prunable = Checksum256::hash_from_slice(&prunable_data);
+
+        let enc_size = self.compression.num_bytes() + self.packed_trx.num_bytes() + prunable.num_bytes();
+        let mut enc_data = vec![0u8; enc_size];
+        let mut pos = 0;
+        self.compression.write(&mut enc_data, &mut pos).map_err(crate::Error::BytesWriteError)?;
+        self.packed_trx.write(&mut enc_data, &mut pos).map_err(crate::Error::BytesWriteError)?;
+        prunable.write(&mut enc_data, &mut pos).map_err(crate::Error::BytesWriteError)?;
+
+        Ok(Checksum256::hash_from_slice(&enc_data))
+    }
+}
+
 impl From<SignedTransaction> for PackedTransaction {
     fn from(signed: SignedTransaction) -> Self {
         let mut packed_trx = vec![0u8; signed.trx.num_bytes()];
