@@ -1,4 +1,5 @@
 use core::iter::{IntoIterator, Iterator};
+use core::convert::TryFrom;
 
 use hex;
 #[cfg(feature = "std")]
@@ -18,6 +19,7 @@ use crate::{
     ReadError,
     SerializeData,
     TimePointSec,
+    TrxKinds,
     UnsignedInt,
     Write,
     WriteError,
@@ -119,7 +121,7 @@ impl core::fmt::Display for PackedTransaction {
             self.compression,
             hex::encode(&self.packed_context_free_data),
             hex::encode(&self.packed_trx),
-            Transaction::from(self.clone()),
+            Transaction::try_from(TrxKinds::PackedTransaction(self.clone())).expect("Convert transaction failed"),
         )
     }
 }
@@ -269,6 +271,18 @@ impl Transaction {
             signatures: sks,
             context_free_data: vec![],
             trx: self.clone(),
+        }
+    }
+}
+
+impl TryFrom<TrxKinds> for Transaction {
+    type Error = crate::Error;
+
+    fn try_from(trx: TrxKinds) -> Result<Self, Self::Error> {
+        match trx {
+            TrxKinds::PackedTransaction(packed) => Transaction::read(packed.packed_trx.as_slice(), &mut 0).map_err(crate::Error::BytesReadError),
+            TrxKinds::TransactionId(_) => Err(crate::Error::FromTrxKindsError),
+
         }
     }
 }

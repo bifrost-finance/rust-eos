@@ -15,5 +15,6 @@ pub enum Error {
     ParseAssetErr(ParseAssetError),
     ParseNameErr(ParseNameError),
     ParseSymbolError(ParseSymbolError),
+    FromTrxKindsError,
 }
 

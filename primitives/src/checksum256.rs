@@ -63,7 +63,7 @@ impl Checksum256 {
 
     pub fn hash<T: Write + NumBytes>(t: T) -> crate::Result<Checksum256> {
         let mut data = vec![0u8; t.num_bytes()];
-        t.write(&mut data, &mut 0).map_err(crate::error::Error::BytesWriteError)?;
+        t.write(&mut data, &mut 0).map_err(crate::Error::BytesWriteError)?;
 
         let hash_data = sha256::Hash::hash(&data);
         Ok(Checksum256(hash_data.into_inner()))

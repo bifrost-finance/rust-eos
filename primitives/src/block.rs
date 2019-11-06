@@ -12,11 +12,14 @@ use crate::{
     SignedBlockHeader,
     Transaction,
     UnsignedInt,
-    Write
+    Write,
+    WriteError,
+    ReadError
 };
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use core::str::FromStr;
+use core::convert::TryFrom;
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
@@ -59,19 +62,62 @@ impl core::fmt::Display for SignedBlock {
 
 impl SerializeData for SignedBlock {}
 
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
+pub enum TrxKinds {
+    TransactionId(Checksum256),
+    PackedTransaction(PackedTransaction),
+}
+
+impl Default for TrxKinds {
+    fn default() -> Self {
+        TrxKinds::TransactionId(Default::default())
+    }
+}
+
+impl NumBytes for TrxKinds {
+    fn num_bytes(&self) -> usize {
+        match self {
+            TrxKinds::TransactionId(id) => id.num_bytes(),
+            TrxKinds::PackedTransaction(packed) => packed.num_bytes(),
+        }
+    }
+}
+
+impl Read for TrxKinds {
+    fn read(bytes: &[u8], pos: &mut usize) -> Result<Self, ReadError> {
+        match PackedTransaction::read(bytes, pos) {
+            Ok(packed) => Ok(TrxKinds::PackedTransaction(packed)),
+            Err(_) => match Checksum256::read(bytes, pos) {
+                Ok(id) => Ok(TrxKinds::TransactionId(id)),
+                Err(err) => Err(err),
+            }
+        }
+    }
+}
+
+impl Write for TrxKinds {
+    fn write(&self, bytes: &mut [u8], pos: &mut usize) -> Result<(), WriteError> {
+        match self {
+            TrxKinds::TransactionId(id) => id.write(bytes, pos),
+            TrxKinds::PackedTransaction(packed) => packed.write(bytes, pos),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceipt {
     pub trx_receipt_header: TransactionReceiptHeader,
-    pub trx: PackedTransaction,
+    pub trx: TrxKinds,
 }
 
 impl core::fmt::Display for TransactionReceipt {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}\n{}",
+        write!(f, "{}",
             self.trx_receipt_header,
-            self.trx,
+//            self.trx,
         )
     }
 }
@@ -137,7 +183,7 @@ impl ActionFilter {
         if !blocks.transactions.is_empty() {
             for trx_receipt in &blocks.transactions {
                 let packet_trx = trx_receipt.trx.clone();
-                let trx = Transaction::from(packet_trx);
+                let trx = Transaction::try_from(packet_trx)?;
                 for ac in &trx.actions {
                     if *self == *ac {
                         let action_transfer = ActionTransfer::read(&ac.data, &mut 0)
@@ -241,7 +287,7 @@ mod tests {
         };
 
         let tx_receipt = TransactionReceipt {
-            trx: PackedTransaction::from(signed_trx),
+            trx: TrxKinds::PackedTransaction(PackedTransaction::from(signed_trx)),
             ..Default::default()
         };
 
