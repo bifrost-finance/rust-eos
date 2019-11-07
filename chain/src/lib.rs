@@ -13,6 +13,7 @@ pub mod checksum256;
 pub mod checksum512;
 pub mod error;
 pub mod extension;
+pub mod incremental_merkle;
 pub mod merkle;
 pub mod names;
 pub mod ops;
@@ -43,6 +44,7 @@ pub use self::{
     checksum256::*,
     checksum512::*,
     error::*,
+    incremental_merkle::*,
     merkle::*,
     extension::*,
     names::*,
