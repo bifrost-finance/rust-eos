@@ -51,8 +51,22 @@ pub fn merkle(ids: Vec<Checksum256>) -> crate::Result<Checksum256> {
 
 #[cfg(test)]
 mod tests {
-    use crate::Checksum256;
+    use crate::{Checksum256, TransactionReceipt};
     use super::*;
+    use std::{
+        error::Error,
+        fs::File,
+        io::Read,
+        path::Path,
+    };
+
+    fn read_json_from_file(json_name: impl AsRef<str>) -> Result<String, Box<dyn Error>> {
+        let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/test_data/")).join(json_name.as_ref());
+        let mut file = File::open(path)?;
+        let mut json_str = String::new();
+        file.read_to_string(&mut json_str)?;
+        Ok(json_str)
+    }
 
     #[test]
     fn merkle_zero_id_should_work() {
@@ -83,5 +97,42 @@ mod tests {
         let result = merkle(ids);
         let expect: Checksum256 = [0xf1, 0x4f, 0xfa, 0x19, 0xa8, 0xc5, 0xe2, 0xa3, 0xf0, 0x42, 0x66, 0xde, 0x1b, 0xb2, 0x8c, 0x5b, 0xc0, 0x29, 0xa7, 0xe3, 0xf8, 0x87, 0x1c, 0x23, 0xd5, 0x9e, 0x15, 0x74, 0x93, 0x5e, 0x40, 0x8c].into();
         assert_eq!(result.unwrap(), expect);
+    }
+
+    #[test]
+    fn verify_transaction_mroot() {
+        let json = "transactions.json";
+        let trxs_str = read_json_from_file(json);
+        assert!(trxs_str.is_ok());
+        let trxs: Result<Vec<TransactionReceipt>, _> = serde_json::from_str(&trxs_str.unwrap());
+        assert!(trxs.is_ok());
+        let trxs = trxs.unwrap();
+
+        let mut trxs_digests: Vec<Checksum256> = Vec::with_capacity(trxs.len());
+        for trx in trxs {
+            trxs_digests.push(trx.digest().unwrap());
+        }
+        let merkle_root = merkle(trxs_digests.clone()).unwrap();
+        // the correct transaction_mroot is right in file many_transactions_in_block.json
+        assert_eq!(merkle_root.to_string(), "ba5b2ff707951223e948a6a684a8abecd26391f4ee62ed58b1477970c43886df");
+    }
+
+    #[test]
+    fn verify_invalid_transaction_mroot() {
+        let json = "invalid_transactions.json";
+        let trxs_str = read_json_from_file(json);
+        assert!(trxs_str.is_ok());
+        let trxs: Result<Vec<TransactionReceipt>, _> = serde_json::from_str(&trxs_str.unwrap());
+        assert!(trxs.is_ok());
+        let trxs = trxs.unwrap();
+
+        let mut trxs_digests: Vec<Checksum256> = Vec::with_capacity(trxs.len());
+        for trx in trxs {
+            trxs_digests.push(trx.digest().unwrap());
+        }
+        let merkle_root = merkle(trxs_digests.clone()).unwrap();
+        // the correct transaction_mroot is right in file many_transactions_in_block.json
+        // change a field net_usage_words from 0 to 42 in file invalid_transactions.json
+        assert_ne!(merkle_root.to_string(), "ba5b2ff707951223e948a6a684a8abecd26391f4ee62ed58b1477970c43886df");
     }
 }

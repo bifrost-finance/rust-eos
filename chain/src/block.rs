@@ -16,10 +16,10 @@ use crate::{
     WriteError,
     ReadError
 };
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use core::str::FromStr;
 use core::convert::TryFrom;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
@@ -63,7 +63,7 @@ impl core::fmt::Display for SignedBlock {
 impl SerializeData for SignedBlock {}
 
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "std", derive(Serialize))]
 pub enum TrxKinds {
     TransactionId(Checksum256),
     PackedTransaction(PackedTransaction),
@@ -120,11 +120,129 @@ impl Write for TrxKinds {
 }
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
-#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "std", derive(Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceipt {
     pub trx_receipt_header: TransactionReceiptHeader,
     pub trx: TrxKinds,
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::Deserialize<'de> for TransactionReceipt {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::de::Deserializer<'de>
+    {
+        #[derive(Debug)]
+        struct VisitorTrxHeader;
+        impl<'de> serde::de::Visitor<'de> for VisitorTrxHeader
+        {
+            type Value = TransactionReceipt;
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "string or a struct, but this is: {:?}", self)
+            }
+
+            fn visit_map<D>(self, mut map: D) -> Result<Self::Value, D::Error>
+                where D: serde::de::MapAccess<'de>,
+            {
+                let mut status = 0u8;
+                let mut cpu_usage_us = 0u32;
+                let mut net_usage_words = UnsignedInt::default();
+                let mut trx = TrxKinds::default();
+                while let Some(field) = map.next_key()? {
+                    match field {
+                        "status" => {
+                            status = match map.next_value()? {
+                                "executed" => 0,
+                                "soft_fail" => 1,
+                                "hard_fail" => 2,
+                                "delayed" => 3,
+                                "expired" => 4,
+                                _ => panic!("unknown status")
+                            }
+                        }
+                        "cpu_usage_us" => {
+                            let cpu: u32 = map.next_value()?;
+                            cpu_usage_us = cpu;
+                        }
+                        "net_usage_words" => {
+                            let val: u32 = map.next_value()?;
+                            net_usage_words = UnsignedInt::from(val)
+                        }
+                        "trx" => {
+                            let val: TrxKinds = map.next_value()?;
+                            trx = val;
+                        }
+                        _ => {
+                            let _: serde_json::Value = map.next_value()?;
+                            continue;
+                        }
+                    }
+                }
+                let trx_receipt_header = TransactionReceiptHeader {
+                    status,
+                    cpu_usage_us,
+                    net_usage_words,
+                };
+                Ok(TransactionReceipt {
+                    trx_receipt_header,
+                    trx,
+                })
+            }
+        }
+        deserializer.deserialize_any(VisitorTrxHeader)
+    }
+}
+
+impl core::str::FromStr for TrxKinds {
+    type Err = core::convert::Infallible;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let t = hex::decode(s).unwrap();
+        let mut a: [u8;32] = [0u8;32];
+        for i in 0..32 {
+            a[i] = t[i];
+        }
+        let s = Checksum256::new(a);
+        Ok(Self::TransactionId(s))
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::Deserialize<'de> for TrxKinds {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::de::Deserializer<'de>
+    {
+        #[derive(Debug)]
+        struct IdOrPacketTrx(core::marker::PhantomData<fn() -> TrxKinds>);
+        impl<'de> serde::de::Visitor<'de> for IdOrPacketTrx
+        {
+            type Value = TrxKinds;
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "string or a struct, but this is: {:?}", self)
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+                where
+                    E: serde::de::Error,
+            {
+                let t = hex::decode(value).unwrap();
+                let mut a: [u8; 32] = [0u8; 32];
+                for i in 0..32 {
+                    a[i] = t[i];
+                }
+                let s = Checksum256::from(a);
+                Ok(TrxKinds::TransactionId(s))
+            }
+
+            fn visit_map<D>(self, map: D) -> Result<Self::Value, D::Error>
+                where
+                    D: serde::de::MapAccess<'de>,
+            {
+                let s = serde::Deserialize::deserialize(serde::de::value::MapAccessDeserializer::new(map))?;
+                Ok(TrxKinds::PackedTransaction(s))
+            }
+        }
+        deserializer.deserialize_any(IdOrPacketTrx(core::marker::PhantomData))
+    }
 }
 
 impl TransactionReceipt {

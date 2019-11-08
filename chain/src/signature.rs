@@ -1,9 +1,10 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/crypto.hpp#L93-L120>
-use crate::{NumBytes, Read, UnsignedInt, Write};
-#[cfg(feature = "std")]
-use serde::{Deserialize, ser::{Serialize, Serializer}};
 #[cfg(feature = "std")]
 use crate::BigArray;
+use crate::{NumBytes, Read, UnsignedInt, Write};
+use core::str::FromStr;
+#[cfg(feature = "std")]
+use serde::{Deserialize, ser::{Serialize, Serializer}};
 
 /// EOSIO Signature
 #[derive(Read, Write, NumBytes, Clone)]
@@ -80,6 +81,14 @@ impl From<keys::signature::Signature> for Signature {
     }
 }
 
+impl FromStr for Signature {
+    type Err = keys::error::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let key_sig = keys::signature::Signature::from_str(s)?;
+        Ok(Signature::from(key_sig))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -96,5 +105,19 @@ mod tests {
     #[test]
     fn signature_display_should_work() {
         println!("{}", Signature::default());
+    }
+
+    #[test]
+    fn signture_from_str_should_work() {
+        let key_sig = "SIG_K1_KYt8J2dEYCVg6j9kZes8vVNdNUrRUy35pAy1ZPPNVFhv1uWQB5G5qC5X6UasuWqejyRiLgH4e3GZfSKs83Ey8BKvP6jdHQ";
+        let sig = Signature::from_str(key_sig);
+        assert!(sig.is_ok());
+    }
+
+    #[test]
+    fn signture_from_invalid_str_should_not_work() {
+        let key_sig = "SIG_K1_KYt8J2dEYCVg6j9kZes8vVNdNUrRUy35pAy1ZPPNVFhv1uWQB5G5qC5X6UasuWqejyRiLgH4e3GZfSKs83Ey8BKvP6jdHQ11111";
+        let sig = Signature::from_str(key_sig);
+        assert!(sig.is_err());
     }
 }

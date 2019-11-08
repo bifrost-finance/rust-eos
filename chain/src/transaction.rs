@@ -1,13 +1,11 @@
 use core::iter::{IntoIterator, Iterator};
 use core::convert::TryFrom;
-
-use hex;
+use core::str::FromStr;
+use keys::secret::SecretKey;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "std")]
 use serde::ser::{Serializer, SerializeStruct};
-
-use keys::secret::SecretKey;
 
 use crate::{
     Action,
@@ -85,13 +83,75 @@ impl core::fmt::Display for CompressionType {
 }
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
-#[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
 pub struct PackedTransaction {
     pub signatures: Vec<crate::Signature>,
     pub compression: CompressionType,
     pub packed_context_free_data: Vec<u8>,
     pub packed_trx: Vec<u8>,
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::Deserialize<'de> for PackedTransaction {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::de::Deserializer<'de>
+    {
+        #[derive(Debug)]
+        struct VisitorTrx;
+        impl<'de> serde::de::Visitor<'de> for VisitorTrx
+        {
+            type Value = PackedTransaction;
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "string or a struct, but this is: {:?}", self)
+            }
+
+            fn visit_map<D>(self, mut map: D) -> Result<Self::Value, D::Error>
+                where D: serde::de::MapAccess<'de>,
+            {
+                let mut signatures: Vec<crate::signature::Signature> = vec![];
+                let mut compression: CompressionType = CompressionType::None;
+                let mut packed_context_free_data: Vec<u8> = vec![];
+                let mut packed_trx: Vec<u8> = vec![];
+                while let Some(field) = map.next_key()? {
+                    match field {
+                        "signatures" => {
+                            let val: Vec<String> = map.next_value()?;
+                            signatures = val.iter().map(|v| {
+                                crate::signature::Signature::from_str(v).unwrap()
+                            }).collect::<Vec<_>>();
+                        }
+                        "compression" => {
+                            compression = match map.next_value()? {
+                                "none" => CompressionType::None,
+                                "zlib" => CompressionType::Zlib,
+                                _ => panic!("unknown compression variant"),
+                            }
+                        }
+                        "packed_context_free_data" => {
+                            let val: String = map.next_value()?;
+                            packed_context_free_data = hex::decode(val).unwrap();
+                        }
+                        "packed_trx" => {
+                            let val: String = map.next_value()?;
+                            packed_trx = hex::decode(val).unwrap();
+                        }
+                        _ => {
+                            // must give a type annotation here or compile with error
+                            let _: serde_json::Value = map.next_value()?;
+                            continue;
+                        }
+                    }
+                }
+                Ok(PackedTransaction {
+                    signatures,
+                    compression,
+                    packed_context_free_data,
+                    packed_trx,
+                })
+            }
+        }
+        deserializer.deserialize_any(VisitorTrx)
+    }
 }
 
 impl PackedTransaction {
@@ -397,6 +457,13 @@ mod test {
     }
 
     #[test]
+    fn packed_trx_tt() {
+        let data = hex::decode("7785c25dbc8b0fe520ac000000000500a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000").unwrap();
+        let packed_trx = PackedTransaction::read(data.as_slice(), &mut 0).unwrap();
+        dbg!(&packed_trx);
+    }
+
+    #[test]
     fn set_and_verify_reference_block_should_work() {
         let mut data = [0u8; 32];
         data.copy_from_slice(hex::decode("0011dfc5d73d7b00b0c262c7ce4c4eea0494bc1790e8e71a85a2a7c6742320a1").unwrap().as_slice());
@@ -406,5 +473,51 @@ mod test {
         assert_eq!(trx_header.ref_block_num, 57285);
         assert_eq!(trx_header.ref_block_prefix, 3345138352);
         assert_eq!(trx_header.verify_reference_block(&block_id), true);
+    }
+
+    #[test]
+    fn packed_transaction_deserialization_should_work() {
+        let p_trx = r#"
+            {
+            "id": "3463ee3c8a499bfe7b7b1bd1372f8a4840e357f24e8b43f22520a0ef6d9b236a",
+            "signatures": [
+              "SIG_K1_KYt8J2dEYCVg6j9kZes8vVNdNUrRUy35pAy1ZPPNVFhv1uWQB5G5qC5X6UasuWqejyRiLgH4e3GZfSKs83Ey8BKvP6jdHQ"
+            ],
+            "compression": "none",
+            "packed_context_free_data": "",
+            "context_free_data": [],
+            "packed_trx": "5a85c25dc88baa41a5cd000000000100a6823403ea3055000000572d3ccdcd0120cf34924d37af3e00000000a8ed32322120cf34924d37af3e301d456a524c9353010000000000000004454f53000000000000",
+            "transaction": {
+              "expiration": "2019-11-06T08:33:30",
+              "ref_block_num": 35784,
+              "ref_block_prefix": 3450159530,
+              "max_net_usage_words": 0,
+              "max_cpu_usage_ms": 0,
+              "delay_sec": 0,
+              "context_free_actions": [],
+              "actions": [
+                {
+                  "account": "eosio.token",
+                  "name": "transfer",
+                  "authorization": [
+                    {
+                      "actor": "burningmanbm",
+                      "permission": "active"
+                    }
+                  ],
+                  "data": {
+                    "from": "burningmanbm",
+                    "to": "eidosonecoin",
+                    "quantity": "0.0001 EOS",
+                    "memo": ""
+                  },
+                  "hex_data": "20cf34924d37af3e301d456a524c9353010000000000000004454f530000000000"
+                }
+              ],
+              "transaction_extensions": []
+            }
+          }"#;
+        let packed_trx: Result<PackedTransaction, _> = serde_json::from_str(&p_trx);
+        assert!(packed_trx.is_ok());
     }
 }
