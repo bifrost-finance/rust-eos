@@ -1,23 +1,28 @@
+#![allow(dead_code)]
 use crate::Checksum256;
 
-fn make_canonical_left(val: Checksum256) -> Checksum256 {
-    let mut canonical_l: Checksum256 = val;
+fn make_canonical_left(val: &Checksum256) -> Checksum256 {
+    let mut canonical_l: Checksum256 = *val;
     canonical_l.set_hash0(canonical_l.hash0() & 0xFFFFFFFFFFFFFF7Fu64);
     canonical_l
 }
 
-fn  make_canonical_right(val: Checksum256) -> Checksum256 {
-    let mut canonical_r: Checksum256 = val;
+fn  make_canonical_right(val: &Checksum256) -> Checksum256 {
+    let mut canonical_r: Checksum256 = *val;
     canonical_r.set_hash0(canonical_r.hash0() | 0x0000000000000080u64);
     canonical_r
 }
 
-fn is_canonical_left(val: Checksum256) -> bool {
+fn is_canonical_left(val: &Checksum256) -> bool {
     (val.hash0() & 0x0000000000000080u64) == 0
 }
 
-fn is_canonical_right(val: Checksum256) -> bool {
+fn is_canonical_right(val: &Checksum256) -> bool {
     (val.hash0() & 0x0000000000000080u64) != 0
+}
+
+pub fn make_canonical_pair(l: &Checksum256, r: &Checksum256) -> (Checksum256, Checksum256) {
+    (make_canonical_left(l), make_canonical_right(r))
 }
 
 pub fn merkle(ids: Vec<Checksum256>) -> crate::Result<Checksum256> {
@@ -33,14 +38,7 @@ pub fn merkle(ids: Vec<Checksum256>) -> crate::Result<Checksum256> {
         }
 
         for i in 0..(ids.len() / 2) {
-            let l = make_canonical_left(ids[2 * i]);
-            let r = make_canonical_right(ids[(2 * i) + 1]);
-
-            assert!(is_canonical_left(l));
-            assert!(is_canonical_right(r));
-
-            let pair = (l, r);
-            ids[i] = Checksum256::hash(pair)?;
+            ids[i] = Checksum256::hash(make_canonical_pair(&ids[2 * i], &ids[(2 * i) + 1]))?;
         }
 
         ids.resize(ids.len() / 2, Default::default());
