@@ -16,5 +16,7 @@ pub enum Error {
     ParseNameErr(ParseNameError),
     ParseSymbolError(ParseSymbolError),
     FromTrxKindsError,
+    IncreMerkleError,
+    InvalidLength,
 }
 

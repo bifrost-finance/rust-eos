@@ -2,6 +2,7 @@ use bitcoin_hashes::{Hash as HashTrait, sha256};
 use crate::{NumBytes, Read, Write};
 #[cfg(feature = "std")]
 use serde::{Deserialize, ser::{Serialize, Serializer}};
+use core::str::FromStr;
 
 // TODO Read, Write, NumBytes needs a custom implementation based on fixed_bytes
 #[derive(Read, Write, NumBytes, Default, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -85,6 +86,27 @@ impl From<Checksum256> for [u8; 32] {
     #[inline]
     fn from(value: Checksum256) -> Self {
         value.0
+    }
+}
+
+impl From<&str> for Checksum256 {
+    fn from(value: &str) -> Self {
+        Checksum256::from_str(value).unwrap()
+    }
+}
+
+impl FromStr for Checksum256 {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> crate::Result<Checksum256> {
+        let raw = hex::decode(s).map_err(crate::error::Error::FromHexError)?;
+        if raw.len() != 32 {
+            return Err(crate::Error::InvalidLength);
+        }
+        let mut target: [u8;32] = [0u8;32];
+        target.copy_from_slice(&raw[0..32]);
+
+        Ok(Checksum256::new(target))
     }
 }
 
