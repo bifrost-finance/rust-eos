@@ -47,6 +47,28 @@ pub fn merkle(ids: Vec<Checksum256>) -> crate::Result<Checksum256> {
     Ok(ids[0])
 }
 
+pub fn verify(paths: &Vec<Checksum256>, leaf: Checksum256, expected_root: Checksum256) -> bool {
+    let mut current: Checksum256 = leaf;
+    let mut left: Checksum256 = Default::default();
+    let mut right: Checksum256 = Default::default();
+
+    for path in paths.iter() {
+        if is_canonical_right(&path) {
+            left = current;
+            right = *path;
+        } else {
+            left = *path;
+            right = current;
+        }
+        left = make_canonical_left(&left);
+        right = make_canonical_right(&right);
+
+        current = Checksum256::hash(make_canonical_pair(&left, &right)).unwrap();
+    }
+
+    current == expected_root
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Checksum256, TransactionReceipt};
@@ -132,5 +154,29 @@ mod tests {
         // the correct transaction_mroot is right in file many_transactions_in_block.json
         // change a field net_usage_words from 0 to 42 in file invalid_transactions.json
         assert_ne!(merkle_root.to_string(), "ba5b2ff707951223e948a6a684a8abecd26391f4ee62ed58b1477970c43886df");
+    }
+
+    #[test]
+    fn merkle_verify_should_work() {
+        let paths: Vec<Checksum256> = vec![
+            "0000259943aeb714e885c783bc79487cd025bb687b39d9de755d73a7fea000dd".into(),
+            "804c48aed6b4f21b9d13bd3cc260411dc8d7e442f0430659e9bbcc70af95c8aa".into(),
+            "80f39c9cda67aa2c1e4ec3a6c2ed6182dbb87b30d2d82b44a2a2a76d37f74aae".into(),
+            "29eb5e917272918a6da86be0aaec2275bef5b66062c7f717b738b92b01e24faa".into(),
+            "07d415864f60c2ca1318d4ebf4fd46e446697076d4f38abc3105531830da815e".into(),
+            "9006d928623a944863b1bef8a6df59fcb9c4790d8fe8b49c2fd4b0f88f48566c".into(),
+            "efc734fa150a9cfa74402a7d50fae265f36037c70af9b078bee7c3332fe62768".into(),
+            "3e2f1f8b53ec4b22ffe724ba11f1cb676a675a0a6cf097ed1d8a30d766008f76".into(),
+            "43e4b272895404d72bdb14f7a06c19342cbdaa132bf3538bb20be67b28db5fc8".into(),
+            "9e3a7f7e635ea41663de6855b81eda28320ae3d2ba669e2a8e1e1d4d8969cb5c".into(),
+            "2cba7c7ee5c1d8ba97ea1a841707fbb2147e883b56544ba821814aebe086383e".into(),
+            "a081325a023dd7018dd99d1d4192348c73d445f4a4fd4ca40a99c1914c3b30b3".into(),
+            "8394f7a83fda4dc1fb026aec143ccb4c9ce69c21f23ab3a8af0a741f8597df96".into(),
+            "2fa502d408f5bdf1660fa9fe3a1fcb432462467e7eb403a8499392ee5297d8d1".into(),
+        ];
+        let leaf: Checksum256 = "0000259a7cc27f04467b6c7362a936a143a5d9f324075b4c0d291c3974f80720".into();
+        let expected_root: Checksum256 = "1894edef851c070852f55a4dc8fc50ea8f2eafc67d8daad767e4f985dfe54071".into();
+        let result = verify(&paths, leaf, expected_root);
+        assert!(result);
     }
 }
