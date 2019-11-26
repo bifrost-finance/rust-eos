@@ -1,3 +1,6 @@
+use alloc::string::String;
+use alloc::vec::Vec;
+use alloc::{vec, format};
 use crate::{
     Action,
     ActionName,
@@ -16,12 +19,12 @@ use crate::{
     WriteError,
     ReadError
 };
-use core::str::FromStr;
-use core::convert::TryFrom;
+use core::{convert::TryFrom, str::FromStr};
+use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct SignedBlock {
@@ -62,7 +65,7 @@ impl core::fmt::Display for SignedBlock {
 
 impl SerializeData for SignedBlock {}
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Serialize))]
 pub enum TrxKinds {
     TransactionId(Checksum256),
@@ -119,7 +122,7 @@ impl Write for TrxKinds {
     }
 }
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceipt {
@@ -173,7 +176,8 @@ impl<'de> serde::Deserialize<'de> for TransactionReceipt {
                             trx = val;
                         }
                         _ => {
-                            let _: serde_json::Value = map.next_value()?;
+//                            let _: serde_json::Value = map.next_value()?;
+                            let _: String = map.next_value()?;
                             continue;
                         }
                     }
@@ -274,7 +278,7 @@ impl core::fmt::Display for TransactionReceipt {
     }
 }
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct TransactionReceiptHeader {

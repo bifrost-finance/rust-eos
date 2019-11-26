@@ -36,6 +36,7 @@ impl TimePoint {
         Self(nano_sec)
     }
 
+    #[cfg(feature = "std")]
     pub fn now() -> Self {
         let now = Utc::now().timestamp_nanos();
         Self::from_unix_nano_seconds(now)

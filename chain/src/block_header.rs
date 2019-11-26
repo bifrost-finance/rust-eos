@@ -1,19 +1,10 @@
-use crate::{
-    AccountName,
-    bitutil,
-    BlockTimestamp,
-    Checksum256,
-    Extension,
-    NumBytes,
-    ProducerSchedule,
-    Read,
-    Signature,
-    Write,
-};
+use alloc::vec::Vec;
+use crate::{AccountName, bitutil, BlockTimestamp, Checksum256, Extension, NumBytes, ProducerSchedule, Read, Signature, Write, PublicKey};
+use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct BlockHeader {
@@ -103,7 +94,7 @@ impl BlockHeader {
     }
 }
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct SignedBlockHeader {
@@ -126,15 +117,80 @@ impl SignedBlockHeader {
     pub fn block_num(&self) -> u32 {
         self.block_header.block_num()
     }
+
+    // Todo, add test cases on this function
+    #[cfg(feature = "std")]
+    pub fn verify(&self, blockroot_merkle: Checksum256, schedule_hash: Checksum256, pk: PublicKey) -> crate::Result<()> {
+        let digest = self.sig_digest(blockroot_merkle, schedule_hash)?;
+        pk.verify(digest.as_bytes(), &self.producer_signature)
+    }
+
+    fn sig_digest(&self, blockroot_merkle: Checksum256, schedule_hash: Checksum256) -> crate::Result<Checksum256> {
+        let block_header_hash = self.block_header.digest()?;
+        let header_bmroot = Checksum256::hash((block_header_hash, blockroot_merkle))?;
+        Checksum256::hash((header_bmroot, schedule_hash))
+    }
 }
 
 impl core::fmt::Display for SignedBlockHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}\n\
-            producer_signature: {}",
+            producer_signature: {:?}",
             self.block_header,
             self.producer_signature,
         )
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::signature::Signature;
+    use core::str::FromStr;
+    use std::{
+        error::Error,
+        fs::File,
+        io::Read,
+        path::Path,
+    };
+    use super::*;
+
+    fn read_json_from_file(json_name: impl AsRef<str>) -> Result<String, Box<dyn Error>> {
+        let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/test_data/")).join(json_name.as_ref());
+        let mut file = File::open(path)?;
+        let mut json_str = String::new();
+        file.read_to_string(&mut json_str)?;
+        Ok(json_str)
+    }
+
+    #[test]
+    fn verify_block_header_should_be_ok() {
+//        let block_header: Result<SignedBlockHeader, _> = serde_json::from_str(&json);
+        let json = "new_producers.json";
+        let new_producers_str = read_json_from_file(json);
+        assert!(new_producers_str.is_ok());
+        let new_producers: Result<ProducerSchedule, _> = serde_json::from_str(&new_producers_str.unwrap());
+        assert!(new_producers.is_ok());
+
+        let new_producers = new_producers.unwrap();
+
+        let header = BlockHeader {
+            timestamp: BlockTimestamp(1542993662),
+            producer: AccountName::from_str("eosio").unwrap(),
+            confirmed: 0,
+            previous: Checksum256::from("00001a38e7e07793dd42bbe4ab050d5f36df3c7d7ad7126e2de7554c36072145"),
+            transaction_mroot: Checksum256::from("0000000000000000000000000000000000000000000000000000000000000000"),
+            action_mroot: Checksum256::from("611f53d8861ff2ba3c8b143100bb3fe99c06810db6d0189639f52a99e70e01b4"),
+            schedule_version: 0,
+            new_producers: Some(new_producers),
+            header_extensions: Vec::default(),
+        };
+        let block_header = SignedBlockHeader {
+            block_header: header,
+            producer_signature: Signature::from_str("SIG_K1_KgdybmKf6gTj8TAX6Cu1yQuRK8P15pEJWa7Xp1cFeCE84NXNpGd6UPkwPJjYGKVstgH7JSf5xCoV1WjKxReRmtVB7vvysp").unwrap(),
+        };
+
+        let pub_key = PublicKey::from_str("EOS5mk56pVBTZUb4Amxte9DbcbZuAHX1GWj4voUatgH7gyz8iUN1o").unwrap();
+
+    }
+}

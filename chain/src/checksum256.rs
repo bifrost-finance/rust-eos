@@ -1,11 +1,13 @@
+use alloc::vec;
 use bitcoin_hashes::{Hash as HashTrait, sha256};
 use crate::{NumBytes, Read, Write};
+use codec::{Encode, Decode};
+use core::str::FromStr;
 #[cfg(feature = "std")]
 use serde::{Deserialize, ser::{Serialize, Serializer}};
-use core::str::FromStr;
 
 // TODO Read, Write, NumBytes needs a custom implementation based on fixed_bytes
-#[derive(Read, Write, NumBytes, Default, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Read, Write, NumBytes, Default, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
 pub struct Checksum256(pub [u8; 32]);

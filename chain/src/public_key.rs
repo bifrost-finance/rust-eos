@@ -1,28 +1,29 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/crypto.hpp#L22-L48>
-use crate::{NumBytes, Read, UnsignedInt, Write};
-#[cfg(feature = "std")]
-use serde::{Deserialize,
-    Deserializer,
-    de::{self, Visitor},
-    ser::{Serialize, Serializer},
-};
+use crate::{NumBytes, Read, UnsignedInt, Write, Signature};
 #[cfg(feature = "std")]
 use crate::BigArray;
 use core::{
-    convert::TryFrom,
+    convert::{TryFrom, TryInto},
     fmt, marker::PhantomData,
     str::FromStr
 };
+use codec::{Encode, Decode};
+#[cfg(feature = "std")]
+use serde::{Deserialize,
+            Deserializer,
+            de::{self, Visitor},
+            ser::{Serialize, Serializer},
+};
 
 /// EOSIO Public Key
-#[derive(Read, Write, NumBytes, Clone)]
+#[derive(Read, Write, NumBytes, Clone, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
 pub struct PublicKey {
     /// Type of the public key, could be either K1 or R1
     pub type_: UnsignedInt,
     /// Bytes of the public key
-    #[serde(with = "BigArray")]
+    #[cfg_attr(feature = "std", serde(with = "BigArray"))]
     pub data: [u8; 33],
 }
 
@@ -44,8 +45,16 @@ impl PublicKey {
     pub const fn to_bytes(&self) -> [u8; 33] {
         self.data
     }
+
+    #[cfg(feature = "std")]
+    pub fn verify(&self, message_slice: &[u8], signature: &Signature) -> crate::Result<()> {
+        let keys = keys::public::PublicKey::try_from(self.clone())?;
+        let sig: &keys::signature::Signature = &signature.clone().try_into()?;
+        keys.verify(message_slice, sig).map_err(crate::Error::VerificationError)
+    }
 }
 
+#[cfg(feature = "std")]
 impl TryFrom<PublicKey> for keys::public::PublicKey {
     type Error = crate::error::Error;
     fn try_from(pk: PublicKey) -> Result<Self, Self::Error> {
@@ -53,6 +62,7 @@ impl TryFrom<PublicKey> for keys::public::PublicKey {
     }
 }
 
+#[cfg(feature = "std")]
 impl Into<PublicKey> for keys::public::PublicKey {
     fn into(self) -> PublicKey {
         PublicKey {
@@ -62,6 +72,7 @@ impl Into<PublicKey> for keys::public::PublicKey {
     }
 }
 
+#[cfg(feature = "std")]
 impl FromStr for PublicKey {
     type Err = crate::error::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -70,6 +81,7 @@ impl FromStr for PublicKey {
     }
 }
 
+#[cfg(feature = "std")]
 pub(crate) fn string_to_public_key<'de, T, D>(deserializer: D) -> Result<T, D::Error>
     where
         T: Deserialize<'de> + FromStr<Err = crate::error::Error>,
@@ -111,13 +123,14 @@ impl PartialEq for PublicKey {
     }
 }
 
-impl std::fmt::Debug for PublicKey {
+impl core::fmt::Debug for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        std::fmt::Debug::fmt(&self.type_, f)?;
-        std::fmt::Debug::fmt(self.as_bytes(), f)
+        core::fmt::Debug::fmt(&self.type_, f)?;
+        core::fmt::Debug::fmt(self.as_bytes(), f)
     }
 }
 
+#[cfg(feature = "std")]
 impl core::fmt::Display for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         if let Ok(pk) = keys::public::PublicKey::try_from(self.clone()) {

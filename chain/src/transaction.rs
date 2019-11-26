@@ -1,6 +1,11 @@
+use alloc::vec::Vec;
+use alloc::string::{ToString, String};
+use alloc::{format, vec};
 use core::iter::{IntoIterator, Iterator};
 use core::convert::TryFrom;
 use core::str::FromStr;
+use codec::{Encode, Decode};
+#[cfg(feature = "std")]
 use keys::secret::SecretKey;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -23,7 +28,7 @@ use crate::{
     WriteError,
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 pub enum CompressionType {
     None,
@@ -82,7 +87,7 @@ impl core::fmt::Display for CompressionType {
     }
 }
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
 #[eosio_core_root_path = "crate"]
 pub struct PackedTransaction {
     pub signatures: Vec<crate::Signature>,
@@ -137,7 +142,8 @@ impl<'de> serde::Deserialize<'de> for PackedTransaction {
                         }
                         _ => {
                             // must give a type annotation here or compile with error
-                            let _: serde_json::Value = map.next_value()?;
+//                            let _: serde_json::Value = map.next_value()?;
+                            let _: String = map.next_value()?;
                             continue;
                         }
                     }
@@ -197,7 +203,7 @@ impl core::fmt::Display for PackedTransaction {
             packed_context_free_data: {}\n\
             packed_trx: {}\n\
             transaction: {}",
-            self.signatures.iter().map(|item| item.to_string()).collect::<String>(),
+            self.signatures.iter().map(|item| format!("{:?}", item)).collect::<String>(),
             self.compression,
             hex::encode(&self.packed_context_free_data),
             hex::encode(&self.packed_trx),
@@ -287,6 +293,7 @@ pub struct Transaction {
 }
 
 impl Transaction {
+    #[cfg(feature = "std")]
     pub fn new(delay_secs: u32, ref_block_num: u16, ref_block_prefix: u32, actions: Vec<Action>) -> Self {
         let expiration = TimePointSec::now().add_seconds(delay_secs);
         let header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
@@ -312,6 +319,7 @@ impl Transaction {
         }
     }
 
+    #[cfg(feature = "std")]
     pub fn sign(&self, sk: SecretKey, chain_id: String) -> crate::Result<SignedTransaction> {
         let mut sign_data: Vec<u8>  = Vec::new();
         let mut chain_id_hex = hex::decode(chain_id)
@@ -329,6 +337,7 @@ impl Transaction {
         })
     }
 
+    #[cfg(feature = "std")]
     pub fn generate_signature(&self, sk: impl AsRef<str>, chain_id: impl AsRef<str>) -> crate::Result<keys::signature::Signature> {
         let sk = SecretKey::from_wif(sk.as_ref()).map_err(crate::error::Error::Keys)?;
         let mut chain_id_hex = hex::decode(chain_id.as_ref())
@@ -344,6 +353,7 @@ impl Transaction {
         Ok(sig)
     }
 
+    #[cfg(feature = "std")]
     pub fn generate_signed_transaction(&self, sks: impl IntoIterator<Item=keys::signature::Signature>) -> SignedTransaction
     {
         let sks: Vec<crate::Signature> = sks.into_iter().map(|sk| sk.into()).collect();
@@ -380,9 +390,9 @@ impl core::fmt::Display for Transaction {
             actions: {}\n\
             transaction_extensions: {}",
             self.header,
-            self.context_free_actions.iter().map(|item| format!("{}", item)).collect::<String>(),
-            self.actions.iter().map(|item| format!("{}", item)).collect::<String>(),
-            self.transaction_extensions.iter().map(|item| format!("{:?}", item)).collect::<String>(),
+            self.context_free_actions.iter().map(Action::to_string).collect::<String>(),
+            self.actions.iter().map(Action::to_string).collect::<String>(),
+            self.transaction_extensions.iter().map(Extension::to_string).collect::<String>(),
         )
     }
 }

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
+use alloc::vec::Vec;
 use crate::{Checksum256, make_canonical_pair};
+use codec::{Encode, Decode};
 
 // given an unsigned integral number return the smallest
 // power-of-2 which is greater than or equal to the given number
@@ -52,8 +54,8 @@ fn calculate_max_depth(node_count: u64) -> usize {
     clz_power_2(implied_count) + 1
 }
 
-#[derive(Default, Debug)]
-struct IncrementalMerkle {
+#[derive(Clone, Default, Debug, PartialEq, Encode, Decode)]
+pub struct IncrementalMerkle {
     _node_count: u64,
     _active_nodes: Vec<Checksum256>,
 }

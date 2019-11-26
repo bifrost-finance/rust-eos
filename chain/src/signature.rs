@@ -2,19 +2,23 @@
 #[cfg(feature = "std")]
 use crate::BigArray;
 use crate::{NumBytes, Read, UnsignedInt, Write};
-use core::str::FromStr;
+use core::{
+    convert::TryInto,
+    str::FromStr,
+};
+use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, ser::{Serialize, Serializer}};
 
 /// EOSIO Signature
-#[derive(Read, Write, NumBytes, Clone)]
+#[derive(Read, Write, NumBytes, Clone, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
 pub struct Signature {
     /// Type of the signature, could be either K1 or R1
     pub type_: UnsignedInt,
     /// Bytes of the signature
-    #[serde(with = "BigArray")]
+    #[cfg_attr(feature = "std", serde(with = "BigArray"))]
     pub data: [u8; 65],
 }
 
@@ -49,7 +53,7 @@ impl Default for Signature {
 
 impl core::fmt::Debug for Signature {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        std::fmt::Debug::fmt(&self.type_, f)?;
+        core::fmt::Debug::fmt(&self.type_, f)?;
         core::fmt::Debug::fmt(self.as_bytes(), f)
     }
 }
@@ -62,6 +66,7 @@ impl PartialEq for Signature {
     }
 }
 
+#[cfg(feature = "std")]
 impl core::fmt::Display for Signature {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         if let Ok(sig) = keys::signature::Signature::from_compact(&self.data) {
@@ -72,6 +77,7 @@ impl core::fmt::Display for Signature {
     }
 }
 
+#[cfg(feature = "std")]
 impl From<keys::signature::Signature> for Signature {
     fn from(sig: keys::signature::Signature) -> Self {
         Signature {
@@ -81,6 +87,15 @@ impl From<keys::signature::Signature> for Signature {
     }
 }
 
+#[cfg(feature = "std")]
+impl TryInto<keys::signature::Signature> for Signature {
+    type Error = crate::Error;
+    fn try_into(self) -> Result<keys::signature::Signature, Self::Error> {
+        keys::signature::Signature::from_compact(&self.data).map_err(crate::Error::Keys)
+    }
+}
+
+#[cfg(feature = "std")]
 impl FromStr for Signature {
     type Err = keys::error::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -97,14 +112,18 @@ mod tests {
     fn unpack_signature_should_work() {
         let data = hex::decode("00206b22f146d8bfe03a7a03b760cb2539409b05f9961543ee41c31f0cf493267b8c244d1517a6aa67cf47f294755d9e2fb5dda6779f5d88d6e4461f380a2b02964b").unwrap();
         let mut pos = 0;
-        let sig = Signature::read(&data.as_slice(), &mut pos).unwrap();
-        dbg!(&sig);
-        dbg!(&pos);
+        let sig = Signature::read(&data.as_slice(), &mut pos);
+        assert!(sig.is_ok());
+        assert_eq!(pos, 20);
     }
 
     #[test]
     fn signature_display_should_work() {
-        println!("{}", Signature::default());
+        let sig = Signature {
+            type_: UnsignedInt::from(0u8),
+            data: [0u8; 65],
+        };
+        assert_eq!(sig, Signature::default());
     }
 
     #[test]

@@ -1,5 +1,6 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/varint.hpp#L15-L237>
 use crate::{NumBytes, Read, ReadError, Write, WriteError};
+use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// serialization of 32-bit unsigned int. It serialuzes a 32-bit unsigned
 /// integer in as few bytes as possible. `UnsignedInt` is unsigned and uses
 /// [VLQ or Base-128 encoding](https://en.wikipedia.org/wiki/Variable-length_quantity)
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 pub struct UnsignedInt(u32);
 

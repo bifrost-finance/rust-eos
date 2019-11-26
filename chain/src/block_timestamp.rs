@@ -1,15 +1,16 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/time.hpp#L134-L210>
 use crate::{TimePoint, TimePointSec, NumBytes, Read, Write};
 use chrono::{Utc, TimeZone, SecondsFormat};
+use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::ser::{Serialize, Serializer};
 
 /// This class is used in the block headers to represent the block time
 /// It is a parameterised class that takes an Epoch in milliseconds and
 /// and an interval in milliseconds and computes the number of slots.
-#[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy, Hash, Default)]
+#[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy, Hash, Default, Encode, Decode)]
 #[eosio_core_root_path = "crate"]
-pub struct BlockTimestamp(u32);
+pub struct BlockTimestamp(pub u32);
 
 #[cfg(feature = "std")]
 impl Serialize for BlockTimestamp {
@@ -33,21 +34,24 @@ impl BlockTimestamp {
         self.0
     }
 
+    #[cfg(feature = "std")]
     pub fn now() -> Self {
         TimePointSec::now().into()
     }
 }
 
+#[cfg(feature = "std")]
 struct BlockTimestampVisitor;
 
+#[cfg(feature = "std")]
 impl<'de> ::serde::de::Visitor<'de> for BlockTimestampVisitor {
     type Value = BlockTimestamp;
 
     #[inline]
     fn expecting(
         &self,
-        formatter: &mut ::std::fmt::Formatter,
-    ) -> ::std::fmt::Result {
+        formatter: &mut core::fmt::Formatter,
+    ) -> core::fmt::Result {
         formatter.write_str("a second timestamp as a number or string")
     }
 
@@ -71,6 +75,7 @@ impl<'de> ::serde::de::Visitor<'de> for BlockTimestampVisitor {
     }
 }
 
+#[cfg(feature = "std")]
 impl<'de> ::serde::de::Deserialize<'de> for BlockTimestamp {
     #[inline]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

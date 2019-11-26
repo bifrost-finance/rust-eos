@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use alloc::vec::Vec;
 use crate::Checksum256;
 
 fn make_canonical_left(val: &Checksum256) -> Checksum256 {

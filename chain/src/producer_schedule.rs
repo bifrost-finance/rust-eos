@@ -1,11 +1,13 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/796ff8bee9a0fc864f665a0a4d018e0ff18ac383/libraries/eosiolib/contracts/eosio/producer_schedule.hpp#L54-L69>
+use alloc::vec::Vec;
 use crate::{AccountName, NumBytes, ProducerKey, Read, Write, PublicKey, Checksum256};
+use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
 /// Defines both the order, account name, and signing keys of the active set
 /// of producers.
-#[derive(Read, Write, NumBytes, Clone, Default, Debug, PartialEq)]
+#[derive(Read, Write, NumBytes, Clone, Default, Debug, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct ProducerSchedule {
@@ -17,6 +19,13 @@ pub struct ProducerSchedule {
 }
 
 impl ProducerSchedule {
+    pub fn new(version: u32, producers: Vec<ProducerKey>) -> Self {
+        Self {
+            version,
+            producers
+        }
+    }
+
     pub fn get_producer_key(&self, p: AccountName) -> PublicKey {
         for i in self.producers.iter() {
             if i.producer_name == p {

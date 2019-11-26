@@ -26,6 +26,7 @@ impl TimePointSec {
         self.0
     }
 
+    #[cfg(feature = "std")]
     pub fn now() -> Self {
         let now = Utc::now().timestamp();
         Self::from_unix_seconds(now as u32)

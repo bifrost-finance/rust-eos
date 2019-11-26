@@ -1,5 +1,6 @@
 use hex;
 
+#[cfg(feature = "std")]
 use keys::error as KeyError;
 
 use crate::{ParseAssetError, ParseNameError, ParseSymbolError, ReadError, WriteError};
@@ -11,6 +12,7 @@ pub enum Error {
     BytesReadError(ReadError),
     BytesWriteError(WriteError),
     FromHexError(hex::FromHexError),
+    #[cfg(feature = "std")]
     Keys(KeyError::Error),
     ParseAssetErr(ParseAssetError),
     ParseNameErr(ParseNameError),
@@ -18,5 +20,8 @@ pub enum Error {
     FromTrxKindsError,
     IncreMerkleError,
     InvalidLength,
+    NoNewProducersList,
+    #[cfg(feature = "std")]
+    VerificationError(KeyError::Error),
 }
 
