@@ -10,7 +10,7 @@ use serde::{Serialize, Deserialize};
 #[cfg(feature = "std")]
 use serde::ser::{Serializer, SerializeStruct};
 
-use crate::{AccountName, ActionName, Asset, Checksum256, Digest, NumBytes, PermissionLevel, Read, SerializeData, Write};
+use crate::{AccountName, ActionName, Asset, Digest, NumBytes, PermissionLevel, Read, SerializeData, Write};
 
 /// This is the packed representation of an action along with meta-data about
 /// the authorization levels.
@@ -39,8 +39,8 @@ impl Action {
         authorization: Vec<PermissionLevel>,
         action_data: S
     ) -> crate::Result<Self> {
-        let account = AccountName::from_str(account.as_ref()).map_err(crate::Error::from)?;
-        let name =  ActionName::from_str(name.as_ref()).map_err(crate::Error::from)?;
+        let account = FromStr::from_str(account.as_ref()).map_err(crate::Error::from)?;
+        let name =  FromStr::from_str(name.as_ref()).map_err(crate::Error::from)?;
         let data = action_data.to_serialize_data();
 
         Ok(Action { account, name, authorization, data })
@@ -110,9 +110,9 @@ impl ActionTransfer {
     }
 
     pub fn from_str<T: AsRef<str>>(from: T, to: T, quantity: T, memo: T) -> crate::Result<Self> {
-        let from = AccountName::from_str(from.as_ref()).map_err(crate::Error::from)?;
-        let to = AccountName::from_str(to.as_ref()).map_err(crate::Error::from)?;
-        let quantity = Asset::from_str(quantity.as_ref()).map_err(crate::Error::from)?;
+        let from = FromStr::from_str(from.as_ref()).map_err(crate::Error::from)?;
+        let to = FromStr::from_str(to.as_ref()).map_err(crate::Error::from)?;
+        let quantity = FromStr::from_str(quantity.as_ref()).map_err(crate::Error::from)?;
         let memo = memo.as_ref().to_string();
 
         Ok(ActionTransfer { from, to, quantity, memo })

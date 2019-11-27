@@ -3,6 +3,7 @@
 extern crate alloc;
 
 pub mod action;
+pub mod action_receipt;
 pub mod asset;
 pub mod bytes;
 pub mod block;
@@ -35,6 +36,7 @@ pub use eosio_core_derive::*;
 
 pub use self::{
     action::*,
+    action_receipt::*,
     asset::*,
     bytes::*,
     block::*,
