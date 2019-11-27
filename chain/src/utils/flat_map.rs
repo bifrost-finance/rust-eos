@@ -1,6 +1,7 @@
 use crate::{Read, Write, NumBytes, UnsignedInt, WriteError, ReadError};
+use codec::{Encode, Decode};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Encode, Decode)]
 pub struct FlatMap<K, V> {
     maps: Vec<(K, V)>,
 }
