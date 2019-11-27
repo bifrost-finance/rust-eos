@@ -62,7 +62,7 @@ pub struct IncrementalMerkle {
 
 impl IncrementalMerkle {
 
-    fn new(node_count: u64, active_nodes: Vec<Checksum256>) -> Self {
+    pub fn new(node_count: u64, active_nodes: Vec<Checksum256>) -> Self {
         IncrementalMerkle {
             _node_count: node_count,
             _active_nodes: active_nodes,
