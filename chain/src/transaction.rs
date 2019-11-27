@@ -14,7 +14,7 @@ use serde::ser::{Serializer, SerializeStruct};
 
 use crate::{
     Action,
-    bitutil,
+    utils::bitutil,
     Checksum256,
     Extension,
     NumBytes,

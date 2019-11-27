@@ -29,8 +29,7 @@ pub mod time_point;
 pub mod time_point_sec;
 pub mod transaction;
 pub mod unsigned_int;
-
-pub mod bitutil;
+pub mod utils;
 
 pub use eosio_core_derive::*;
 
