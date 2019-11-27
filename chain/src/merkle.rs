@@ -104,7 +104,7 @@ pub fn verify_proof(paths: &Vec<Checksum256>, leaf: Checksum256, expected_root: 
 
 #[cfg(test)]
 mod tests {
-    use crate::{Checksum256, Digest, TransactionReceipt, TrxKinds, Transaction, SignedBlock};
+    use crate::{Checksum256, Digest, TransactionReceipt, TrxKinds, Transaction};
     use super::*;
     use std::{
         error::Error,
@@ -113,7 +113,6 @@ mod tests {
         path::Path,
     };
     use std::convert::TryFrom;
-    use crate::SerializeData;
 
     fn read_json_from_file(json_name: impl AsRef<str>) -> Result<String, Box<dyn Error>> {
         let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/test_data/")).join(json_name.as_ref());

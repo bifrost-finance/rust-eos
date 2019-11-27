@@ -153,7 +153,6 @@ mod test {
         io::Read,
         path::Path,
     };
-    use super::*;
 
     fn read_json_from_file(json_name: impl AsRef<str>) -> Result<String, Box<dyn Error>> {
         let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/test_data/")).join(json_name.as_ref());
