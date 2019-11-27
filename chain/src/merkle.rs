@@ -82,8 +82,8 @@ pub fn get_proof(position: usize, ids: Vec<Checksum256>) -> crate::Result<Vec<Ch
 
 pub fn verify_proof(paths: &Vec<Checksum256>, leaf: Checksum256, expected_root: Checksum256) -> bool {
     let mut current: Checksum256 = leaf;
-    let mut left: Checksum256 = Default::default();
-    let mut right: Checksum256 = Default::default();
+    let mut left: Checksum256;
+    let mut right: Checksum256;
 
     for path in paths.iter() {
         if is_canonical_right(&path) {
