@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use crate::{AccountName, bitutil, BlockTimestamp, Checksum256, Extension, NumBytes, ProducerSchedule, Read, Signature, Write, PublicKey};
+use crate::{AccountName, utils::bitutil, BlockTimestamp, Checksum256, Extension, NumBytes, ProducerSchedule, Read, Signature, Write, PublicKey};
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

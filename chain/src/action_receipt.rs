@@ -1,6 +1,8 @@
 use crate::{AccountName, Checksum256, UnsignedInt, Digest, Read, Write, NumBytes, SerializeData};
+use crate::utils::flat_map::FlatMap;
+use codec::{Encode, Decode};
 
-#[derive(Clone, Debug, Read, Write, NumBytes, Default)]
+#[derive(Clone, Debug, Read, Write, NumBytes, Default, Encode, Decode)]
 #[eosio_core_root_path = "crate"]
 pub struct ActionReceipt {
     receiver: AccountName,
@@ -9,7 +11,7 @@ pub struct ActionReceipt {
     global_sequence: u64,
     /// total number of actions with this receiver since genesis
     recv_sequence: u64,
-    auth_sequence: (UnsignedInt, AccountName, u64),
+    auth_sequence: FlatMap<AccountName, u64>,
     /// total number of setcodes
     code_sequence: UnsignedInt,
     /// total number of setabis
@@ -32,7 +34,7 @@ mod tests {
             act_digest: "765a9001f3648d8e4de93b4ac1fae775b6f6a6cc989f0b75060aacf9c1100b51".into(),
             global_sequence: 32u64,
             recv_sequence: 30u64,
-            auth_sequence: (UnsignedInt::from(1u32), account, 23u64),
+            auth_sequence: FlatMap::new(account, 23u64),
             code_sequence: UnsignedInt::from(1u32),
             abi_sequence: UnsignedInt::from(1u32),
         };
