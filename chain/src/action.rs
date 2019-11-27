@@ -10,7 +10,7 @@ use serde::{Serialize, Deserialize};
 #[cfg(feature = "std")]
 use serde::ser::{Serializer, SerializeStruct};
 
-use crate::{AccountName, ActionName, Asset, NumBytes, PermissionLevel, Read, SerializeData, Write};
+use crate::{AccountName, ActionName, Asset, Checksum256, Digest, NumBytes, PermissionLevel, Read, SerializeData, Write};
 
 /// This is the packed representation of an action along with meta-data about
 /// the authorization levels.
@@ -58,6 +58,7 @@ impl Action {
     }
 }
 
+impl Digest for Action {}
 impl SerializeData for Action {}
 
 impl core::fmt::Display for Action {
@@ -148,7 +149,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn action_should_work() {
+    fn action_hash_should_work() {
+        let action = Action {
+            account: FromStr::from_str("eosio.token").unwrap(),
+            name: FromStr::from_str("issue").unwrap(),
+            authorization: vec![PermissionLevel {
+                actor: FromStr::from_str("eosio").unwrap(),
+                permission: FromStr::from_str("active").unwrap(),
+            }],
+            data: hex::decode("0000000000ea305500625e5a1809000004454f530000000004696e6974").unwrap(),
+        };
+
+        let hash = action.digest().unwrap();
+        assert_eq!(hash, "0221f3da945a3de738cdb744f7963a6a3486097ab42436d1f4e13a1ade502bb9".into());
+    }
+
+    #[test]
+    fn action_transfer_serialize_should_work() {
         let action = Action::transfer("testa", "testb", "1.0000 EOS", "a memo").ok().unwrap();
         let data = action.to_serialize_data();
         assert_eq!(
