@@ -72,6 +72,12 @@ pub trait SerializeData: Write + NumBytes {
     }
 }
 
+pub trait Digest: Clone + Write + NumBytes {
+    fn digest(&self) -> crate::Result<Checksum256> {
+        Checksum256::hash(self.clone())
+    }
+}
+
 #[cfg(feature = "std")]
 #[macro_use]
 extern crate serde_big_array;
