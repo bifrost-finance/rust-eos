@@ -125,6 +125,7 @@ impl SignedBlockHeader {
         pk.verify(digest.as_bytes(), &self.producer_signature)
     }
 
+    #[cfg(feature = "std")]
     fn sig_digest(&self, blockroot_merkle: Checksum256, schedule_hash: Checksum256) -> crate::Result<Checksum256> {
         let block_header_hash = self.block_header.digest()?;
         let header_bmroot = Checksum256::hash((block_header_hash, blockroot_merkle))?;
@@ -141,6 +142,10 @@ impl core::fmt::Display for SignedBlockHeader {
         )
     }
 }
+
+impl crate::SerializeData for BlockHeader {}
+
+impl crate::SerializeData for SignedBlockHeader {}
 
 #[cfg(test)]
 mod test {

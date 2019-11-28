@@ -47,10 +47,10 @@ impl PublicKey {
     }
 
     #[cfg(feature = "std")]
-    pub fn verify(&self, message_slice: &[u8], signature: &Signature) -> crate::Result<()> {
+    pub fn verify(&self, hash: &[u8], signature: &Signature) -> crate::Result<()> {
         let keys = keys::public::PublicKey::try_from(self.clone())?;
         let sig: &keys::signature::Signature = &signature.clone().try_into()?;
-        keys.verify(message_slice, sig).map_err(crate::Error::VerificationError)
+        keys.verify_hash(hash, sig).map_err(crate::Error::VerificationError)
     }
 }
 
