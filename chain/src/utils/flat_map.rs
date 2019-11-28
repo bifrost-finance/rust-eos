@@ -1,3 +1,5 @@
+use alloc::vec;
+use alloc::vec::Vec;
 use crate::{Read, Write, NumBytes, UnsignedInt, WriteError, ReadError};
 use codec::{Encode, Decode};
 
