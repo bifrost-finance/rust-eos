@@ -1,5 +1,10 @@
 use alloc::vec::Vec;
-use crate::{AccountName, utils::bitutil, BlockTimestamp, Checksum256, Extension, NumBytes, ProducerSchedule, Read, Signature, Write, PublicKey};
+use core::{convert::From, str::FromStr};
+use crate::{
+    AccountName, utils::bitutil, BlockTimestamp,
+    Checksum256, Extension, NumBytes, ProducerSchedule,
+    Read, Signature, Write, PublicKey, TimePointSec,
+};
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -95,7 +100,7 @@ impl BlockHeader {
 }
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "std", derive(Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct SignedBlockHeader {
     pub block_header: BlockHeader,
@@ -132,6 +137,97 @@ impl SignedBlockHeader {
     }
 }
 
+#[cfg(feature = "std")]
+impl<'de> serde::Deserialize<'de> for SignedBlockHeader {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::de::Deserializer<'de>
+    {
+        #[derive(Debug)]
+        struct VisitorSignedHeader;
+        impl<'de> serde::de::Visitor<'de> for VisitorSignedHeader
+        {
+            type Value = SignedBlockHeader;
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "string or a struct, but this is: {:?}", self)
+            }
+
+            fn visit_map<D>(self, mut map: D) -> Result<Self::Value, D::Error>
+                where D: serde::de::MapAccess<'de>,
+            {
+                let mut timestamp = BlockTimestamp::default();
+                let mut producer = AccountName::default();
+                let mut confirmed = 0u16;
+                let mut previous = Checksum256::default();
+                let mut transaction_mroot = Checksum256::default();
+                let mut action_mroot = Checksum256::default();
+                let mut schedule_version = 0u32;
+                let mut new_producers: Option<ProducerSchedule> = None;
+                let mut producer_signature = Signature::default();
+                while let Some(field) = map.next_key()? {
+                    match field {
+                        "timestamp" => {
+                            let val: String = map.next_value()?;
+                            let t = val.parse::<chrono::NaiveDateTime>().unwrap().timestamp();
+                            timestamp = BlockTimestamp::from(TimePointSec::from_unix_seconds(t as u32));
+                        }
+                        "producer" => {
+                            let val: String = map.next_value()?;
+                            producer = AccountName::from_str(&val).unwrap();
+                        }
+                        "confirmed" => {
+                            confirmed= map.next_value()?;
+                        }
+                        "previous" => {
+                            let val: String = map.next_value()?;
+                            previous = Checksum256::from_str(&val).unwrap();
+                        }
+                        "transaction_mroot" => {
+                            let val: String = map.next_value()?;
+                            transaction_mroot = Checksum256::from_str(&val).unwrap();
+                        }
+                        "action_mroot" => {
+                            let val: String = map.next_value()?;
+                            action_mroot = Checksum256::from_str(&val).unwrap();
+                        }
+                        "schedule_version" => {
+                            schedule_version= map.next_value()?;
+                        }
+                        "new_producers" => {
+                            let np: Option<ProducerSchedule> = map.next_value()?;
+                            new_producers = np;
+                        }
+                        "producer_signature" => {
+                            let val: String = map.next_value()?;
+                            producer_signature = Signature::from_str(&val).unwrap();
+                        }
+                        _ => {
+                            let _: serde_json::Value = map.next_value()?;
+                            continue;
+                        }
+                    }
+                }
+                let block_header = BlockHeader {
+                    timestamp,
+                    producer,
+                    confirmed,
+                    previous,
+                    transaction_mroot,
+                    action_mroot,
+                    schedule_version,
+                    new_producers,
+                    header_extensions: Default::default()
+                };
+                let sb = SignedBlockHeader {
+                    block_header,
+                    producer_signature
+                };
+                Ok(sb)
+            }
+        }
+        deserializer.deserialize_any(VisitorSignedHeader)
+    }
+}
+
 impl core::fmt::Display for SignedBlockHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}\n\
@@ -150,6 +246,7 @@ impl crate::SerializeData for SignedBlockHeader {}
 mod test {
     use super::*;
     use crate::signature::Signature;
+    use crate::IncrementalMerkle;
     use core::str::FromStr;
     use std::{
         error::Error,
@@ -168,32 +265,29 @@ mod test {
 
     #[test]
     fn verify_block_header_should_be_ok() {
-//        let block_header: Result<SignedBlockHeader, _> = serde_json::from_str(&json);
-        let json = "new_producers.json";
-        let new_producers_str = read_json_from_file(json);
-        assert!(new_producers_str.is_ok());
-        let new_producers: Result<ProducerSchedule, _> = serde_json::from_str(&new_producers_str.unwrap());
-        assert!(new_producers.is_ok());
+        let json = "signed_block_header.json";
+        let signed_block_str = read_json_from_file(json);
+        let signed_block: Result<SignedBlockHeader, _> = serde_json::from_str(&signed_block_str.unwrap());
+        assert!(signed_block.is_ok());
+        let signed_block_header = signed_block.unwrap();
 
-        let new_producers = new_producers.unwrap();
+        let new_producers = signed_block_header.block_header.new_producers.as_ref().unwrap().clone();
+        let schedule_hash = new_producers.schedule_hash();
+        assert!(schedule_hash.is_ok());
+        let schedule_hash = schedule_hash.unwrap();
+        let pk = new_producers.get_producer_key(signed_block_header.block_header.producer);
 
-        let header = BlockHeader {
-            timestamp: BlockTimestamp(1542993662),
-            producer: AccountName::from_str("eosio").unwrap(),
-            confirmed: 0,
-            previous: Checksum256::from("00001a38e7e07793dd42bbe4ab050d5f36df3c7d7ad7126e2de7554c36072145"),
-            transaction_mroot: Checksum256::from("0000000000000000000000000000000000000000000000000000000000000000"),
-            action_mroot: Checksum256::from("611f53d8861ff2ba3c8b143100bb3fe99c06810db6d0189639f52a99e70e01b4"),
-            schedule_version: 0,
-            new_producers: Some(new_producers),
-            header_extensions: Vec::default(),
-        };
-        let block_header = SignedBlockHeader {
-            block_header: header,
-            producer_signature: Signature::from_str("SIG_K1_KgdybmKf6gTj8TAX6Cu1yQuRK8P15pEJWa7Xp1cFeCE84NXNpGd6UPkwPJjYGKVstgH7JSf5xCoV1WjKxReRmtVB7vvysp").unwrap(),
-        };
+        // 9312 merkle root
+        let mroot: Checksum256 = "bd1dc07bd4f14bf4d9a32834ec1d35ea92eda26cc220fe91f4f65052bfb1d45a".into();
+        assert!(signed_block_header.verify(mroot, schedule_hash, pk).is_ok());
+    }
 
-        let pub_key = PublicKey::from_str("EOS5mk56pVBTZUb4Amxte9DbcbZuAHX1GWj4voUatgH7gyz8iUN1o").unwrap();
-
+    #[test]
+    fn deserialize_signed_block_should_be_ok() {
+        let json = "transaction_with_new_producers.json";
+        let signed_block_str = read_json_from_file(json);
+        assert!(signed_block_str.is_ok());
+        let signed_block: Result<SignedBlockHeader, _> = serde_json::from_str(&signed_block_str.unwrap());
+        assert!(signed_block.is_ok());
     }
 }
