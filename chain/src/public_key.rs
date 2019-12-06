@@ -102,7 +102,7 @@ pub(crate) fn string_to_public_key<'de, T, D>(deserializer: D) -> Result<T, D::E
             where
                 E: de::Error,
         {
-            Ok(FromStr::from_str(value).unwrap())
+            Ok(FromStr::from_str(value).map_err(|_| E::custom("public_key deserialization error."))?)
         }
     }
     deserializer.deserialize_any(StringToPublicKey(PhantomData))

@@ -4,17 +4,16 @@ use alloc::{format, vec};
 use alloc::vec::Vec;
 use core::str::FromStr;
 use codec::{Encode, Decode};
-
+use crate::{
+    AccountName, ActionName, Asset, Digest, NumBytes,
+    PermissionLevel, Read, SerializeData, Write
+};
 #[cfg(feature = "std")]
-use serde::{Serialize, Deserialize};
-#[cfg(feature = "std")]
-use serde::ser::{Serializer, SerializeStruct};
+use serde::{Serialize, Deserialize, de::Error, ser::{Serializer, SerializeStruct}};
 
-use crate::{AccountName, ActionName, Asset, Digest, NumBytes, PermissionLevel, Read, SerializeData, Write};
 
 /// This is the packed representation of an action along with meta-data about
 /// the authorization levels.
-#[cfg_attr(feature = "std", derive(Deserialize))]
 #[derive(Clone, Debug, Read, Write, NumBytes, PartialEq, Default, Encode, Decode)]
 #[eosio_core_root_path = "crate"]
 pub struct Action {
@@ -26,6 +25,63 @@ pub struct Action {
     pub authorization: Vec<PermissionLevel>,
     /// Payload data
     pub data: Vec<u8>,
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::Deserialize<'de> for Action {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::de::Deserializer<'de>
+    {
+        #[derive(Debug)]
+        struct VisitorAction;
+        impl<'de> serde::de::Visitor<'de> for VisitorAction
+        {
+            type Value = Action;
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "string or a struct, but this is: {:?}", self)
+            }
+
+            fn visit_map<D>(self, mut map: D) -> Result<Self::Value, D::Error>
+                where D: serde::de::MapAccess<'de>,
+            {
+                let mut account = AccountName::default();
+                let mut name = ActionName::default();
+                let mut authorization: Vec<PermissionLevel> = vec![];
+                let mut data: Vec<u8> = vec![];
+                while let Some(field) = map.next_key()? {
+                    match field {
+                        "account" => {
+                            account = map.next_value()?;
+//                            account = AccountName::from_str(&val).map_err(|_| D::Error::custom("failed to parse the filed account."))?;
+                        }
+                        "name" => {
+                            name = map.next_value()?;
+//                            act_digest = ActionName::from_str(&val).map_err(|_| D::Error::custom("failed to parse the filed name."))?;
+                        }
+                        "authorization" => {
+                            authorization= map.next_value()?;
+                        }
+                        "hex_data" => {
+                            let val: String= map.next_value()?;
+                            data = hex::decode(val).map_err(D::Error::custom)?;
+                        }
+                        _ => {
+                            let _: serde_json::Value = map.next_value()?;
+                            continue;
+                        }
+                    }
+                }
+                let action = Action {
+                    account,
+                    name,
+                    authorization,
+                    data,
+                };
+                Ok(action)
+            }
+        }
+        deserializer.deserialize_any(VisitorAction)
+    }
 }
 
 impl Action {
@@ -172,5 +228,33 @@ mod tests {
             hex::encode(data),
             "00a6823403ea3055000000572d3ccdcd01000000000093b1ca00000000a8ed323227000000000093b1ca000000008093b1ca102700000000000004454f53000000000661206d656d6f"
         );
+    }
+
+    #[test]
+    fn action_deserialize_should_be_ok() {
+        let action_str = r#"
+        {
+            "account": "eosio.token",
+            "name": "transfer",
+            "authorization": [
+                {
+                    "actor": "junglefaucet",
+                    "permission": "active"
+                }
+            ],
+            "data": {
+                "from": "junglefaucet",
+                "receiver": "megasuper333",
+                "stake_net_quantity": "1.0000 EOS",
+                "stake_cpu_quantity": "1.0000 EOS",
+                "transfer": 1
+            },
+            "hex_data": "9015d266a9c8a67e30c6b8aa6a6c989240420f000000000004454f5300000000134e657720425020526567697374726174696f6e"
+        }"#;
+
+        let action: Result<Action, _> = serde_json::from_str(action_str);
+        assert!(action.is_ok());
+        let hash = action.unwrap().digest().unwrap();
+        assert_eq!(hash, "eaa3b4bf845a1b41668ab7ca49fb5644fc91a6c0156dfd33911b4ec69d2e41d6".into())
     }
 }

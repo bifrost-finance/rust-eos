@@ -10,7 +10,10 @@ use keys::secret::SecretKey;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "std")]
-use serde::ser::{Serializer, SerializeStruct};
+use serde::{
+    de::Error,
+    ser::{Serializer, SerializeStruct},
+};
 
 use crate::{
     Action,
@@ -121,9 +124,11 @@ impl<'de> serde::Deserialize<'de> for PackedTransaction {
                     match field {
                         "signatures" => {
                             let val: Vec<String> = map.next_value()?;
-                            signatures = val.iter().map(|v| {
-                                crate::signature::Signature::from_str(v).unwrap()
-                            }).collect::<Vec<_>>();
+                            signatures = Vec::with_capacity(val.len());
+                            for v in val {
+                                let sig = crate::Signature::from_str(&v).map_err(|e| D::Error::custom(e))?;
+                                signatures.push(sig);
+                            }
                         }
                         "compression" => {
                             compression = match map.next_value()? {
@@ -134,15 +139,14 @@ impl<'de> serde::Deserialize<'de> for PackedTransaction {
                         }
                         "packed_context_free_data" => {
                             let val: String = map.next_value()?;
-                            packed_context_free_data = hex::decode(val).unwrap();
+                            packed_context_free_data = hex::decode(val).map_err(|e| D::Error::custom(e))?;
                         }
                         "packed_trx" => {
                             let val: String = map.next_value()?;
-                            packed_trx = hex::decode(val).unwrap();
+                            packed_trx = hex::decode(val).map_err(|e| D::Error::custom(e))?;
                         }
                         _ => {
                             // must give a type annotation here or compile with error
-//                            let _: serde_json::Value = map.next_value()?;
                             let _: String = map.next_value()?;
                             continue;
                         }

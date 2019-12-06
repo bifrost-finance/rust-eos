@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use crate::{Read, Write, NumBytes, UnsignedInt, WriteError, ReadError};
 use codec::{Encode, Decode};
 
-#[derive(Clone, Debug, Default, Encode, Decode)]
+#[derive(Clone, Debug, Default, Encode, Decode, PartialEq)]
 pub struct FlatMap<K, V> {
     maps: Vec<(K, V)>,
 }
@@ -17,6 +17,12 @@ impl<K, V> FlatMap<K, V> {
 
     pub fn size(&self) -> UnsignedInt {
         UnsignedInt::from(self.maps.len())
+    }
+
+    pub fn assign(v: Vec<(K, V)>) -> Self {
+        Self {
+            maps: v
+        }
     }
 }
 
@@ -55,4 +61,3 @@ impl <K: Read, V: Read> Read for FlatMap<K, V> {
         Ok(FlatMap { maps })
     }
 }
-

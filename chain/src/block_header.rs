@@ -7,7 +7,7 @@ use crate::{
 };
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
+use serde::{de::Error, Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
@@ -167,27 +167,27 @@ impl<'de> serde::Deserialize<'de> for SignedBlockHeader {
                     match field {
                         "timestamp" => {
                             let val: String = map.next_value()?;
-                            let t = val.parse::<chrono::NaiveDateTime>().unwrap().timestamp();
+                            let t = val.parse::<chrono::NaiveDateTime>().map_err(|e| D::Error::custom(e))?.timestamp();
                             timestamp = BlockTimestamp::from(TimePointSec::from_unix_seconds(t as u32));
                         }
                         "producer" => {
                             let val: String = map.next_value()?;
-                            producer = AccountName::from_str(&val).unwrap();
+                            producer = AccountName::from_str(&val).map_err(|e| D::Error::custom(e))?;
                         }
                         "confirmed" => {
                             confirmed= map.next_value()?;
                         }
                         "previous" => {
                             let val: String = map.next_value()?;
-                            previous = Checksum256::from_str(&val).unwrap();
+                            previous = Checksum256::from_str(&val).map_err(|_| D::Error::custom("checksum256 deserialization error."))?;
                         }
                         "transaction_mroot" => {
                             let val: String = map.next_value()?;
-                            transaction_mroot = Checksum256::from_str(&val).unwrap();
+                            transaction_mroot = Checksum256::from_str(&val).map_err(|_| D::Error::custom("checksum256 deserialization error."))?;
                         }
                         "action_mroot" => {
                             let val: String = map.next_value()?;
-                            action_mroot = Checksum256::from_str(&val).unwrap();
+                            action_mroot = Checksum256::from_str(&val).map_err(|_| D::Error::custom("checksum256 deserialization error."))?;
                         }
                         "schedule_version" => {
                             schedule_version= map.next_value()?;
@@ -198,7 +198,7 @@ impl<'de> serde::Deserialize<'de> for SignedBlockHeader {
                         }
                         "producer_signature" => {
                             let val: String = map.next_value()?;
-                            producer_signature = Signature::from_str(&val).unwrap();
+                            producer_signature = Signature::from_str(&val).map_err(|e| D::Error::custom(e))?;
                         }
                         _ => {
                             let _: serde_json::Value = map.next_value()?;
@@ -245,9 +245,6 @@ impl crate::SerializeData for SignedBlockHeader {}
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::signature::Signature;
-    use crate::IncrementalMerkle;
-    use core::str::FromStr;
     use std::{
         error::Error,
         fs::File,
