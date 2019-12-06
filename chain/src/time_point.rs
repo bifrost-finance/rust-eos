@@ -87,3 +87,21 @@ impl core::fmt::Display for TimePoint {
         write!(f, "{}", dt.to_rfc3339_opts(SecondsFormat::Millis, true))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn time_point_error_code() {
+        let max = u64::max_value();
+        let timePoint_test = TimePoint::try_from(max);
+        assert!(timePoint_test.is_err());
+        let time = TimePoint(46);
+        let a = TimePoint::from(46);
+        assert_eq!(time,a);
+        let test_data = a.as_i64();
+        let timePoint_test_as_i64 = TimePoint::try_from(max);
+        assert!(timePoint_test_as_i64.is_err());
+    }
+}

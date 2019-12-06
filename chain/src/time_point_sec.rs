@@ -65,3 +65,20 @@ impl core::fmt::Display for TimePointSec {
         write!(f, "{}", dt.to_rfc3339_opts(SecondsFormat::Secs, true))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn time_point_sec_should_be_ok() {
+        let time_now = Utc::now().timestamp();
+        let time_now_u32 = time_now as u32;
+        let time_point_sec_now = TimePointSec::now().0;
+        assert_eq!(time_now_u32, time_point_sec_now);
+        let time_point_data = TimePoint::now();
+        let time_point_data_from = (time_point_data.as_i64() as u32) / 1_000_000_u32;
+        let time_point_sec_data = TimePointSec::from(time_point_data).0;
+        assert_eq!(time_point_data_from, time_point_sec_data);
+    }
+}

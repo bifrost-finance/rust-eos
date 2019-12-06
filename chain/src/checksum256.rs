@@ -117,3 +117,42 @@ impl core::fmt::Display for Checksum256 {
         write!(f, "{}", hex::encode(self.0))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn checksum256_should_be_ok() {
+        let s: Result<Checksum256,_> = Checksum256::from_str("05458d0eb126feab3e44b7298a021298d9a4fa96795adf68399b95c82d231aff");
+        assert!(s.is_ok());
+
+        let checked = Checksum256(
+            [0,5,4,5,8,0,0,4,6,1,2,6,5,5,5,0,3,1,4,4,7,7,2,9,8,3,6,6,8,5,4,2]
+        );
+        let asb = Checksum256::as_bytes(&checked);
+        let arr:[u8;32] = [0,5,4,5,8,0,0,4,6,1,2,6,5,5,5,0,3,1,4,4,7,7,2,9,8,3,6,6,8,5,4,2];
+        assert_eq!(asb,&arr);
+
+        let hash_test_data = Checksum256(
+            [0,5,4,5,8,0,0,4,6,1,2,6,5,5,5,0,3,1,4,4,7,7,2,9,8,3,6,6,8,5,4,2,]
+        );
+        let hash_test_new_data = Checksum256(
+            [0,5,4,5,8,0,0,4,6,1,2,6,5,5,5,0,3,1,0,0,0,0,0,0,0,0,0,0,8,5,4,2,]
+        );
+        let hash0_test_data = Checksum256::hash0(&hash_test_data);
+        let hash0_test_new_data = Checksum256::hash0(&hash_test_new_data);
+        assert_eq!(hash0_test_data, hash0_test_new_data);
+
+        //Change the first eight bits of the array, the hash value changes
+        let hash_test_data1 = Checksum256(
+            [0,2,3,0,1,0,8,0,0,1,2,6,5,5,5,0,3,1,4,4,7,7,2,9,8,3,6,6,8,5,4,2,]
+        );
+        let hash_test_new_data2 = Checksum256(
+            [0,5,4,5,8,0,0,4,6,1,2,6,5,5,5,0,3,1,0,0,0,0,0,0,0,0,0,0,8,5,4,2,]
+        );
+        let hash0_test_data1 = Checksum256::hash0(&hash_test_data1);
+        let hash0_test_new_data1 = Checksum256::hash0(&hash_test_new_data2);
+        assert_ne!(hash0_test_data1,hash0_test_new_data1);
+    }
+}

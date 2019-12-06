@@ -133,7 +133,9 @@ mod tests {
     #[test]
     fn time_should_work() {
         let tps = TimePointSec::now();
+        let block_time = BlockTimestamp::now();
         let block_timestamp = BlockTimestamp::from(tps);
-        dbg!(&block_timestamp);
+        assert_eq!(block_time, block_timestamp);
+        assert_eq!(BlockTimestamp::from(100), BlockTimestamp(100));
     }
 }

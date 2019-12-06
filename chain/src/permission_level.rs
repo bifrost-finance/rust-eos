@@ -36,3 +36,20 @@ impl core::fmt::Display for PermissionLevel {
         )
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn deserialize_permission_level_should_be_ok() {
+        let s = r#"
+        {
+          "actor": "eosio",
+          "permission": "active"
+        }
+        "#;
+        let s: Result<PermissionLevel, _> =serde_json::from_str(s);
+        assert!(s.is_ok());
+    }
+}
