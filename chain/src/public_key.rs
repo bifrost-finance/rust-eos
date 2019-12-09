@@ -1,7 +1,6 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/crypto.hpp#L22-L48>
 use crate::{NumBytes, Read, UnsignedInt, Write, Signature};
 #[cfg(feature = "std")]
-use crate::BigArray;
 use core::{
     convert::{TryFrom, TryInto},
     fmt, marker::PhantomData,
@@ -17,13 +16,11 @@ use serde::{Deserialize,
 
 /// EOSIO Public Key
 #[derive(Read, Write, NumBytes, Clone, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
 pub struct PublicKey {
     /// Type of the public key, could be either K1 or R1
     pub type_: UnsignedInt,
     /// Bytes of the public key
-    #[cfg_attr(feature = "std", serde(with = "BigArray"))]
     pub data: [u8; 33],
 }
 
@@ -34,6 +31,27 @@ impl Serialize for PublicKey {
             S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'de>serde::Deserialize<'de> for PublicKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::de::Deserializer<'de>
+    {
+        struct VisitorPublicKey;
+        impl<'de> serde::de::Visitor<'de> for VisitorPublicKey {
+            type Value = PublicKey;
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                formatter.write_str("error is here")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
+                Ok(PublicKey::from_str(v).map_err(|_| E::custom("failed to parse public key."))?)
+            }
+        }
+        deserializer.deserialize_any(VisitorPublicKey)
     }
 }
 
@@ -145,11 +163,12 @@ impl core::fmt::Display for PublicKey {
 mod test {
     use core::convert::TryFrom;
     use core::str::FromStr;
+    use super::*;
 
     #[test]
     fn generate_public_key_from_key_str() {
         let sig_key = "EOS7y4hU89NJ658H1KmAdZ6A585bEVmSV8xBGJ3SbQM4Pt3pcLion";
-        let pk = super::PublicKey::from_str(sig_key);
+        let pk = PublicKey::from_str(sig_key);
         assert!(pk.is_ok());
     }
 
@@ -157,7 +176,7 @@ mod test {
     fn generate_public_key_from_invalid_key_str() {
         // this is a invalid public key string
         let sig_key = "EOS7y4hU89NJ658H1KmAdZ6A585bEVmSV8xBGJ3SbQM4Pt3pcLionwwwwww";
-        let pk = super::PublicKey::from_str(sig_key);
+        let pk = PublicKey::from_str(sig_key);
         assert!(pk.is_err());
     }
 
@@ -166,7 +185,23 @@ mod test {
         let sig_key = "EOS8FdQ4gt16pFcSiXAYCcHnkHTS2nNLFWGZXW5sioAdvQuMxKhAm";
         let secp_pk = keys::public::PublicKey::from_str(sig_key);
         assert!(secp_pk.is_ok());
-        let pk = super::PublicKey::try_from(secp_pk.unwrap());
+        let pk = PublicKey::try_from(secp_pk.unwrap());
         assert!(pk.is_ok());
+    }
+
+    #[test]
+    fn generate_public_key_deserialize_should_be_ok() {
+        let sig_key = r#"[
+            "EOS7y4hU89NJ658H1KmAdZ6A585bEVmSV8xBGJ3SbQM4Pt3pcLion",
+            "EOS8FdQ4gt16pFcSiXAYCcHnkHTS2nNLFWGZXW5sioAdvQuMxKhAm"
+        ]"#;
+        let pks: Result<Vec<PublicKey>, _> = serde_json::from_str(sig_key);
+        assert!(pks.is_ok());
+
+        let pks = pks.unwrap();
+        let pub_k0 = PublicKey::from_str("EOS7y4hU89NJ658H1KmAdZ6A585bEVmSV8xBGJ3SbQM4Pt3pcLion");
+        let pub_k1 = PublicKey::from_str("EOS8FdQ4gt16pFcSiXAYCcHnkHTS2nNLFWGZXW5sioAdvQuMxKhAm");
+        let expected_pks = vec![pub_k0.unwrap(), pub_k1.unwrap()];
+        assert_eq!(pks, expected_pks);
     }
 }

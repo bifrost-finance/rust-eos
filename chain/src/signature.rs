@@ -1,6 +1,5 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/crypto.hpp#L93-L120>
 #[cfg(feature = "std")]
-use crate::BigArray;
 use crate::{NumBytes, Read, UnsignedInt, Write};
 use core::{
     convert::TryInto,
@@ -8,17 +7,15 @@ use core::{
 };
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
-use serde::{Deserialize, ser::{Serialize, Serializer}};
+use serde::{Serialize, Serializer};
 
 /// EOSIO Signature
 #[derive(Read, Write, NumBytes, Clone, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
 pub struct Signature {
     /// Type of the signature, could be either K1 or R1
     pub type_: UnsignedInt,
     /// Bytes of the signature
-    #[cfg_attr(feature = "std", serde(with = "BigArray"))]
     pub data: [u8; 65],
 }
 
@@ -29,6 +26,30 @@ impl Serialize for Signature {
             S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::Deserialize<'de> for Signature {
+    fn deserialize<D>(deserializer: D) -> Result<Self,D::Error>
+        where D: serde::de::Deserializer<'de>
+    {
+        #[derive(Debug)]
+        struct VisitorSignature;
+        impl<'de> serde::de::Visitor<'de> for VisitorSignature {
+            type Value = Signature;
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                formatter.write_str("this is error")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+                where E: serde::de::Error
+            {
+                Ok(Signature::from(keys::signature::Signature::from_str(value).map_err(|_| E::custom("error"))?))
+            }
+        }
+        deserializer.deserialize_any(VisitorSignature)
     }
 }
 
@@ -114,7 +135,7 @@ mod tests {
         let mut pos = 0;
         let sig = Signature::read(&data.as_slice(), &mut pos);
         assert!(sig.is_ok());
-        assert_eq!(pos, 20);
+        assert_eq!(pos, 66);
     }
 
     #[test]
@@ -138,5 +159,23 @@ mod tests {
         let key_sig = "SIG_K1_KYt8J2dEYCVg6j9kZes8vVNdNUrRUy35pAy1ZPPNVFhv1uWQB5G5qC5X6UasuWqejyRiLgH4e3GZfSKs83Ey8BKvP6jdHQ11111";
         let sig = Signature::from_str(key_sig);
         assert!(sig.is_err());
+    }
+
+    #[test]
+    fn signature_deserialization_should_be_ok() {
+        let key_sig = r#"[
+            "SIG_K1_KYt8J2dEYCVg6j9kZes8vVNdNUrRUy35pAy1ZPPNVFhv1uWQB5G5qC5X6UasuWqejyRiLgH4e3GZfSKs83Ey8BKvP6jdHQ",
+            "SIG_K1_KYt8J2dEYCVg6j9kZes8vVNdNUrRUy35pAy1ZPPNVFhv1uWQB5G5qC5X6UasuWqejyRiLgH4e3GZfSKs83Ey8BKvP6jdHQ"
+        ]"#;
+        let sigs: Result<Vec<Signature>, _> = serde_json::from_str(key_sig);
+        assert!(sigs.is_ok());
+
+        let sigs = sigs.unwrap();
+        let key_sig0 = "SIG_K1_KYt8J2dEYCVg6j9kZes8vVNdNUrRUy35pAy1ZPPNVFhv1uWQB5G5qC5X6UasuWqejyRiLgH4e3GZfSKs83Ey8BKvP6jdHQ";
+        let key_sig1 = "SIG_K1_KYt8J2dEYCVg6j9kZes8vVNdNUrRUy35pAy1ZPPNVFhv1uWQB5G5qC5X6UasuWqejyRiLgH4e3GZfSKs83Ey8BKvP6jdHQ";
+        let sig0 = Signature::from_str(key_sig0);
+        let sig1 = Signature::from_str(key_sig1);
+        let expected_sigs = vec![sig0.unwrap(),sig1.unwrap()];
+        assert_eq!(sigs, expected_sigs);
     }
 }

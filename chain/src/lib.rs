@@ -78,14 +78,3 @@ pub trait Digest: Clone + Write + NumBytes {
         Checksum256::hash(self.clone())
     }
 }
-
-#[cfg(feature = "std")]
-#[macro_use]
-extern crate serde_big_array;
-#[cfg(feature = "std")]
-big_array! {
-    BigArray;
-    // serde only support costant array size to 32,
-    // but we have two arrays that both exceeds that size.
-    +33, 65,
-}
