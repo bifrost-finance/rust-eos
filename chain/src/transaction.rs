@@ -324,18 +324,26 @@ impl Transaction {
     }
 
     #[cfg(feature = "std")]
-    pub fn sign(&self, sk: SecretKey, chain_id: String) -> crate::Result<SignedTransaction> {
+    pub fn sign(&self, sk: SecretKey, chain_id_hex: Vec<u8>) -> crate::Result<crate::Signature> {
         let mut sign_data: Vec<u8>  = Vec::new();
-        let mut chain_id_hex = hex::decode(chain_id)
-            .map_err(crate::error::Error::FromHexError)?;
+        let mut chain_id_hex = chain_id_hex;
         sign_data.append(&mut chain_id_hex);
         sign_data.append(&mut self.to_serialize_data());
         sign_data.append(&mut vec![0u8; 32]);
 
         let sig = sk.sign(&sign_data.as_slice()).map_err(crate::error::Error::Keys)?;
 
+        Ok(sig.into())
+    }
+
+    #[cfg(feature = "std")]
+    pub fn sign_and_tx(&self, sk: SecretKey, chain_id: String) -> crate::Result<SignedTransaction> {
+        let chain_id_hex = hex::decode(chain_id)
+            .map_err(crate::error::Error::FromHexError)?;
+        let sig = self.sign(sk, chain_id_hex)?;
+
         Ok(SignedTransaction {
-            signatures: vec![sig.into()],
+            signatures: vec![sig],
             context_free_data: vec![],
             trx: self.clone(),
         })
@@ -453,7 +461,7 @@ mod test {
 
         let chain_id = "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f".to_string();
         let sk = SecretKey::from_wif("5KUEhweMaSD2szyjU9EKjAyY642ZdVL2qzHW72dQcNRzUMWx9EL").unwrap();
-        let signed_trx = trx.sign(sk, chain_id);
+        let signed_trx = trx.sign_and_tx(sk, chain_id);
         assert!(signed_trx.is_ok());
         assert_eq!(
             hex::encode(&trx.to_serialize_data()[4..]),

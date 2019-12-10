@@ -1,5 +1,5 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/crypto.hpp#L93-L120>
-use crate::{NumBytes, Read, UnsignedInt, Write};
+use crate::{NumBytes, Read, SerializeData, UnsignedInt, Write};
 use core::{
     convert::TryInto,
     str::FromStr,
@@ -17,6 +17,8 @@ pub struct Signature {
     /// Bytes of the signature
     pub data: [u8; 65],
 }
+
+impl SerializeData for Signature {}
 
 #[cfg(feature = "std")]
 impl Serialize for Signature {
