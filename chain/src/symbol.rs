@@ -28,6 +28,12 @@ pub enum ParseSymbolError {
     BadPrecision,
 }
 
+impl From<ParseSymbolError> for crate::Error {
+    fn from(err: ParseSymbolError) -> Self {
+        crate::Error::ParseSymbolError(err)
+    }
+}
+
 impl fmt::Display for ParseSymbolError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -27,6 +27,13 @@ pub struct Asset {
 }
 
 impl Asset {
+    pub fn new(amount: i64, symbol: Symbol) -> Self {
+        Self {
+            amount,
+            symbol
+        }
+    }
+
     /// Check if the asset is valid. A valid asset has its amount <= max_amount
     /// and its symbol name valid
     #[inline]
@@ -84,9 +91,9 @@ impl From<ParseSymbolError> for ParseAssetError {
     }
 }
 
-impl From<ParseAssetError> for crate::error::Error {
-    fn from(e: ParseAssetError) -> crate::error::Error {
-        crate::error::Error::ParseAssetErr(e)
+impl From<ParseAssetError> for crate::Error {
+    fn from(e: ParseAssetError) -> crate::Error {
+        crate::Error::ParseAssetErr(e)
     }
 }
 
