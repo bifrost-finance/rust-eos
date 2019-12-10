@@ -191,35 +191,6 @@ mod tests {
     }
 
     #[test]
-    fn merkle_verify_action_mroot_should_work() {
-        let json = "actions.json";
-        let trxs_str = read_json_from_file(json);
-        assert!(trxs_str.is_ok());
-        let trxs: Result<Vec<TransactionReceipt>, _> = serde_json::from_str(&trxs_str.unwrap());
-        let trxs = trxs.unwrap();
-
-        let mut digests: Vec<Checksum256> = Vec::new();
-        for trx_recpt in trxs {
-            match trx_recpt.trx {
-                TrxKinds::TransactionId(_) => {},
-                a @ TrxKinds::PackedTransaction(_) => {
-                    let trx = Transaction::try_from(a).unwrap();
-                    let actions = trx.actions;
-                    for action in actions {
-//                        dbg!(hex::encode(&action.to_serialize_data()));
-                        dbg!(&action.digest().unwrap().to_string());
-                        digests.push(action.digest().unwrap());
-                    }
-                },
-            }
-        }
-        let merkle_root = merkle(digests.clone()).unwrap();
-        dbg!(merkle_root.to_string());
-        // the correct transaction_mroot is right in file many_transactions_in_block.json
-        assert_eq!(merkle_root.to_string(), "74b82e1f8388116c54fb8e2871cc431bc6e563be1e0d3762472da88a15f7523d");
-    }
-
-    #[test]
     fn merkle_verify_proof_should_work() {
         let paths: Vec<Checksum256> = vec![
             "0000259943aeb714e885c783bc79487cd025bb687b39d9de755d73a7fea000dd".into(),
@@ -274,75 +245,4 @@ mod tests {
         let result = verify_proof(&paths, leaf, expected_root);
         assert!(result);
     }
-//
-//    #[test]
-//    fn merkle_verify_proof_should_work3() {
-//        let paths: Vec<Checksum256> = vec![
-//            "00002a2fb72da881babc192b80bab59c289e2db1b4318160a4c0ab5e50618f57".into(),  // 10799
-//            "70ab58e347ef03142b35424d6552989f02cdb2cddcba464242322af601e6e11a".into(),
-//            "788a5b90b4a5fce14bc505bbd0ddf9e9458bed02b4c19b8e07bb74bbe38c7143".into(),
-//            "7198c55b921fd45feaa78b69a67d9858aee9f1630d95d32ec0e956d3499f1378".into(),
-//            "c4bc330fe55c16f41a25e139f8284e15c7c48f28e8036f1b3f8449df2ae27803".into(),
-//            "0f6f773d99e67a33e639f50909f989afe8fbf06e3141aa23c57933bb25051f24".into(),
-//            "ba6c01c4c9d49a61f88837b45b4725f0f6df408a0d3e11464ded2b4e8242459b".into(),
-//            "dd917719e102d97e0818c828b638c3a7fd1d7cb3f56e3d2e329676618b41e895".into(),
-//            "d2c97d295a443e365d267d31d48ec2aa28febe7f94fc723d31cc960aced55697".into(),
-//            "36cbf5d9c35b2538181bf7f8af4ee57c55c17e516eedd992a73bace9ca14a5c3".into(),
-//            "f52cb75ca3e694e79d4558656ec19ef6ad69c133713dcbb9f780ff26c2c1cadf".into(),
-//            "40e8bb864481e7bb01674ec3517c84e557869fea8160c4b2762d3e83d71d6034".into(),
-//            "e45c41b2b4a14571087913fd02148518e4cefe76e671134b902106337a385d6b".into(),
-//            "2fa502d408f5bdf1660fa9fe3a1fcb432462467e7eb403a8499392ee5297d8d1".into(),
-//        ];
-//        let leaf: Checksum256 = "00002a304f2dcbb2dc2078356f6e71b2168296e64e7166eec08b78a157390bda".into();  // 10800
-//        let expected_root: Checksum256 = "eb76accc649f98cf2348c15ea4d8b5e1978f82e95d7f23be293213b06d56868b".into(); // 10800 block merkle root
-//        let result = verify_proof(&paths, leaf, expected_root);
-//        assert!(result);
-//    }
-//
-//    #[test]
-//    fn merkle_verify_proof_should_work4() {
-//        let paths: Vec<Checksum256> = vec![
-//            "80002a3ed9f66e493782c7709bd5e5897b2ea7ade68a33172d91f374e123595c".into(),  // 10814
-//            "a8f795f42252663800366da475a91c58cd727c817649fdaca4c5e5024a0a8f21".into(),  // 10815 append 0
-//            "0cee49b6b073e8ce8d443b9ea0659c35d7ff0371bbba0a0664891f439d63ad77".into(),  // 10813 init 1
-//            "247195580f923f88d5af7f3f266382395ecf79fb9c1394ce9b37f557f263bfdb".into(),  // 10813 init 2
-//            "44bc330fe55c16f41a25e139f8284e15c7c48f28e8036f1b3f8449df2ae27803".into(),  // 10814 init 3
-//            "0f6f773d99e67a33e639f50909f989afe8fbf06e3141aa23c57933bb25051f24".into(),  // 10814 init 4
-//            "e29717af9b53aa5a247e241d0f2ce560768bbcab5f52f65568d5c3b3bb45d43e".into(),  // 10823 append 5
-//            "de96ec110393e5f48281e5a4107d5158a1d0829c2e05eb687267e3f6efbcb5d7".into(),  // 10823 append 6
-//            "d58e5480d86758475163e0c524ee494f1d985efd66b9696b194ab195fbbaf76a".into(),  // 10823 append 7
-//            "36cbf5d9c35b2538181bf7f8af4ee57c55c17e516eedd992a73bace9ca14a5c3".into(),  // 10814 init 5
-//            "88213d334e9865a41a039818e3f0ddd186525e40299df67217e6444c4be83469".into(),  // 10823 append 9
-//            "40e8bb864481e7bb01674ec3517c84e557869fea8160c4b2762d3e83d71d6034".into(),  // 10814 init 7
-//            "d1f498ff7006860d38a0c44ebc2f5b86215ad16a878dc9b857c79132566b416e".into(),  // 10823 append 11
-//            "2fa502d408f5bdf1660fa9fe3a1fcb432462467e7eb403a8499392ee5297d8d1".into(),  // 10814 init 8
-//        ];
-//        let leaf: Checksum256 = "00002a3d514cd6723ff6ce0f0ccde19a359c06d8387c2efe35d2ef49066b5048".into();  // 10813
-//        let expected_root: Checksum256 = "0c1bfaf61024456dca43946a1eb7b37267126f273e1448939790b0a9058bab6e".into(); // 10824 block merkle root
-//        let result = verify_proof(&paths, leaf, expected_root);
-//        assert!(result);
-//    }
-//
-//    fn merkle_verify_proof_should_work5() {
-//        let paths: Vec<Checksum256> = vec![
-//            "80002a3ed9f66e493782c7709bd5e5897b2ea7ade68a33172d91f374e123595c".into(),  // 10814
-//            "a8f795f42252663800366da475a91c58cd727c817649fdaca4c5e5024a0a8f21".into(),  // 10815 append 0
-//            "0cee49b6b073e8ce8d443b9ea0659c35d7ff0371bbba0a0664891f439d63ad77".into(),  // 10813 init 1
-//            "247195580f923f88d5af7f3f266382395ecf79fb9c1394ce9b37f557f263bfdb".into(),  // 10813 init 2
-//            "44bc330fe55c16f41a25e139f8284e15c7c48f28e8036f1b3f8449df2ae27803".into(),  // 10814 init 3
-//            "0f6f773d99e67a33e639f50909f989afe8fbf06e3141aa23c57933bb25051f24".into(),  // 10814 init 4
-//            "e29717af9b53aa5a247e241d0f2ce560768bbcab5f52f65568d5c3b3bb45d43e".into(),  // 10823 append 5
-//            "de96ec110393e5f48281e5a4107d5158a1d0829c2e05eb687267e3f6efbcb5d7".into(),  // 10823 append 6
-//            "d58e5480d86758475163e0c524ee494f1d985efd66b9696b194ab195fbbaf76a".into(),  // 10823 append 7
-//            "36cbf5d9c35b2538181bf7f8af4ee57c55c17e516eedd992a73bace9ca14a5c3".into(),  // 10814 init 5
-//            "88213d334e9865a41a039818e3f0ddd186525e40299df67217e6444c4be83469".into(),  // 10823 append 9
-//            "40e8bb864481e7bb01674ec3517c84e557869fea8160c4b2762d3e83d71d6034".into(),  // 10814 init 7
-//            "d1f498ff7006860d38a0c44ebc2f5b86215ad16a878dc9b857c79132566b416e".into(),  // 10823 append 11
-//            "2fa502d408f5bdf1660fa9fe3a1fcb432462467e7eb403a8499392ee5297d8d1".into(),  // 10814 init 8
-//        ];
-//        let leaf: Checksum256 = "00002a3d514cd6723ff6ce0f0ccde19a359c06d8387c2efe35d2ef49066b5048".into();  // 10813
-//        let expected_root: Checksum256 = "0c1bfaf61024456dca43946a1eb7b37267126f273e1448939790b0a9058bab6e".into(); // 10824 block merkle root
-//        let result = verify_proof(&paths, leaf, expected_root);
-//        assert!(result);
-//    }
 }
