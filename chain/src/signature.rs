@@ -1,5 +1,4 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/crypto.hpp#L93-L120>
-#[cfg(feature = "std")]
 use crate::{NumBytes, Read, UnsignedInt, Write};
 use core::{
     convert::TryInto,

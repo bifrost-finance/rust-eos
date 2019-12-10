@@ -3,7 +3,7 @@ use core::{convert::From, str::FromStr};
 use crate::{
     AccountName, utils::bitutil, BlockTimestamp,
     Checksum256, Extension, NumBytes, ProducerSchedule,
-    Read, Signature, Write, PublicKey, TimePointSec,
+    Read, Signature, Write, PublicKey, TimePoint
 };
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
@@ -167,8 +167,8 @@ impl<'de> serde::Deserialize<'de> for SignedBlockHeader {
                     match field {
                         "timestamp" => {
                             let val: String = map.next_value()?;
-                            let t = val.parse::<chrono::NaiveDateTime>().map_err(|e| D::Error::custom(e))?.timestamp();
-                            timestamp = BlockTimestamp::from(TimePointSec::from_unix_seconds(t as u32));
+                            let t = val.parse::<chrono::NaiveDateTime>().map_err(|e| D::Error::custom(e))?.timestamp_nanos();
+                            timestamp = BlockTimestamp::from(TimePoint::from_unix_nano_seconds(t));
                         }
                         "producer" => {
                             let val: String = map.next_value()?;
