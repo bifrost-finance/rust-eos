@@ -9,12 +9,16 @@ use crate::{
     PermissionLevel, Read, SerializeData, Write
 };
 #[cfg(feature = "std")]
-use serde::{Serialize, Deserialize, de::Error, ser::{Serializer, SerializeStruct}};
+use serde::{
+    Serialize, Deserialize,
+    de::Error as DeError,
+    ser::{Error as SerError, Serializer, SerializeStruct}
+};
 
 
 /// This is the packed representation of an action along with meta-data about
 /// the authorization levels.
-#[derive(Clone, Debug, Read, Write, NumBytes, PartialEq, Default, Encode, Decode)]
+#[derive(Clone, Debug, Read, Write, NumBytes, PartialEq, Default, Encode, Decode, Digest, SerializeData)]
 #[eosio_core_root_path = "crate"]
 pub struct Action {
     /// Name of the account the action is intended for
@@ -97,7 +101,7 @@ impl Action {
     ) -> crate::Result<Self> {
         let account = FromStr::from_str(account.as_ref()).map_err(crate::Error::from)?;
         let name =  FromStr::from_str(name.as_ref()).map_err(crate::Error::from)?;
-        let data = action_data.to_serialize_data();
+        let data = action_data.to_serialize_data()?;
 
         Ok(Action { account, name, authorization, data })
     }
@@ -113,9 +117,6 @@ impl Action {
         )
     }
 }
-
-impl Digest for Action {}
-impl SerializeData for Action {}
 
 impl core::fmt::Display for Action {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -141,7 +142,7 @@ impl serde::ser::Serialize for Action {
         state.serialize_field("hex_data", &hex::encode(&self.data))?;
         match (self.account.to_string().as_str(), self.name.to_string().as_str()) {
             ("eosio.token", "transfer") => {
-                let data = ActionTransfer::read(&self.data, &mut 0).expect("Action read from data failed.");
+                let data = ActionTransfer::read(&self.data, &mut 0).map_err(|_| S::Error::custom("Action read from data failed."))?;
                 state.serialize_field("data", &data)?;
             },
             _ => {}
@@ -151,7 +152,7 @@ impl serde::ser::Serialize for Action {
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Clone, Debug, Read, Write, NumBytes, Default)]
+#[derive(Clone, Debug, Read, Write, NumBytes, Default, SerializeData)]
 #[eosio_core_root_path = "crate"]
 pub struct ActionTransfer {
     pub from: AccountName,
@@ -175,8 +176,6 @@ impl ActionTransfer {
     }
 }
 
-impl SerializeData for ActionTransfer {}
-
 pub trait ToAction: Write + NumBytes {
     const NAME: u64;
 
@@ -185,16 +184,16 @@ pub trait ToAction: Write + NumBytes {
         &self,
         account: AccountName,
         authorization: Vec<PermissionLevel>,
-    ) -> Action {
+    ) -> crate::Result<Action> {
         let mut data = vec![0_u8; self.num_bytes()];
-        self.write(&mut data, &mut 0).expect("write");
+        self.write(&mut data, &mut 0).map_err(crate::Error::BytesWriteError)?;
 
-        Action {
+        Ok(Action {
             account,
             name: Self::NAME.into(),
             authorization,
             data,
-        }
+        })
     }
 }
 
@@ -224,6 +223,8 @@ mod tests {
     fn action_transfer_serialize_should_work() {
         let action = Action::transfer("testa", "testb", "1.0000 EOS", "a memo").ok().unwrap();
         let data = action.to_serialize_data();
+        assert!(data.is_ok());
+        let data = data.unwrap();
         assert_eq!(
             hex::encode(data),
             "00a6823403ea3055000000572d3ccdcd01000000000093b1ca00000000a8ed323227000000000093b1ca000000008093b1ca102700000000000004454f53000000000661206d656d6f"

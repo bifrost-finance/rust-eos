@@ -9,7 +9,7 @@ use codec::{Encode, Decode};
 use serde::{Serialize, Serializer};
 
 /// EOSIO Signature
-#[derive(Read, Write, NumBytes, Clone, Encode, Decode)]
+#[derive(Read, Write, NumBytes, Clone, Encode, Decode, SerializeData)]
 #[eosio_core_root_path = "crate"]
 pub struct Signature {
     /// Type of the signature, could be either K1 or R1
@@ -17,8 +17,6 @@ pub struct Signature {
     /// Bytes of the signature
     pub data: [u8; 65],
 }
-
-impl SerializeData for Signature {}
 
 #[cfg(feature = "std")]
 impl Serialize for Signature {

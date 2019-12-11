@@ -71,12 +71,13 @@ impl serde::ser::Serialize for Asset {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ParseAssetError {
     BadChar(char),
     BadPrecision,
     SymbolIsEmpty,
     SymbolTooLong,
+    ParseIntError(core::num::ParseIntError),
 }
 
 impl From<ParseSymbolError> for ParseAssetError {
@@ -151,17 +152,14 @@ impl FromStr for Asset {
         // TODO: clean up code/unwraps below
         let amount = s.get(0..end_index - 1).unwrap();
         if precision == 0 {
-            let amount =
-                amount.parse::<i64>().expect("error parsing asset amount");
+            let amount = amount.parse::<i64>().map_err(ParseAssetError::ParseIntError)?;
             Ok(Self {
                 amount,
                 symbol: symbol.into(),
             })
         } else {
             let fraction = s.get(end_index..(index - 1) as usize).unwrap();
-            let amount = format!("{}{}", amount, fraction)
-                .parse::<i64>()
-                .expect("error parsing asset amount");
+            let amount = format!("{}{}", amount, fraction).parse::<i64>().map_err(ParseAssetError::ParseIntError)?;
             Ok(Self {
                 amount,
                 symbol: symbol.into(),

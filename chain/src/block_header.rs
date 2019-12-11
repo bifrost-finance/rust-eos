@@ -3,13 +3,13 @@ use core::{convert::From, str::FromStr};
 use crate::{
     AccountName, utils::bitutil, BlockTimestamp,
     Checksum256, Extension, NumBytes, ProducerSchedule,
-    Read, Signature, Write, PublicKey, TimePoint
+    Read, Signature, Write, PublicKey, TimePoint, SerializeData
 };
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::{de::Error, Deserialize, Serialize};
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode, SerializeData)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct BlockHeader {
@@ -38,7 +38,7 @@ impl core::fmt::Display for BlockHeader {
             new_producers: {:?}\n\
             header_extensions: {:?}",
             self.block_num(),
-            self.id().unwrap(),
+            self.id().map_err(|_| core::fmt::Error)?,
             self.timestamp,
             self.producer,
             self.confirmed,
@@ -99,7 +99,7 @@ impl BlockHeader {
     }
 }
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode, SerializeData)]
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct SignedBlockHeader {
@@ -123,7 +123,6 @@ impl SignedBlockHeader {
         self.block_header.block_num()
     }
 
-    // Todo, add test cases on this function
     #[cfg(feature = "std")]
     pub fn verify(&self, blockroot_merkle: Checksum256, schedule_hash: Checksum256, pk: PublicKey) -> crate::Result<()> {
         let digest = self.sig_digest(blockroot_merkle, schedule_hash)?;
@@ -237,10 +236,6 @@ impl core::fmt::Display for SignedBlockHeader {
         )
     }
 }
-
-impl crate::SerializeData for BlockHeader {}
-
-impl crate::SerializeData for SignedBlockHeader {}
 
 #[cfg(test)]
 mod test {

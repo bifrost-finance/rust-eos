@@ -8,7 +8,7 @@ use codec::{Encode, Decode};
 #[cfg(feature = "std")]
 use serde::de::Error;
 
-#[derive(Clone, Debug, Read, Write, NumBytes, Default, Encode, Decode, PartialEq)]
+#[derive(Clone, Debug, Read, Write, NumBytes, Default, Encode, Decode, PartialEq, Digest, SerializeData)]
 #[eosio_core_root_path = "crate"]
 pub struct ActionReceipt {
     receiver: AccountName,
@@ -97,9 +97,6 @@ impl<'de> serde::Deserialize<'de> for ActionReceipt {
         deserializer.deserialize_any(VisitorRecdeipt)
     }
 }
-
-impl Digest for ActionReceipt {}
-impl SerializeData for ActionReceipt {}
 
 #[cfg(test)]
 mod tests {

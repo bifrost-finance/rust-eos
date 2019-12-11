@@ -96,7 +96,12 @@ pub fn verify_proof(paths: &Vec<Checksum256>, leaf: Checksum256, expected_root: 
         left = make_canonical_left(&left);
         right = make_canonical_right(&right);
 
-        current = Checksum256::hash(make_canonical_pair(&left, &right)).unwrap();
+        match Checksum256::hash(make_canonical_pair(&left, &right)) {
+            Ok(hash) => {
+                current = hash;
+            },
+            Err(_) => { return false; }
+        }
     }
 
     current == expected_root

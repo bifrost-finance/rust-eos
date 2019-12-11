@@ -66,10 +66,10 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 pub trait SerializeData: Write + NumBytes {
-    fn to_serialize_data(&self) -> Vec<u8> {
+    fn to_serialize_data(&self) -> crate::Result<Vec<u8>> {
         let mut data = vec![0u8; self.num_bytes()];
-        self.write(&mut data, &mut 0).expect("write");
-        data.to_vec()
+        self.write(&mut data, &mut 0).map_err(crate::Error::BytesWriteError)?;
+        Ok(data.to_vec())
     }
 }
 

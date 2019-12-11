@@ -20,9 +20,9 @@ pub fn expand(input: TokenStream) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     let (is_singleton, table_name) = input.attrs.iter().fold((false, None), |(a, b), attr| {
-        match attr.interpret_meta() {
-            Some(meta) => {
-                let name = meta.name();
+        match attr.parse_meta() {
+            Ok(meta) => {
+                let name = meta.path().get_ident().as_ref().expect("please add table name.").to_string();
                 if name == "table_name" {
                     if b.is_some() {
                         panic!("only 1 table_name attribute allowed per struct");
@@ -46,7 +46,7 @@ pub fn expand(input: TokenStream) -> TokenStream {
                     (a, b)
                 }
             }
-            None => (a, b),
+            Err(_) => (a, b),
         }
     });
 
@@ -61,9 +61,12 @@ pub fn expand(input: TokenStream) -> TokenStream {
                 let mut secondary_keys = Vec::new();
                 for field in fields.named.iter() {
                     for attr in field.attrs.iter() {
-                        let name = attr.interpret_meta().map(|m| m.name());
-                        let (is_primary, is_secondary) = name
-                            .map(|n| (n == "primary", n == "secondary"))
+                        let name = attr.parse_meta().unwrap();
+                        let (is_primary, is_secondary) = name.path().get_ident()
+                            .map(|n| {
+                                let n = n.to_string();
+                                (n == "primary", n == "secondary")
+                            })
                             .unwrap_or_else(|| (false, false));
 
                         if is_singleton {

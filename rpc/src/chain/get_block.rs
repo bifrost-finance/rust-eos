@@ -69,7 +69,7 @@ pub struct Trx {
 }
 
 impl FromStr for Trx {
-    type Err = ();
+    type Err = core::convert::Infallible;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Trx {
             id: s.to_string(),
@@ -80,14 +80,14 @@ impl FromStr for Trx {
 
 fn string_or_struct<'de, T, D>(deserializer: D) -> Result<T, D::Error>
     where
-        T: Deserialize<'de> + FromStr<Err = ()>,
+        T: Deserialize<'de> + FromStr<Err = core::convert::Infallible>,
         D: Deserializer<'de>,
 {
     struct StringOrStruct<T>(PhantomData<fn() -> T>);
 
     impl<'de, T> Visitor<'de> for StringOrStruct<T>
         where
-            T: Deserialize<'de> + FromStr<Err = ()>,
+            T: Deserialize<'de> + FromStr<Err = core::convert::Infallible>,
     {
         type Value = T;
 
@@ -99,7 +99,7 @@ fn string_or_struct<'de, T, D>(deserializer: D) -> Result<T, D::Error>
             where
                 E: de::Error,
         {
-            Ok(FromStr::from_str(value).unwrap())
+            Ok(FromStr::from_str(value).map_err(|_| E::custom("error happened while visitting string."))?)
         }
 
         fn visit_map<M>(self, map: M) -> Result<T, M::Error>
