@@ -20,6 +20,7 @@ use serde::{
 /// the authorization levels.
 #[derive(Clone, Debug, Read, Write, NumBytes, PartialEq, Default, Encode, Decode, Digest, SerializeData)]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct Action {
     /// Name of the account the action is intended for
     pub account: AccountName,

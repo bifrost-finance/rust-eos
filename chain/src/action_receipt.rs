@@ -11,17 +11,17 @@ use serde::de::Error;
 #[derive(Clone, Debug, Read, Write, NumBytes, Default, Encode, Decode, PartialEq, Digest, SerializeData)]
 #[eosio_core_root_path = "crate"]
 pub struct ActionReceipt {
-    receiver: AccountName,
+    pub receiver: AccountName,
     pub act_digest: Checksum256,
     /// total number of actions dispatched since genesis
-    global_sequence: u64,
+    pub global_sequence: u64,
     /// total number of actions with this receiver since genesis
-    recv_sequence: u64,
-    auth_sequence: FlatMap<AccountName, u64>,
+    pub recv_sequence: u64,
+    pub auth_sequence: FlatMap<AccountName, u64>,
     /// total number of setcodes
-    code_sequence: UnsignedInt,
+    pub code_sequence: UnsignedInt,
     /// total number of setabis
-    abi_sequence: UnsignedInt,
+    pub abi_sequence: UnsignedInt,
 }
 
 #[cfg(feature = "std")]

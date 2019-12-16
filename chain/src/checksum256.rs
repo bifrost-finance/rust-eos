@@ -10,6 +10,7 @@ use serde::{Deserialize, ser::{Serialize, Serializer}};
 #[derive(Read, Write, NumBytes, Default, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct Checksum256(pub [u8; 32]);
 
 #[cfg(feature = "std")]

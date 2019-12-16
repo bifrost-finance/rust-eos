@@ -11,6 +11,7 @@ use serde::{Serialize, Serializer};
 /// EOSIO Signature
 #[derive(Read, Write, NumBytes, Clone, Encode, Decode, SerializeData)]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct Signature {
     /// Type of the signature, could be either K1 or R1
     pub type_: UnsignedInt,

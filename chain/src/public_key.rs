@@ -17,6 +17,7 @@ use serde::{Deserialize,
 /// EOSIO Public Key
 #[derive(Read, Write, NumBytes, Clone, Encode, Decode)]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct PublicKey {
     /// Type of the public key, could be either K1 or R1
     pub type_: UnsignedInt,
