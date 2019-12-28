@@ -210,6 +210,7 @@ macro_rules! declare_name_types {
     ($($ident:ident)*) => ($(
         #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Hash, PartialOrd, Ord, Read, Write, NumBytes, Encode, Decode)]
         #[eosio_core_root_path = "crate"]
+        #[repr(C)]
         pub struct $ident(u64);
 
         impl $ident {

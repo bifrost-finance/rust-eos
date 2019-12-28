@@ -363,11 +363,10 @@ mod tests {
         // Construct transaction
         let trx = Transaction::new(300, ref_block_num, ref_block_prefix, actions);
         let signed_trx = trx.sign_and_tx(sk, chain_id).ok().unwrap();
-        dbg!(hex::encode(trx.to_serialize_data()));
-        dbg!(signed_trx.clone());
+        assert!(trx.to_serialize_data().is_ok());
+
         let response = push_transaction(signed_trx).fetch(&hyper_client);
-        let res: PushTransaction = response.unwrap();
-        dbg!(res);
+        assert!(response.is_ok());
     }
 
     #[test]

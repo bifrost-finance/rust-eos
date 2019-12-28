@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Read, Write, NumBytes, Clone, Default, Debug, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct ProducerKey {
     /// Name of the producer
     pub producer_name: AccountName,

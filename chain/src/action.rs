@@ -57,11 +57,9 @@ impl<'de> serde::Deserialize<'de> for Action {
                     match field {
                         "account" => {
                             account = map.next_value()?;
-//                            account = AccountName::from_str(&val).map_err(|_| D::Error::custom("failed to parse the filed account."))?;
                         }
                         "name" => {
                             name = map.next_value()?;
-//                            act_digest = ActionName::from_str(&val).map_err(|_| D::Error::custom("failed to parse the filed name."))?;
                         }
                         "authorization" => {
                             authorization= map.next_value()?;

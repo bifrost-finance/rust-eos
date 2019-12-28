@@ -410,9 +410,9 @@ mod tests {
     fn transaction_receipt_header_should_work() {
         let data = hex::decode("00530100001001").unwrap();
         let mut pos = 0;
-        let header = TransactionReceiptHeader::read(&data.as_slice(), &mut pos).unwrap();
-        dbg!(&header);
-        dbg!(&pos);
+        let header = TransactionReceiptHeader::read(&data.as_slice(), &mut pos);
+        assert!(header.is_ok());
+        assert_eq!(0, pos);
     }
 
     #[test]

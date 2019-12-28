@@ -12,6 +12,7 @@ use serde::{de::Error, Deserialize, Serialize};
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode, SerializeData)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct BlockHeader {
     pub timestamp: BlockTimestamp,
     pub producer: AccountName,

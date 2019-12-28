@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Read, Write, NumBytes, Clone, Default, Debug, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct ProducerSchedule {
     /// Version number of the schedule. It is sequentially incrementing
     /// version number.
@@ -57,6 +58,28 @@ mod test {
         let mut json_str = String::new();
         file.read_to_string(&mut json_str)?;
         Ok(json_str)
+    }
+
+    #[test]
+    fn producers_schedule_deserialization_should_be_ok() {
+        let s = r#"
+        {
+            "version":0,
+            "producers":[
+                {
+                    "producer_name":"eosio",
+                    "block_signing_key":"EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"
+                }
+            ]
+        }
+        "#;
+        let new_producers: Result<ProducerSchedule, _> = serde_json::from_str(&s);
+        assert!(new_producers.is_ok());
+
+        let new_producers = new_producers.unwrap();
+        assert_eq!(new_producers.version, 0);
+        assert_eq!(new_producers.producers[0].producer_name.to_string(), "eosio");
+        assert_eq!(new_producers.producers[0].block_signing_key.to_string(), "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV");
     }
 
     #[test]

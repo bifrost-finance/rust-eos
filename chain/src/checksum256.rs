@@ -4,11 +4,10 @@ use crate::{NumBytes, Read, Write};
 use codec::{Encode, Decode};
 use core::str::FromStr;
 #[cfg(feature = "std")]
-use serde::{Deserialize, ser::{Serialize, Serializer}};
+use serde::ser::{Serialize, Serializer};
 
 // TODO Read, Write, NumBytes needs a custom implementation based on fixed_bytes
 #[derive(Read, Write, NumBytes, Default, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Deserialize))]
 #[eosio_core_root_path = "crate"]
 #[repr(C)]
 pub struct Checksum256(pub [u8; 32]);
@@ -20,6 +19,30 @@ impl Serialize for Checksum256 {
             S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::Deserialize<'de> for Checksum256 {
+    fn deserialize<D>(deserializer: D) -> Result<Self,D::Error>
+        where D: serde::de::Deserializer<'de>
+    {
+        #[derive(Debug)]
+        struct VisitorChecksum256;
+        impl<'de> serde::de::Visitor<'de> for VisitorChecksum256 {
+            type Value = Checksum256;
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                formatter.write_str("this is error")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+                where E: serde::de::Error
+            {
+                Ok(Self::Value::from_str(value).map_err(|_| E::custom("error"))?)
+            }
+        }
+        deserializer.deserialize_any(VisitorChecksum256)
     }
 }
 
@@ -95,7 +118,7 @@ impl From<Checksum256> for [u8; 32] {
 impl From<&str> for Checksum256 {
     fn from(value: &str) -> Self {
         Checksum256::from_str(value).unwrap()
-    }
+    } // Todo, replace from with try_from
 }
 
 impl FromStr for Checksum256 {
@@ -155,5 +178,26 @@ mod test {
         let hash0_test_data1 = Checksum256::hash0(&hash_test_data1);
         let hash0_test_new_data1 = Checksum256::hash0(&hash_test_new_data2);
         assert_ne!(hash0_test_data1,hash0_test_new_data1);
+    }
+
+    #[test]
+    fn checksum256_deserialization_should_be_ok() {
+        let dut_str = r#"
+        [
+            [
+            "0000004928647cc5305748cc67caa9610886278e828dfd54996c445d1c011207",
+            "0000004a45d8d6f0d819c46c7c7bed25b0cd5c84b5c7195e109b884cd6318cba",
+            "0000004b13d7c252648f7dab13f0fb768770661dba9680da52137b7f8701d5cf"
+            ],
+            [
+            "00000053e086dcd817526b00f9f94a0d3fe9baeae902111306238ecfa73e8092",
+            "00000054e658541a25d25c4cfff54f611b76982f398e9cc69f966dd9d0d7e9cb",
+            "0000005510edcf0dc2c25e8fbaf550e137ddf80be8b39f2607de2522e4eedeba"
+            ],
+            []
+        ]
+        "#;
+        let result: Result<Vec<Vec<Checksum256>>, _> = serde_json::from_str(dut_str);
+        assert!(result.is_ok());
     }
 }

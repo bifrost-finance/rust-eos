@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Read, Write, NumBytes, PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash, Default, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct Extension(pub u16, pub Vec<u8>);
 
 impl core::fmt::Display for Extension {
