@@ -58,7 +58,7 @@ impl Default for ProducerSchedule {
         };
         ProducerSchedule {
             version,
-            producers: vec![producers]
+            producers: alloc::vec![producers]
         }
     }
 }
