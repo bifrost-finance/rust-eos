@@ -1,17 +1,20 @@
-use std::fmt::{self, Write};
-use std::str::FromStr;
-use rand::{CryptoRng, Rng};
-use secp256k1::{self, Secp256k1, key, Message};
+use alloc::vec::Vec;
+use alloc::vec;
+use alloc::string::String;
+use bitcoin_hashes::{sha256, Hash as HashTrait};
+use core::fmt::{self, Write};
+use core::str::FromStr;
 use crate::error;
 use crate::network::Network;
 use crate::base58;
 use crate::network::Network::Mainnet;
 use crate::signature::Signature;
-use bitcoin_hashes::{sha256, Hash as HashTrait};
+use rand::Rng;
+use secp256k1;
 
 
 /// A Secp256k1 private key
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct SecretKey {
     /// Whether this private key should be serialized as compressed
     pub compressed: bool,
@@ -23,17 +26,17 @@ pub struct SecretKey {
 
 impl SecretKey {
     /// Creates a new random secret key. Requires compilation with the "rand" feature.
-    pub fn generate<R>(csprng: &mut R) -> Self where R: CryptoRng + Rng {
+    pub fn generate<R>(csprng: &mut R) -> Self where R: Rng {
         Self {
             compressed: false,
             network: Mainnet,
-            key: key::SecretKey::new(csprng),
+            key: secp256k1::SecretKey::random(csprng),
         }
     }
 
     /// Serialize the private key to bytes
     pub fn to_bytes(&self) -> Vec<u8> {
-        self.key[..].to_vec()
+        self.key.serialize().to_vec()
     }
 
     /// Format the private key to WIF format.
@@ -43,7 +46,7 @@ impl SecretKey {
             Network::Mainnet => 128,
             Network::Testnet => 239,
         };
-        ret[1..33].copy_from_slice(&self.key[..]);
+        ret[1..33].copy_from_slice(&self.key.serialize());
         let privkey = if self.compressed {
             ret[33] = 1;
             base58::check_encode_slice(&ret[..])
@@ -82,7 +85,7 @@ impl SecretKey {
         Ok(SecretKey {
             compressed,
             network,
-            key: secp256k1::SecretKey::from_slice(&data[1..33])?,
+            key: secp256k1::SecretKey::parse_slice(&data[1..33])?,
         })
     }
 
@@ -97,7 +100,7 @@ impl SecretKey {
         Ok(SecretKey {
             compressed,
             network: Mainnet,
-            key: secp256k1::SecretKey::from_slice(data)?,
+            key: secp256k1::SecretKey::parse_slice(data)?,
         })
     }
 
@@ -109,11 +112,13 @@ impl SecretKey {
 
     /// Sign a hash with secret key
     pub fn sign_hash(&self, hash: &[u8]) -> crate::Result<Signature> {
-        let secp = Secp256k1::signing_only();
-        let msg = Message::from_slice(&hash)?;
-        let recv_sig = secp.sign_canonical(&msg, &self.key);
+        let msg = secp256k1::Message::parse_slice(&hash)?;
+        let (sig, recv_id) = secp256k1::sign(&msg, &self.key);
 
-        Ok(Signature::from(recv_sig))
+        Ok(Signature {
+            recv_id,
+            sig,
+        })
     }
 }
 
@@ -140,12 +145,15 @@ impl FromStr for SecretKey {
 mod test {
     use super::SecretKey;
     use crate::public::PublicKey;
-    use rand::rngs::OsRng;
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use rand::thread_rng;
 
+    #[cfg(feature = "std")]
     #[test]
     fn sk_generate_should_work() {
-        let mut csprng: OsRng = OsRng::new().unwrap();
-        let _sk = SecretKey::generate(&mut csprng);
+        let mut rng = thread_rng();
+        let _sk = SecretKey::generate(&mut rng);
     }
 
     #[test]
@@ -166,6 +174,6 @@ mod test {
         assert!(sig.is_ok());
         let sig = sig.unwrap();
         assert!(sig.is_canonical());
-        assert_eq!(sig.to_string(), "SIG_K1_K5DaZL6EH7L2iDhKBhxNAxTeGsgCWuZs2vJUfctrRoqJTMdo5hCnpmVkY9zt8dQGQebPrgp6fdu6D4KXUk8atYDYngnsUh");
+        assert_eq!(sig.to_string(), "SIG_K1_KL1utX4aFNsSfEWVGtqcLAyhV5juPxhGNB7vGTUGKiWeEgxeXhxpuAPg44t7LeaBQPr5qf3Md7VZtEDZHtsfAwr95rpjGa");
     }
 }

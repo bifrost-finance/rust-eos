@@ -1,12 +1,12 @@
-use rand::{CryptoRng, Rng};
 use crate::constant::*;
 use crate::public::PublicKey;
 use crate::secret::SecretKey;
 use crate::signature::Signature;
+use rand::Rng;
 
 
 /// A secp256k1 keypair.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Keypair {
     /// The secret half of this keypair.
     pub sk: SecretKey,
@@ -16,7 +16,7 @@ pub struct Keypair {
 
 impl Keypair {
     /// Generate an secp256k1 keypair.
-    pub fn generate<R>(csprng: &mut R) -> Keypair where R: CryptoRng + Rng {
+    pub fn generate<R>(csprng: &mut R) -> Keypair where R: Rng {
         let sk = SecretKey::generate(csprng);
         let pk = PublicKey::from(&sk);
 
@@ -54,14 +54,17 @@ impl Keypair {
 
 #[cfg(test)]
 mod tests {
-    use rand::rngs::OsRng;
     use super::Keypair;
-    use crate::public::PublicKey;
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use rand::thread_rng;
+    use super::PublicKey;
 
+    #[cfg(feature = "std")]
     #[test]
     fn keypair_generate_should_work() {
-        let mut csprng: OsRng = OsRng::new().unwrap();
-        let keypair = Keypair::generate(&mut csprng);
+        let mut rng = thread_rng();
+        let keypair = Keypair::generate(&mut rng);
 
         assert_eq!(PublicKey::from(&keypair.sk), keypair.pk);
     }

@@ -4,7 +4,10 @@
 
 extern crate bitcoin_hashes as hashes;
 
-use std::{error, fmt, str, slice, iter};
+use alloc::vec::Vec;
+use alloc::string::String;
+use alloc::vec;
+use core::{fmt, str, slice, iter};
 use byteorder::{ByteOrder, LittleEndian};
 use hashes::{sha256d, Hash};
 
@@ -40,7 +43,8 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
     fn description(&self) -> &'static str {
         match *self {
             Error::BadByte(_) => "invalid b58 character",
@@ -51,7 +55,7 @@ impl error::Error for Error {
             Error::Other(_) => "unknown b58 error"
         }
     }
-    fn cause(&self) -> Option<&dyn error::Error> { None }
+    fn cause(&self) -> Option<&dyn std::error::Error> { None }
 }
 
 /// Vector-like object that holds the first 100 elements on the stack. If more space is needed it

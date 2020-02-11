@@ -1,9 +1,10 @@
 //! Fixed-size hashes
 
-use std::{fmt, ops, cmp, str};
-use rustc_hex::{ToHex, FromHex, FromHexError};
-use std::hash::{Hash, Hasher};
+use alloc::vec::Vec;
 use bitcoin_hashes::{ripemd160, Hash as HashTrait, HashEngine};
+use core::{ops, cmp, str};
+use core::hash::{Hash, Hasher};
+use hex::{FromHex, FromHexError};
 
 macro_rules! impl_hash {
     ($name: ident, $size: expr) => {
@@ -53,8 +54,7 @@ macro_rules! impl_hash {
 
         impl From<&'static str> for $name {
             fn from(s: &'static str) -> Self {
-                let err_msg = format!("cannot parse {} as {:?}", s, stringify!($name));
-                s.parse().expect(&err_msg)
+                s.parse().unwrap()
             }
         }
 
@@ -70,29 +70,30 @@ macro_rules! impl_hash {
             type Err = FromHexError;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                let vec: Vec<u8> = s.from_hex()?;
+                let vec: Vec<u8> = Vec::from_hex(s)?;
                 match vec.len() {
                     $size => {
                         let mut result = [0u8; $size];
                         result.copy_from_slice(&vec);
                         Ok($name(result))
                     },
-                    _ => Err(FromHexError::InvalidHexLength)
+                    _ => Err(FromHexError::InvalidStringLength)
                 }
             }
         }
 
-        impl fmt::Debug for $name {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.write_str(&self.0.to_hex::<String>())
-            }
-        }
+//        impl fmt::Debug for $name {
+//            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//                f.write_str(&self.0.to_hex::<String>())
+//            }
+//        }
 
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.write_str(&self.0.to_hex::<String>())
-            }
-        }
+//        #[cfg(feature = "std")]
+//        impl fmt::Display for $name {
+//            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//                f.write_str(&self.0.to_hex::<String>())
+//            }
+//        }
 
         impl ops::Deref for $name {
             type Target = [u8; $size];
@@ -167,17 +168,17 @@ impl_hash!(H520, 65);
 
 //known_heap_size!(0, H32, H48, H96, H160, H256, H264, H512, H520);
 
-impl H256 {
-    #[inline]
-    pub fn from_reversed_str(s: &'static str) -> Self {
-        H256::from(s).reversed()
-    }
-
-    #[inline]
-    pub fn to_reversed_str(&self) -> String {
-        self.reversed().to_string()
-    }
-}
+//impl H256 {
+//    #[inline]
+//    pub fn from_reversed_str(s: &'static str) -> Self {
+//        H256::from(s).reversed()
+//    }
+//
+//    #[inline]
+//    pub fn to_reversed_str(&self) -> String {
+//        self.reversed().to_string()
+//    }
+//}
 
 /// Computes RIPEMD-160 cryptographic hash of key
 pub fn ripemd160(msg: &[u8]) -> H160 {
