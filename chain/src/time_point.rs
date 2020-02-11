@@ -36,6 +36,7 @@ impl TimePoint {
         Self(nano_sec)
     }
 
+    #[cfg(feature = "std")]
     pub fn now() -> Self {
         let now = Utc::now().timestamp_nanos();
         Self::from_unix_nano_seconds(now)
@@ -84,5 +85,23 @@ impl core::fmt::Display for TimePoint {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         let dt = Utc.timestamp_nanos(self.time_since_epoch());
         write!(f, "{}", dt.to_rfc3339_opts(SecondsFormat::Millis, true))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn time_point_error_code() {
+        let max = u64::max_value();
+        let timePoint_test = TimePoint::try_from(max);
+        assert!(timePoint_test.is_err());
+        let time = TimePoint(46);
+        let a = TimePoint::from(46);
+        assert_eq!(time,a);
+        let test_data = a.as_i64();
+        let timePoint_test_as_i64 = TimePoint::try_from(max);
+        assert!(timePoint_test_as_i64.is_err());
     }
 }

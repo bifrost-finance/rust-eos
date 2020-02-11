@@ -57,7 +57,7 @@ impl PublicKey {
     /// Verify a signature on a hash with public key.
     pub fn verify_hash(&self, hash: &[u8], signature: &Signature) -> crate::Result<()> {
         let secp = Secp256k1::verification_only();
-        let msg = Message::from_slice(&hash).unwrap();
+        let msg = Message::from_slice(&hash).map_err(crate::error::Error::Secp256k1)?;
         secp.verify(&msg, &signature.to_standard(), &self.key)?;
 
         Ok(())

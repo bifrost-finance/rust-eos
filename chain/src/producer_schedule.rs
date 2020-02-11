@@ -1,13 +1,17 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/796ff8bee9a0fc864f665a0a4d018e0ff18ac383/libraries/eosiolib/contracts/eosio/producer_schedule.hpp#L54-L69>
-use crate::{AccountName, NumBytes, ProducerKey, Read, Write, PublicKey, Checksum256};
+use alloc::vec::Vec;
+use crate::{AccountName, NumBytes, ProducerKey, Read, Write, PublicKey, Checksum256, UnsignedInt};
+use codec::{Encode, Decode};
+use core::default::Default;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
 /// Defines both the order, account name, and signing keys of the active set
 /// of producers.
-#[derive(Read, Write, NumBytes, Clone, Default, Debug, PartialEq)]
+#[derive(Read, Write, NumBytes, Clone, Debug, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct ProducerSchedule {
     /// Version number of the schedule. It is sequentially incrementing
     /// version number.
@@ -17,6 +21,13 @@ pub struct ProducerSchedule {
 }
 
 impl ProducerSchedule {
+    pub fn new(version: u32, producers: Vec<ProducerKey>) -> Self {
+        Self {
+            version,
+            producers
+        }
+    }
+
     pub fn get_producer_key(&self, p: AccountName) -> PublicKey {
         for i in self.producers.iter() {
             if i.producer_name == p {
@@ -28,6 +39,27 @@ impl ProducerSchedule {
 
     pub fn schedule_hash(&self) -> crate::Result<Checksum256> {
         Checksum256::hash(self.clone())
+    }
+}
+
+// This is just for testing
+impl Default for ProducerSchedule {
+    fn default() -> Self {
+        let version = 0u32;
+        let producers = {
+            let producer_name = AccountName::from(6138663577826885632);
+            let type_ = UnsignedInt::from(0u32);
+            let data = [
+                2u8, 192, 222, 210, 188, 31, 19, 5, 251, 15, 170, 197, 230, 192, 62, 227,
+                161, 146, 66, 52, 152, 84, 39, 182, 22, 124, 165, 105, 209, 61, 244, 53, 207
+            ];
+            let pk = PublicKey { type_, data };
+            ProducerKey { producer_name, block_signing_key: pk}
+        };
+        ProducerSchedule {
+            version,
+            producers: alloc::vec![producers]
+        }
     }
 }
 
@@ -48,6 +80,36 @@ mod test {
         let mut json_str = String::new();
         file.read_to_string(&mut json_str)?;
         Ok(json_str)
+    }
+
+    #[test]
+    fn producers_schedule_deserialization_should_be_ok() {
+        let s = r#"
+        {
+            "version":0,
+            "producers":[
+                {
+                    "producer_name":"eosio",
+                    "block_signing_key":"EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"
+                }
+            ]
+        }
+        "#;
+        let new_producers: Result<ProducerSchedule, _> = serde_json::from_str(&s);
+        assert!(new_producers.is_ok());
+
+        let new_producers = new_producers.unwrap();
+        assert_eq!(new_producers.version, 0);
+        assert_eq!(new_producers.producers[0].producer_name.to_string(), "eosio");
+        assert_eq!(new_producers.producers[0].block_signing_key.to_string(), "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV");
+    }
+
+    #[test]
+    fn producers_schedule_default_should_be_ok() {
+        let new_producers = ProducerSchedule::default();
+        assert_eq!(new_producers.version, 0);
+        assert_eq!(new_producers.producers[0].producer_name.to_string(), "eosio");
+        assert_eq!(new_producers.producers[0].block_signing_key.to_string(), "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV");
     }
 
     #[test]

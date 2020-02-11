@@ -31,10 +31,26 @@ mod derive_num_bytes;
 mod derive_read;
 mod derive_table;
 mod derive_write;
+mod derive_digest;
+mod derive_serialize_data;
 
 use crate::proc_macro::TokenStream;
 use proc_macro2::Span;
 use syn::{DeriveInput, Lit, LitStr, Meta, Path};
+
+/// Derive the `Digest` trait
+#[inline]
+#[proc_macro_derive(Digest, attributes(eosio_core_root_path))]
+pub fn derive_digest(input: TokenStream) -> TokenStream {
+    crate::derive_digest::expand(input)
+}
+
+/// Derive the `SerializeData` trait
+#[inline]
+#[proc_macro_derive(SerializeData, attributes(eosio_core_root_path))]
+pub fn derive_serialize_data(input: TokenStream) -> TokenStream {
+    crate::derive_serialize_data::expand(input)
+}
 
 /// Derive the `Write` trait
 #[inline]
@@ -82,8 +98,8 @@ pub(crate) fn root_path(input: &DeriveInput) -> Path {
         .iter()
         .fold(None, |acc, attr| match attr.parse_meta() {
             Ok(meta) => {
-                let name = meta.name();
-                if name == "eosio_core_root_path" {
+                let name = meta.path().get_ident();
+                if name.as_ref().expect("please add trait root path").to_string() == "eosio_core_root_path" {
                     match meta {
                         Meta::NameValue(meta) => match meta.lit {
                             Lit::Str(s) => Some(s),

@@ -1,10 +1,13 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/contracts/eosio/action.hpp#L180-L217>
 use crate::{AccountName, NumBytes, PermissionName, Read, Write};
 use core::str::FromStr;
+use codec::{Encode, Decode};
+#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
 /// A permission
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Read, Write, NumBytes, Hash, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Read, Write, NumBytes, Hash, PartialOrd, Ord, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct PermissionLevel {
     pub actor: AccountName,
@@ -31,5 +34,22 @@ impl core::fmt::Display for PermissionLevel {
             self.actor,
             self.permission,
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn deserialize_permission_level_should_be_ok() {
+        let s = r#"
+        {
+          "actor": "eosio",
+          "permission": "active"
+        }
+        "#;
+        let s: Result<PermissionLevel, _> =serde_json::from_str(s);
+        assert!(s.is_ok());
     }
 }

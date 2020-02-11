@@ -1,21 +1,26 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/contracts/eosio/action.hpp#L249-L274>
 use alloc::string::{String, ToString};
-use alloc::vec;
+use alloc::{format, vec};
 use alloc::vec::Vec;
 use core::str::FromStr;
-
+use codec::{Encode, Decode};
+use crate::{
+    AccountName, ActionName, Asset, Digest, NumBytes,
+    PermissionLevel, Read, SerializeData, Write
+};
 #[cfg(feature = "std")]
-use serde::{Serialize, Deserialize};
-#[cfg(feature = "std")]
-use serde::ser::{Serializer, SerializeStruct};
+use serde::{
+    Serialize, Deserialize,
+    de::Error as DeError,
+    ser::{Error as SerError, Serializer, SerializeStruct}
+};
 
-use crate::{AccountName, ActionName, Asset, NumBytes, PermissionLevel, Read, SerializeData, Write};
 
 /// This is the packed representation of an action along with meta-data about
 /// the authorization levels.
-#[cfg_attr(feature = "std", derive(Deserialize))]
-#[derive(Clone, Debug, Read, Write, NumBytes, Default)]
+#[derive(Clone, Debug, Read, Write, NumBytes, PartialEq, Default, Encode, Decode, Digest, SerializeData)]
 #[eosio_core_root_path = "crate"]
+#[repr(C)]
 pub struct Action {
     /// Name of the account the action is intended for
     pub account: AccountName,
@@ -25,6 +30,61 @@ pub struct Action {
     pub authorization: Vec<PermissionLevel>,
     /// Payload data
     pub data: Vec<u8>,
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::Deserialize<'de> for Action {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::de::Deserializer<'de>
+    {
+        #[derive(Debug)]
+        struct VisitorAction;
+        impl<'de> serde::de::Visitor<'de> for VisitorAction
+        {
+            type Value = Action;
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "string or a struct, but this is: {:?}", self)
+            }
+
+            fn visit_map<D>(self, mut map: D) -> Result<Self::Value, D::Error>
+                where D: serde::de::MapAccess<'de>,
+            {
+                let mut account = AccountName::default();
+                let mut name = ActionName::default();
+                let mut authorization: Vec<PermissionLevel> = vec![];
+                let mut data: Vec<u8> = vec![];
+                while let Some(field) = map.next_key()? {
+                    match field {
+                        "account" => {
+                            account = map.next_value()?;
+                        }
+                        "name" => {
+                            name = map.next_value()?;
+                        }
+                        "authorization" => {
+                            authorization= map.next_value()?;
+                        }
+                        "hex_data" => {
+                            let val: String= map.next_value()?;
+                            data = hex::decode(val).map_err(D::Error::custom)?;
+                        }
+                        _ => {
+                            let _: serde_json::Value = map.next_value()?;
+                            continue;
+                        }
+                    }
+                }
+                let action = Action {
+                    account,
+                    name,
+                    authorization,
+                    data,
+                };
+                Ok(action)
+            }
+        }
+        deserializer.deserialize_any(VisitorAction)
+    }
 }
 
 impl Action {
@@ -38,9 +98,9 @@ impl Action {
         authorization: Vec<PermissionLevel>,
         action_data: S
     ) -> crate::Result<Self> {
-        let account = AccountName::from_str(account.as_ref()).map_err(crate::Error::from)?;
-        let name =  ActionName::from_str(name.as_ref()).map_err(crate::Error::from)?;
-        let data = action_data.to_serialize_data();
+        let account = FromStr::from_str(account.as_ref()).map_err(crate::Error::from)?;
+        let name =  FromStr::from_str(name.as_ref()).map_err(crate::Error::from)?;
+        let data = action_data.to_serialize_data()?;
 
         Ok(Action { account, name, authorization, data })
     }
@@ -56,8 +116,6 @@ impl Action {
         )
     }
 }
-
-impl SerializeData for Action {}
 
 impl core::fmt::Display for Action {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -83,7 +141,7 @@ impl serde::ser::Serialize for Action {
         state.serialize_field("hex_data", &hex::encode(&self.data))?;
         match (self.account.to_string().as_str(), self.name.to_string().as_str()) {
             ("eosio.token", "transfer") => {
-                let data = ActionTransfer::read(&self.data, &mut 0).expect("Action read from data failed.");
+                let data = ActionTransfer::read(&self.data, &mut 0).map_err(|_| S::Error::custom("Action read from data failed."))?;
                 state.serialize_field("data", &data)?;
             },
             _ => {}
@@ -93,7 +151,7 @@ impl serde::ser::Serialize for Action {
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Clone, Debug, Read, Write, NumBytes, Default)]
+#[derive(Clone, Debug, Read, Write, NumBytes, Default, SerializeData)]
 #[eosio_core_root_path = "crate"]
 pub struct ActionTransfer {
     pub from: AccountName,
@@ -108,16 +166,14 @@ impl ActionTransfer {
     }
 
     pub fn from_str<T: AsRef<str>>(from: T, to: T, quantity: T, memo: T) -> crate::Result<Self> {
-        let from = AccountName::from_str(from.as_ref()).map_err(crate::Error::from)?;
-        let to = AccountName::from_str(to.as_ref()).map_err(crate::Error::from)?;
-        let quantity = Asset::from_str(quantity.as_ref()).map_err(crate::Error::from)?;
+        let from = FromStr::from_str(from.as_ref()).map_err(crate::Error::from)?;
+        let to = FromStr::from_str(to.as_ref()).map_err(crate::Error::from)?;
+        let quantity = FromStr::from_str(quantity.as_ref()).map_err(crate::Error::from)?;
         let memo = memo.as_ref().to_string();
 
         Ok(ActionTransfer { from, to, quantity, memo })
     }
 }
-
-impl SerializeData for ActionTransfer {}
 
 pub trait ToAction: Write + NumBytes {
     const NAME: u64;
@@ -127,16 +183,16 @@ pub trait ToAction: Write + NumBytes {
         &self,
         account: AccountName,
         authorization: Vec<PermissionLevel>,
-    ) -> Action {
+    ) -> crate::Result<Action> {
         let mut data = vec![0_u8; self.num_bytes()];
-        self.write(&mut data, &mut 0).expect("write");
+        self.write(&mut data, &mut 0).map_err(crate::Error::BytesWriteError)?;
 
-        Action {
+        Ok(Action {
             account,
             name: Self::NAME.into(),
             authorization,
             data,
-        }
+        })
     }
 }
 
@@ -147,12 +203,58 @@ mod tests {
     use super::*;
 
     #[test]
-    fn action_should_work() {
+    fn action_hash_should_work() {
+        let action = Action {
+            account: FromStr::from_str("eosio.token").unwrap(),
+            name: FromStr::from_str("issue").unwrap(),
+            authorization: vec![PermissionLevel {
+                actor: FromStr::from_str("eosio").unwrap(),
+                permission: FromStr::from_str("active").unwrap(),
+            }],
+            data: hex::decode("0000000000ea305500625e5a1809000004454f530000000004696e6974").unwrap(),
+        };
+
+        let hash = action.digest().unwrap();
+        assert_eq!(hash, "0221f3da945a3de738cdb744f7963a6a3486097ab42436d1f4e13a1ade502bb9".into());
+    }
+
+    #[test]
+    fn action_transfer_serialize_should_work() {
         let action = Action::transfer("testa", "testb", "1.0000 EOS", "a memo").ok().unwrap();
         let data = action.to_serialize_data();
+        assert!(data.is_ok());
+        let data = data.unwrap();
         assert_eq!(
             hex::encode(data),
             "00a6823403ea3055000000572d3ccdcd01000000000093b1ca00000000a8ed323227000000000093b1ca000000008093b1ca102700000000000004454f53000000000661206d656d6f"
         );
+    }
+
+    #[test]
+    fn action_deserialize_should_be_ok() {
+        let action_str = r#"
+        {
+            "account": "eosio.token",
+            "name": "transfer",
+            "authorization": [
+                {
+                    "actor": "junglefaucet",
+                    "permission": "active"
+                }
+            ],
+            "data": {
+                "from": "junglefaucet",
+                "receiver": "megasuper333",
+                "stake_net_quantity": "1.0000 EOS",
+                "stake_cpu_quantity": "1.0000 EOS",
+                "transfer": 1
+            },
+            "hex_data": "9015d266a9c8a67e30c6b8aa6a6c989240420f000000000004454f5300000000134e657720425020526567697374726174696f6e"
+        }"#;
+
+        let action: Result<Action, _> = serde_json::from_str(action_str);
+        assert!(action.is_ok());
+        let hash = action.unwrap().digest().unwrap();
+        assert_eq!(hash, "eaa3b4bf845a1b41668ab7ca49fb5644fc91a6c0156dfd33911b4ec69d2e41d6".into())
     }
 }

@@ -1,8 +1,9 @@
-//#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
 
 pub mod action;
+pub mod action_receipt;
 pub mod asset;
 pub mod bytes;
 pub mod block;
@@ -28,13 +29,13 @@ pub mod time_point;
 pub mod time_point_sec;
 pub mod transaction;
 pub mod unsigned_int;
-
-pub mod bitutil;
+pub mod utils;
 
 pub use eosio_core_derive::*;
 
 pub use self::{
     action::*,
+    action_receipt::*,
     asset::*,
     bytes::*,
     block::*,
@@ -65,20 +66,15 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 pub trait SerializeData: Write + NumBytes {
-    fn to_serialize_data(&self) -> Vec<u8> {
+    fn to_serialize_data(&self) -> crate::Result<Vec<u8>> {
         let mut data = vec![0u8; self.num_bytes()];
-        self.write(&mut data, &mut 0).expect("write");
-        data.to_vec()
+        self.write(&mut data, &mut 0).map_err(crate::Error::BytesWriteError)?;
+        Ok(data.to_vec())
     }
 }
 
-#[cfg(feature = "std")]
-#[macro_use]
-extern crate serde_big_array;
-#[cfg(feature = "std")]
-big_array! {
-    BigArray;
-    // serde only support costant array size to 32,
-    // but we have two arrays that both exceeds that size.
-    +33, 65,
+pub trait Digest: Clone + Write + NumBytes {
+    fn digest(&self) -> crate::Result<Checksum256> {
+        Checksum256::hash(self.clone())
+    }
 }

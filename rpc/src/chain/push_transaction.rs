@@ -22,7 +22,7 @@ pub fn push_transaction(signed_trx: SignedTransaction) -> PushTransactionParams 
         signatures: signed_trx.signatures.iter().map(|sig| sig.to_string()).collect(),
         compression: "none".to_string(),
         packed_context_free_data: "".to_string(),
-        packed_trx: hex::encode(&signed_trx.trx.to_serialize_data()),
+        packed_trx: hex::encode(&signed_trx.trx.to_serialize_data().expect("failed to serialize signed transaction data.")),
     }
 }
 
@@ -362,12 +362,11 @@ mod tests {
 
         // Construct transaction
         let trx = Transaction::new(300, ref_block_num, ref_block_prefix, actions);
-        let signed_trx = trx.sign(sk, chain_id).ok().unwrap();
-        dbg!(hex::encode(trx.to_serialize_data()));
-        dbg!(signed_trx.clone());
+        let signed_trx = trx.sign_and_tx(sk, chain_id).ok().unwrap();
+        assert!(trx.to_serialize_data().is_ok());
+
         let response = push_transaction(signed_trx).fetch(&hyper_client);
-        let res: PushTransaction = response.unwrap();
-        dbg!(res);
+        assert!(response.is_ok());
     }
 
     #[test]

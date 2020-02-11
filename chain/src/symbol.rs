@@ -1,13 +1,13 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/symbol.hpp#L234-L337>
-use crate::{NumBytes, Read, SymbolCode, Write};
 use alloc::string::String;
+use crate::{NumBytes, Read, SymbolCode, Write};
 use core::{
     convert::TryFrom,
     fmt,
     str::FromStr,
 };
+#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
 
 /// All possible characters that can be used in EOSIO symbol codes.
 pub const SYMBOL_UTF8_CHARS: [u8; 26] = *b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -26,6 +26,12 @@ pub enum ParseSymbolError {
     BadChar(char),
     /// TODO docs
     BadPrecision,
+}
+
+impl From<ParseSymbolError> for crate::Error {
+    fn from(err: ParseSymbolError) -> Self {
+        crate::Error::ParseSymbolError(err)
+    }
 }
 
 impl fmt::Display for ParseSymbolError {
@@ -203,7 +209,8 @@ pub fn symbol_code_length(symbol: u64) -> usize {
 }
 
 /// Stores information about a symbol, the symbol can be 7 characters long.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Read, Write, NumBytes, Hash, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Read, Write, NumBytes, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct Symbol(u64);
 

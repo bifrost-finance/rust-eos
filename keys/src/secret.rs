@@ -55,12 +55,12 @@ impl SecretKey {
     }
 
     /// Get WIF encoding of this private key.
-    pub fn to_wif(&self) -> String {
+    pub fn to_wif(&self) -> Result<String, core::fmt::Error> {
         let mut buf = String::new();
-        buf.write_fmt(format_args!("{}", self)).unwrap();
+        buf.write_fmt(format_args!("{}", self))?;
         buf.shrink_to_fit();
 
-        buf
+        Ok(buf)
     }
 
     /// Parse WIF encoded private key.

@@ -53,7 +53,8 @@ macro_rules! impl_hash {
 
         impl From<&'static str> for $name {
             fn from(s: &'static str) -> Self {
-                s.parse().unwrap()
+                let err_msg = format!("cannot parse {} as {:?}", s, stringify!($name));
+                s.parse().expect(&err_msg)
             }
         }
 

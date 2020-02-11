@@ -1,15 +1,23 @@
+use alloc::vec::Vec;
+use alloc::string::{ToString, String};
+use alloc::{format, vec};
 use core::iter::{IntoIterator, Iterator};
 use core::convert::TryFrom;
 use core::str::FromStr;
+use codec::{Encode, Decode};
+#[cfg(feature = "std")]
 use keys::secret::SecretKey;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "std")]
-use serde::ser::{Serializer, SerializeStruct};
+use serde::{
+    de::Error as DeError,
+    ser::{Error as SerError, Serializer, SerializeStruct},
+};
 
 use crate::{
     Action,
-    bitutil,
+    utils::bitutil,
     Checksum256,
     Extension,
     NumBytes,
@@ -23,7 +31,7 @@ use crate::{
     WriteError,
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 pub enum CompressionType {
     None,
@@ -82,7 +90,7 @@ impl core::fmt::Display for CompressionType {
     }
 }
 
-#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq)]
+#[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode, SerializeData)]
 #[eosio_core_root_path = "crate"]
 pub struct PackedTransaction {
     pub signatures: Vec<crate::Signature>,
@@ -116,9 +124,11 @@ impl<'de> serde::Deserialize<'de> for PackedTransaction {
                     match field {
                         "signatures" => {
                             let val: Vec<String> = map.next_value()?;
-                            signatures = val.iter().map(|v| {
-                                crate::signature::Signature::from_str(v).unwrap()
-                            }).collect::<Vec<_>>();
+                            signatures = Vec::with_capacity(val.len());
+                            for v in val {
+                                let sig = crate::Signature::from_str(&v).map_err(|e| D::Error::custom(e))?;
+                                signatures.push(sig);
+                            }
                         }
                         "compression" => {
                             compression = match map.next_value()? {
@@ -129,11 +139,11 @@ impl<'de> serde::Deserialize<'de> for PackedTransaction {
                         }
                         "packed_context_free_data" => {
                             let val: String = map.next_value()?;
-                            packed_context_free_data = hex::decode(val).unwrap();
+                            packed_context_free_data = hex::decode(val).map_err(|e| D::Error::custom(e))?;
                         }
                         "packed_trx" => {
                             let val: String = map.next_value()?;
-                            packed_trx = hex::decode(val).unwrap();
+                            packed_trx = hex::decode(val).map_err(|e| D::Error::custom(e))?;
                         }
                         _ => {
                             // must give a type annotation here or compile with error
@@ -174,21 +184,20 @@ impl PackedTransaction {
     }
 }
 
-impl From<SignedTransaction> for PackedTransaction {
-    fn from(signed: SignedTransaction) -> Self {
+impl TryFrom<SignedTransaction> for PackedTransaction {
+    type Error = crate::Error;
+    fn try_from(signed: SignedTransaction) -> Result<Self, Self::Error> {
         let mut packed_trx = vec![0u8; signed.trx.num_bytes()];
-        signed.trx.write(&mut packed_trx, &mut 0).expect("Convert transaction to packed failed");
+        signed.trx.write(&mut packed_trx, &mut 0).map_err(crate::Error::BytesWriteError)?;
 
-        PackedTransaction {
+        Ok(PackedTransaction {
             signatures: signed.signatures,
             compression: Default::default(),
             packed_context_free_data: signed.context_free_data,
             packed_trx,
-        }
+        })
     }
 }
-
-impl SerializeData for PackedTransaction {}
 
 impl core::fmt::Display for PackedTransaction {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -197,11 +206,11 @@ impl core::fmt::Display for PackedTransaction {
             packed_context_free_data: {}\n\
             packed_trx: {}\n\
             transaction: {}",
-            self.signatures.iter().map(|item| item.to_string()).collect::<String>(),
+            self.signatures.iter().map(|item| format!("{:?}", item)).collect::<String>(),
             self.compression,
             hex::encode(&self.packed_context_free_data),
             hex::encode(&self.packed_trx),
-            Transaction::try_from(TrxKinds::PackedTransaction(self.clone())).expect("Convert transaction failed"),
+            Transaction::try_from(TrxKinds::PackedTransaction(self.clone())).map_err(|_| core::fmt::Error)?,
         )
     }
 }
@@ -214,8 +223,10 @@ impl serde::ser::Serialize for PackedTransaction {
         state.serialize_field("compression", &self.compression)?;
         state.serialize_field("packed_context_free_data", &self.packed_context_free_data)?;
         state.serialize_field("packed_trx", &hex::encode(&self.packed_trx))?;
-        state.serialize_field("transaction", &Transaction::read(&self.packed_trx.as_slice(), &mut 0)
-            .expect("Transaction read from packed trx failed."))?;
+        state.serialize_field(
+            "transaction",
+            &Transaction::read(&self.packed_trx.as_slice(), &mut 0).map_err(|_| S::Error::custom("failed to serialize transaction data"))?
+        )?;
         state.end()
     }
 }
@@ -277,7 +288,7 @@ impl core::fmt::Display for TransactionHeader {
 }
 
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
-#[derive(NumBytes, Write, Read, Debug, Clone, Default)]
+#[derive(NumBytes, Write, Read, Debug, Clone, Default, SerializeData)]
 #[eosio_core_root_path = "crate"]
 pub struct Transaction {
     pub header: TransactionHeader,
@@ -287,6 +298,7 @@ pub struct Transaction {
 }
 
 impl Transaction {
+    #[cfg(feature = "std")]
     pub fn new(delay_secs: u32, ref_block_num: u16, ref_block_prefix: u32, actions: Vec<Action>) -> Self {
         let expiration = TimePointSec::now().add_seconds(delay_secs);
         let header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
@@ -312,28 +324,38 @@ impl Transaction {
         }
     }
 
-    pub fn sign(&self, sk: SecretKey, chain_id: String) -> crate::Result<SignedTransaction> {
+    #[cfg(feature = "std")]
+    pub fn sign(&self, sk: SecretKey, chain_id_hex: Vec<u8>) -> crate::Result<crate::Signature> {
         let mut sign_data: Vec<u8>  = Vec::new();
-        let mut chain_id_hex = hex::decode(chain_id)
-            .map_err(crate::error::Error::FromHexError)?;
+        let mut chain_id_hex = chain_id_hex;
         sign_data.append(&mut chain_id_hex);
-        sign_data.append(&mut self.to_serialize_data());
+        sign_data.append(&mut self.to_serialize_data()?);
         sign_data.append(&mut vec![0u8; 32]);
 
         let sig = sk.sign(&sign_data.as_slice()).map_err(crate::error::Error::Keys)?;
 
+        Ok(sig.into())
+    }
+
+    #[cfg(feature = "std")]
+    pub fn sign_and_tx(&self, sk: SecretKey, chain_id: String) -> crate::Result<SignedTransaction> {
+        let chain_id_hex = hex::decode(chain_id)
+            .map_err(crate::error::Error::FromHexError)?;
+        let sig = self.sign(sk, chain_id_hex)?;
+
         Ok(SignedTransaction {
-            signatures: vec![sig.into()],
+            signatures: vec![sig],
             context_free_data: vec![],
             trx: self.clone(),
         })
     }
 
+    #[cfg(feature = "std")]
     pub fn generate_signature(&self, sk: impl AsRef<str>, chain_id: impl AsRef<str>) -> crate::Result<keys::signature::Signature> {
         let sk = SecretKey::from_wif(sk.as_ref()).map_err(crate::error::Error::Keys)?;
         let mut chain_id_hex = hex::decode(chain_id.as_ref())
             .map_err(crate::error::Error::FromHexError)?;
-        let mut serialized = self.to_serialize_data();
+        let mut serialized = self.to_serialize_data()?;
         let pre_reserved  = chain_id_hex.len() + serialized.len() + 32;
         let mut sign_data: Vec<u8>  = Vec::with_capacity(pre_reserved);
         sign_data.append(&mut chain_id_hex);
@@ -344,6 +366,7 @@ impl Transaction {
         Ok(sig)
     }
 
+    #[cfg(feature = "std")]
     pub fn generate_signed_transaction(&self, sks: impl IntoIterator<Item=keys::signature::Signature>) -> SignedTransaction
     {
         let sks: Vec<crate::Signature> = sks.into_iter().map(|sk| sk.into()).collect();
@@ -367,9 +390,10 @@ impl TryFrom<TrxKinds> for Transaction {
     }
 }
 
-impl From<PackedTransaction> for Transaction {
-    fn from(packed: PackedTransaction) -> Self {
-        Transaction::read(packed.packed_trx.as_slice(), &mut 0).expect("Transaction read from packed trx failed.")
+impl TryFrom<PackedTransaction> for Transaction {
+    type Error = crate::Error;
+    fn try_from(packed: PackedTransaction) -> Result<Self, Self::Error> {
+        Transaction::read(packed.packed_trx.as_slice(), &mut 0).map_err(crate::Error::BytesReadError)
     }
 }
 
@@ -380,15 +404,12 @@ impl core::fmt::Display for Transaction {
             actions: {}\n\
             transaction_extensions: {}",
             self.header,
-            self.context_free_actions.iter().map(|item| format!("{}", item)).collect::<String>(),
-            self.actions.iter().map(|item| format!("{}", item)).collect::<String>(),
-            self.transaction_extensions.iter().map(|item| format!("{:?}", item)).collect::<String>(),
+            self.context_free_actions.iter().map(Action::to_string).collect::<String>(),
+            self.actions.iter().map(Action::to_string).collect::<String>(),
+            self.transaction_extensions.iter().map(Extension::to_string).collect::<String>(),
         )
     }
 }
-
-
-impl SerializeData for Transaction {}
 
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[derive(NumBytes, Write, Read, Debug, Clone, Default)]
@@ -399,13 +420,14 @@ pub struct SignedTransaction {
     pub trx: Transaction,
 }
 
-impl From<PackedTransaction> for SignedTransaction {
-    fn from(packed: PackedTransaction) -> Self {
-        SignedTransaction {
+impl TryFrom<PackedTransaction> for SignedTransaction {
+    type Error = crate::Error;
+    fn try_from(packed: PackedTransaction) -> Result<Self, Self::Error> {
+        Ok(Self {
             signatures: packed.signatures,
             context_free_data: packed.packed_context_free_data,
-            trx: Transaction::read(packed.packed_trx.as_slice(), &mut 0).expect("Transaction read from packed trx failed."),
-        }
+            trx: Transaction::read(packed.packed_trx.as_slice(), &mut 0).map_err(crate::Error::BytesReadError)?
+        })
     }
 }
 
@@ -439,10 +461,10 @@ mod test {
 
         let chain_id = "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f".to_string();
         let sk = SecretKey::from_wif("5KUEhweMaSD2szyjU9EKjAyY642ZdVL2qzHW72dQcNRzUMWx9EL").unwrap();
-        let signed_trx = trx.sign(sk, chain_id);
+        let signed_trx = trx.sign_and_tx(sk, chain_id);
         assert!(signed_trx.is_ok());
         assert_eq!(
-            hex::encode(&trx.to_serialize_data()[4..]),
+            hex::encode(&trx.to_serialize_data().unwrap()[4..]),
             "000000000000000000000100a6823403ea3055000000572d3ccdcd01000000000093b1ca00000000a8ed323227000000000093b1ca000000008093b1ca102700000000000004454f53000000000661206d656d6f00"
         );
         println!("{}", serde_json::to_string_pretty(&signed_trx.ok().unwrap()).unwrap());
@@ -451,16 +473,10 @@ mod test {
     #[test]
     fn packed_trx_to_signed_trx_should_work() {
         let data = hex::decode("0100206b22f146d8bfe03a7a03b760cb2539409b05f9961543ee41c31f0cf493267b8c244d1517a6aa67cf47f294755d9e2fb5dda6779f5d88d6e4461f380a2b02964b000053256fa15db57c56c88ddb000000000100a6823403ea3055000000572d3ccdcd010000000000855c3400000000a8ed3232210000000000855c340000000000000e3d102700000000000004454f53000000000000").unwrap();
-        let packed_trx = PackedTransaction::read(data.as_slice(), &mut 0).unwrap();
-        let signed_trx: SignedTransaction = packed_trx.into();
-        dbg!(&signed_trx);
-    }
-
-    #[test]
-    fn packed_trx_tt() {
-        let data = hex::decode("7785c25dbc8b0fe520ac000000000500a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000a6823403ea3055000000572d3ccdcd01701534524d9d2f5d00000000a8ed323221701534524d9d2f5d301d456a524c9353010000000000000004454f53000000000000").unwrap();
-        let packed_trx = PackedTransaction::read(data.as_slice(), &mut 0).unwrap();
-        dbg!(&packed_trx);
+        let packed_trx = PackedTransaction::read(data.as_slice(), &mut 0);
+        assert!(packed_trx.is_ok());
+        let signed_trx = SignedTransaction::try_from(packed_trx.unwrap());
+        assert!(signed_trx.is_ok());
     }
 
     #[test]

@@ -6,7 +6,7 @@ use core::{
     fmt,
     str::FromStr,
 };
-
+use codec::{Encode, Decode};
 
 /// All possible characters that can be used in EOSIO names.
 pub const NAME_UTF8_CHARS: [u8; 32] = *b".12345abcdefghijklmnopqrstuvwxyz";
@@ -174,6 +174,7 @@ struct NameVisitor<
     T: FromStr<Err = ParseNameError> + From<u64> + core::fmt::Display,
 >(core::marker::PhantomData<T>);
 
+#[cfg(feature = "std")]
 impl<'de, T> serde::de::Visitor<'de> for NameVisitor<T>
     where
         T: FromStr<Err = ParseNameError> + From<u64> + core::fmt::Display,
@@ -207,8 +208,9 @@ impl<'de, T> serde::de::Visitor<'de> for NameVisitor<T>
 
 macro_rules! declare_name_types {
     ($($ident:ident)*) => ($(
-        #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Hash, PartialOrd, Ord, Read, Write, NumBytes)]
+        #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Hash, PartialOrd, Ord, Read, Write, NumBytes, Encode, Decode)]
         #[eosio_core_root_path = "crate"]
+        #[repr(C)]
         pub struct $ident(u64);
 
         impl $ident {
@@ -255,6 +257,7 @@ macro_rules! declare_name_types {
             }
         }
 
+        #[cfg(feature = "std")]
         impl<'de> serde::Deserialize<'de> for $ident {
             #[inline]
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -265,6 +268,7 @@ macro_rules! declare_name_types {
             }
         }
 
+        #[cfg(feature = "std")]
         impl serde::Serialize for $ident {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
