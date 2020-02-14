@@ -5,7 +5,6 @@ use core::iter::{IntoIterator, Iterator};
 use core::convert::TryFrom;
 use core::str::FromStr;
 use codec::{Encode, Decode};
-#[cfg(feature = "std")]
 use keys::secret::SecretKey;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

@@ -86,7 +86,7 @@ impl Into<PublicKey> for keys::public::PublicKey {
     fn into(self) -> PublicKey {
         PublicKey {
             type_: Default::default(),
-            data: self.key.serialize(),
+            data: self.key.serialize_compressed(),
         }
     }
 }
