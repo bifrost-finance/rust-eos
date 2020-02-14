@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 bitcoin_hashes = { version = "0.7", default-features = false }
-chrono = { version = "0.4.10", default-features = false, features = ["alloc"] }
+chrono = { version = "0.4.10", default-features = false }
 codec = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
 eosio-core-derive = { path = "../eosio-core-derive" }
 hex = { version = "0.4", default-features = false }

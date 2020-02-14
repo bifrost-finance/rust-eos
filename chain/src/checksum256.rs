@@ -1,4 +1,5 @@
 use alloc::vec;
+use alloc::string::ToString;
 use bitcoin_hashes::{Hash as HashTrait, sha256};
 use crate::{NumBytes, Read, Write};
 use codec::{Encode, Decode};

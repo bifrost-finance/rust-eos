@@ -552,7 +552,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "libsecp256k1"
 version = "0.3.5"
-source = "git+https://github.com/bifrost-codes/libsecp256k1.git#0ed98d8d094dfb34d9666143ff4090463cc9d174"
+source = "git+https://github.com/bifrost-codes/libsecp256k1.git#53e29703095e541d657709045f6bbb118b1ce359"
 dependencies = [
  "arrayref 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "crunchy 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",

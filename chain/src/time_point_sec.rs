@@ -59,8 +59,9 @@ impl From<TimePoint> for TimePointSec {
     }
 }
 
-impl core::fmt::Display for TimePointSec {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+#[cfg(feature = "std")]
+impl std::fmt::Display for TimePointSec {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let dt = Utc.timestamp(self.sec_since_epoch() as i64, 0);
         write!(f, "{}", dt.to_rfc3339_opts(SecondsFormat::Secs, true))
     }

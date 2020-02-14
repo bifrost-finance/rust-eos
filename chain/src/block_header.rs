@@ -1,3 +1,4 @@
+use alloc::string::String;
 use alloc::vec::Vec;
 use core::{convert::From, str::FromStr};
 use crate::{
@@ -29,7 +30,7 @@ impl core::fmt::Display for BlockHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "block_num: {}\n\
             id: {}\n\
-            timestamp: {}\n\
+            timestamp: {:?}\n\
             producer: {}\n\
             confirmed: {}\n\
             previous: {}\n\
@@ -124,7 +125,6 @@ impl SignedBlockHeader {
         self.block_header.block_num()
     }
 
-    #[cfg(feature = "std")]
     pub fn verify(&self, blockroot_merkle: Checksum256, schedule_hash: Checksum256, pk: PublicKey) -> crate::Result<()> {
         let digest = self.sig_digest(blockroot_merkle, schedule_hash)?;
         pk.verify(digest.as_bytes(), &self.producer_signature)

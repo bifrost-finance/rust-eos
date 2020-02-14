@@ -3,8 +3,7 @@ use alloc::vec::Vec;
 use crate::Client;
 use hex;
 use rpc_codegen::Fetch;
-use chain::transaction::SignedTransaction;
-use chain::SerializeData;
+use chain::{SerializeData, SignedTransaction};
 use serde::{Deserialize, Serialize};
 
 
@@ -102,9 +101,8 @@ pub struct ActionReceipt {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chain::{SerializeData, Action, Transaction};
+    use chain::{SerializeData, Action, Transaction, TimePointSec};
     use keys::secret::SecretKey;
-    use hex;
     use crate::{HyperClient, GetInfo, GetBlock};
     use crate::{get_info, get_block};
 
@@ -334,6 +332,7 @@ mod tests {
         assert!(r.is_ok());
     }
 
+    #[cfg(feature = "std")]
     #[test]
     fn push_transaction_should_work() {
         // import private key
@@ -341,7 +340,7 @@ mod tests {
         assert!(sk.is_ok());
         let sk = sk.unwrap();
 
-        let node: &'static str = "http://47.101.139.226:8888/";
+        let node: &'static str = "http://127.0.0.1:8888/";
         let hyper_client = HyperClient::new(node);
 
         // fetch info
@@ -361,7 +360,8 @@ mod tests {
         let actions = vec![action];
 
         // Construct transaction
-        let trx = Transaction::new(300, ref_block_num, ref_block_prefix, actions);
+        let expiration = TimePointSec::now().sec_since_epoch() + 300;
+        let trx = Transaction::new(expiration, ref_block_num, ref_block_prefix, actions);
         let signed_trx = trx.sign_and_tx(sk, chain_id).ok().unwrap();
         assert!(trx.to_serialize_data().is_ok());
 
@@ -369,13 +369,14 @@ mod tests {
         assert!(response.is_ok());
     }
 
+    #[cfg(feature = "std")]
     #[test]
     fn push_transaction_with_mul_sign_should_work() {
         // import private keys
         let sk = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3";
         let sk1 = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3";
 
-        let node: &'static str = "http://47.101.139.226:8888/";
+        let node: &'static str = "http://127.0.0.1:8888/";
         let hyper_client = HyperClient::new(node);
 
         // fetch info
@@ -395,7 +396,8 @@ mod tests {
         let actions = vec![action];
 
         // Construct transaction
-        let trx = Transaction::new(300, ref_block_num, ref_block_prefix, actions);
+        let expiration = TimePointSec::now().sec_since_epoch() + 300;
+        let trx = Transaction::new(expiration, ref_block_num, ref_block_prefix, actions);
         let signed = trx.generate_signature(&sk, &chain_id).ok().unwrap();
         let signed1 = trx.generate_signature(&sk1, &chain_id).ok().unwrap();
         let signeds = vec![signed, signed1];

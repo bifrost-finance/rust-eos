@@ -1,6 +1,6 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/crypto.hpp#L22-L48>
 use crate::{NumBytes, Read, UnsignedInt, Write, Signature};
-#[cfg(feature = "std")]
+use alloc::string::ToString;
 use core::{
     convert::{TryFrom, TryInto},
     fmt, marker::PhantomData,
@@ -65,7 +65,6 @@ impl PublicKey {
         self.data
     }
 
-    #[cfg(feature = "std")]
     pub fn verify(&self, hash: &[u8], signature: &Signature) -> crate::Result<()> {
         let keys = keys::public::PublicKey::try_from(self.clone())?;
         let sig: &keys::signature::Signature = &signature.clone().try_into()?;
@@ -73,7 +72,6 @@ impl PublicKey {
     }
 }
 
-#[cfg(feature = "std")]
 impl TryFrom<PublicKey> for keys::public::PublicKey {
     type Error = crate::error::Error;
     fn try_from(pk: PublicKey) -> Result<Self, Self::Error> {
@@ -81,7 +79,6 @@ impl TryFrom<PublicKey> for keys::public::PublicKey {
     }
 }
 
-#[cfg(feature = "std")]
 impl Into<PublicKey> for keys::public::PublicKey {
     fn into(self) -> PublicKey {
         PublicKey {
@@ -91,7 +88,6 @@ impl Into<PublicKey> for keys::public::PublicKey {
     }
 }
 
-#[cfg(feature = "std")]
 impl FromStr for PublicKey {
     type Err = crate::error::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -149,7 +145,6 @@ impl core::fmt::Debug for PublicKey {
     }
 }
 
-#[cfg(feature = "std")]
 impl core::fmt::Display for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         if let Ok(pk) = keys::public::PublicKey::try_from(self.clone()) {

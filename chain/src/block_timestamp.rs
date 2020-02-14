@@ -1,5 +1,6 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/time.hpp#L134-L210>
 use crate::{TimePoint, TimePointSec, NumBytes, Read, Write};
+use alloc::string::ToString;
 use chrono::{Utc, TimeZone, SecondsFormat};
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
@@ -119,8 +120,9 @@ impl From<TimePointSec> for BlockTimestamp {
     }
 }
 
-impl core::fmt::Display for BlockTimestamp {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+#[cfg(feature = "std")]
+impl std::fmt::Display for BlockTimestamp {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let sec_since_epoch = (self.0 as i64 * BlockTimestamp::BLOCK_INTERVAL_MS as i64) + BlockTimestamp::BLOCK_TIMESTAMP_EPOCH as i64;
         let dt = Utc.timestamp_millis(sec_since_epoch);
         write!(f, "{}", dt.to_rfc3339_opts(SecondsFormat::Millis, true))

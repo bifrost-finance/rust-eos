@@ -1,5 +1,6 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/crypto.hpp#L93-L120>
 use crate::{NumBytes, Read, SerializeData, UnsignedInt, Write};
+use alloc::string::ToString;
 use core::{
     convert::TryInto,
     str::FromStr,
@@ -87,7 +88,6 @@ impl PartialEq for Signature {
     }
 }
 
-#[cfg(feature = "std")]
 impl core::fmt::Display for Signature {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         if let Ok(sig) = keys::signature::Signature::from_compact(&self.data) {
@@ -98,7 +98,6 @@ impl core::fmt::Display for Signature {
     }
 }
 
-#[cfg(feature = "std")]
 impl From<keys::signature::Signature> for Signature {
     fn from(sig: keys::signature::Signature) -> Self {
         Signature {
@@ -108,7 +107,6 @@ impl From<keys::signature::Signature> for Signature {
     }
 }
 
-#[cfg(feature = "std")]
 impl TryInto<keys::signature::Signature> for Signature {
     type Error = crate::Error;
     fn try_into(self) -> Result<keys::signature::Signature, Self::Error> {
@@ -116,7 +114,6 @@ impl TryInto<keys::signature::Signature> for Signature {
     }
 }
 
-#[cfg(feature = "std")]
 impl FromStr for Signature {
     type Err = keys::error::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {

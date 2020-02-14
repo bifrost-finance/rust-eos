@@ -270,7 +270,7 @@ impl TransactionHeader {
 
 impl core::fmt::Display for TransactionHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "expiration: {}\n\
+        write!(f, "expiration: {:?}\n\
             ref_block_num: {}\n\
             ref_block_prefix: {}\n\
             max_net_usage_words: {}\n\
@@ -297,9 +297,8 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    #[cfg(feature = "std")]
-    pub fn new(delay_secs: u32, ref_block_num: u16, ref_block_prefix: u32, actions: Vec<Action>) -> Self {
-        let expiration = TimePointSec::now().add_seconds(delay_secs);
+    pub fn new(expiration: u32, ref_block_num: u16, ref_block_prefix: u32, actions: Vec<Action>) -> Self {
+        let expiration = TimePointSec::from_unix_seconds(expiration);
         let header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
 
         Transaction {
@@ -323,7 +322,6 @@ impl Transaction {
         }
     }
 
-    #[cfg(feature = "std")]
     pub fn sign(&self, sk: SecretKey, chain_id_hex: Vec<u8>) -> crate::Result<crate::Signature> {
         let mut sign_data: Vec<u8>  = Vec::new();
         let mut chain_id_hex = chain_id_hex;
@@ -336,7 +334,6 @@ impl Transaction {
         Ok(sig.into())
     }
 
-    #[cfg(feature = "std")]
     pub fn sign_and_tx(&self, sk: SecretKey, chain_id: String) -> crate::Result<SignedTransaction> {
         let chain_id_hex = hex::decode(chain_id)
             .map_err(crate::error::Error::FromHexError)?;
@@ -349,7 +346,6 @@ impl Transaction {
         })
     }
 
-    #[cfg(feature = "std")]
     pub fn generate_signature(&self, sk: impl AsRef<str>, chain_id: impl AsRef<str>) -> crate::Result<keys::signature::Signature> {
         let sk = SecretKey::from_wif(sk.as_ref()).map_err(crate::error::Error::Keys)?;
         let mut chain_id_hex = hex::decode(chain_id.as_ref())
@@ -365,10 +361,12 @@ impl Transaction {
         Ok(sig)
     }
 
-    #[cfg(feature = "std")]
-    pub fn generate_signed_transaction(&self, sks: impl IntoIterator<Item=keys::signature::Signature>) -> SignedTransaction
-    {
-        let sks: Vec<crate::Signature> = sks.into_iter().map(|sk| sk.into()).collect();
+    pub fn generate_signed_transaction(
+        &self,
+        sks: impl IntoIterator<Item=keys::signature::Signature>
+    ) -> SignedTransaction {
+        let sks = sks.into_iter().map(|sk: keys::signature::Signature| sk.into())
+            .collect::<Vec<crate::Signature>>();
         SignedTransaction {
             signatures: sks,
             context_free_data: vec![],
@@ -456,7 +454,8 @@ mod test {
     fn sign_tx_should_work() {
         let action = Action::transfer("testa", "testb", "1.0000 EOS", "a memo").ok().unwrap();
         let actions = vec![action];
-        let trx = Transaction::new(300, 0, 0, actions);
+        let expiration = TimePointSec::now().sec_since_epoch() + 300;
+        let trx = Transaction::new(expiration, 0, 0, actions);
 
         let chain_id = "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f".to_string();
         let sk = SecretKey::from_wif("5KUEhweMaSD2szyjU9EKjAyY642ZdVL2qzHW72dQcNRzUMWx9EL").unwrap();

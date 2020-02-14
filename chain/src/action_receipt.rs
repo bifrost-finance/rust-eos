@@ -3,6 +3,8 @@ use crate::{
     Digest, Read, Write, NumBytes, SerializeData,
     utils::flat_map::FlatMap
 };
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::str::FromStr;
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
