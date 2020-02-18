@@ -224,7 +224,7 @@ impl Symbol {
     /// Construct a new symbol given a `u8` precision and `SymbolCode`.
     #[inline]
     pub fn new_with_code(precision: u8, code: SymbolCode) -> Self {
-        let mut value = code.as_u64();
+        let mut value = code.as_u64() << 8;
         value |= u64::from(precision);
         Self(value)
     }
@@ -441,5 +441,23 @@ mod tests {
         test_ok("EOS", Symbol::from_str("4,EOS").unwrap().as_u64());
         test_ok("TGFT", Symbol::from_str("0,TGFT").unwrap().as_u64());
         test_err("tst", ParseSymbolError::BadChar('t'));
+    }
+
+    #[test]
+    fn symbol_from_code_should_work() {
+        let symbol = Symbol::from_str("4,EOS");
+        assert!(symbol.is_ok());
+
+        let code = SymbolCode::try_from("EOS");
+        assert!(code.is_ok());
+
+        let rhs = Symbol::new_with_code(4, code.unwrap());
+        assert_eq!(symbol.unwrap(), rhs);
+
+        let rhs = Symbol::new_with_code(0, code.unwrap());
+        assert_ne!(symbol.unwrap(), rhs);
+
+        let rhs = Symbol::new_with_code(8, code.unwrap());
+        assert_ne!(symbol.unwrap(), rhs);
     }
 }
