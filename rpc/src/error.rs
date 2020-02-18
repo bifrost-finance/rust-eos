@@ -91,8 +91,6 @@ impl From<serde_json::Error> for Error {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-#[cfg_attr(not(feature = "std"), derive(Fail))]
-#[cfg_attr(not(feature = "std"), fail(display = "error response due to: {}.", message))]
 pub struct ErrorResponse {
     pub code: u32,
     pub message: String,
