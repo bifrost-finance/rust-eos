@@ -10,8 +10,6 @@ use crate::base58;
 use crate::network::Network::Mainnet;
 use crate::signature::Signature;
 use rand::Rng;
-use secp256k1;
-
 
 /// A Secp256k1 private key
 #[derive(Clone, PartialEq, Eq)]

@@ -1,8 +1,6 @@
-use bitcoin_hashes;
-use secp256k1;
+use alloc::string::ToString;
+use core::fmt;
 use crate::base58;
-#[cfg(feature = "std")]
-use std::fmt;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -18,13 +16,12 @@ pub enum Error {
     VerifyFailed,
 }
 
-#[cfg(feature = "std")]
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Base58(ref e) => fmt::Display::fmt(e, f),
-            Error::Secp256k1(ref e) => f.write_str(""),
-            Error::Hash(ref e) => f.write_str(""),
+            Error::Secp256k1(ref e) => f.write_str(&e.to_string()),
+            Error::Hash(ref e) => f.write_str(&e.to_string()),
             Error::VerifyFailed => f.write_str("Verify failed"),
         }
     }

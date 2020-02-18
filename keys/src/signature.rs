@@ -1,7 +1,6 @@
 use core::fmt;
 use core::str::FromStr;
 use crate::{base58, hash, error};
-use secp256k1;
 use byteorder::{ByteOrder, LittleEndian};
 
 /// An secp256k1 signature.

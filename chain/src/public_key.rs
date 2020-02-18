@@ -1,6 +1,6 @@
 //! <https://github.com/EOSIO/eosio.cdt/blob/4985359a30da1f883418b7133593f835927b8046/libraries/eosiolib/core/eosio/crypto.hpp#L22-L48>
-use crate::{NumBytes, Read, UnsignedInt, Write, Signature};
 use alloc::string::ToString;
+use crate::{NumBytes, Read, UnsignedInt, Write, Signature};
 use core::{
     convert::{TryFrom, TryInto},
     fmt, marker::PhantomData,
@@ -8,10 +8,11 @@ use core::{
 };
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
-use serde::{Deserialize,
-            Deserializer,
-            de::{self, Visitor},
-            ser::{Serialize, Serializer},
+use serde::{
+    Deserialize,
+    Deserializer,
+    de::{self, Visitor},
+    ser::{Serialize, Serializer},
 };
 
 /// EOSIO Public Key

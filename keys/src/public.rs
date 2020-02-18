@@ -3,7 +3,6 @@ use alloc::string::String;
 use alloc::format;
 use bitcoin_hashes::{sha256, Hash as HashTrait};
 use core::{fmt, str::FromStr};
-use secp256k1;
 use crate::constant::*;
 use crate::{error, hash};
 use crate::secret::SecretKey;

@@ -2,14 +2,12 @@
 
 #![allow(dead_code)]
 
-extern crate bitcoin_hashes as hashes;
-
 use alloc::vec::Vec;
 use alloc::string::String;
 use alloc::vec;
-use core::{fmt, str, slice, iter};
 use byteorder::{ByteOrder, LittleEndian};
-use hashes::{sha256d, Hash};
+use bitcoin_hashes::{sha256d, Hash};
+use core::{fmt, str, slice, iter};
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, Clone)]
