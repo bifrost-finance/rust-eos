@@ -296,9 +296,8 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    #[cfg(feature = "std")]
     pub fn new(expiration: u32, ref_block_num: u16, ref_block_prefix: u32, actions: Vec<Action>) -> Self {
-        let expiration = TimePointSec::now().add_seconds(expiration);
+        let expiration = TimePointSec::from_unix_seconds(expiration);
         let header = TransactionHeader::new(expiration, ref_block_num, ref_block_prefix);
 
         Transaction {
