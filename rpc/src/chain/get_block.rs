@@ -31,9 +31,11 @@ pub struct GetBlock {
     pub action_mroot: String,
     pub schedule_version: u16,
     pub new_producers: Option<ProducerSchedule>,
+    #[serde(skip)]
     pub header_extensions: Vec<Extension>,
     pub producer_signature: String,
     pub transactions: Vec<Transaction>,
+    #[serde(skip)]
     pub block_extensions: Vec<Extension>,
     pub id: String,
     pub block_num: u64,

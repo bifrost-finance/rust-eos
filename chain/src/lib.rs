@@ -21,6 +21,7 @@ pub mod ops;
 pub mod permission_level;
 pub mod producer_key;
 pub mod producer_schedule;
+pub mod producer_schedule_v2;
 pub mod public_key;
 pub mod signature;
 pub mod symbol;
@@ -53,6 +54,7 @@ pub use self::{
     permission_level::*,
     producer_key::*,
     producer_schedule::*,
+    producer_schedule_v2::*,
     public_key::*,
     signature::*,
     symbol::*,
