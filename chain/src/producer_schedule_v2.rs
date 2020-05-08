@@ -11,7 +11,7 @@ use serde::{de::Error, Deserialize, Serialize};
 
 /// Defines both the order, account name, and signing keys of the active set
 /// of producers.
-#[derive(Read, Write, NumBytes, Clone, Debug, Default, PartialEq, Encode, Decode)]
+#[derive(Read, Write, NumBytes, Clone, Debug, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 #[repr(C)]
@@ -21,6 +21,26 @@ pub struct ProducerAuthoritySchedule {
     pub version: u32,
     /// List of producers for this schedule, including its signing key
     pub producers: Vec<ProducerAuthority>,
+}
+
+impl Default for ProducerAuthoritySchedule {
+    fn default() -> Self {
+        let default_schedule = r#"
+        {
+            "version":0,
+            "producers":[{
+                "producer_name":"eosio",
+                "authority":[
+                    0,
+                    {"threshold":1,"keys":[{"key":"EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV","weight":1}
+                ]}
+            ]
+        }]
+        }
+        "#;
+        let producers = serde_json::from_str(default_schedule).expect("failed to create default producers schedule");
+        producers
+    }
 }
 
 #[derive(Read, Write, NumBytes, Clone, Debug, Default, PartialEq, Encode, Decode)]
@@ -211,6 +231,11 @@ mod test {
 
         let new_producers = new_producers.unwrap();
         assert_eq!(Checksum256::hash(new_producers).unwrap().to_string(), "e64c3331f87231a5c4e541f98853baf1295c17ca22b631e503aa5bdf381180d6");
+
+        assert_eq!(
+            ProducerAuthoritySchedule::default().schedule_hash().unwrap().to_string(),
+            "af0197daded4f5d512c6210f58658256025d581da3d658fdfc9b11d7b8abe22e"
+        );
     }
 
     #[test]

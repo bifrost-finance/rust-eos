@@ -175,5 +175,10 @@ mod test {
         assert!(hash.is_ok());
         let hash = hash.unwrap();
         assert_eq!(hash, "e2b28d9dbe1948d0f36973014bbe1c1c936cd38b7907ba29f2d3fb9061b2dd3c".into());
+
+        assert_eq!(
+            ProducerSchedule::default().schedule_hash().unwrap().to_string(),
+            "828135c21a947b15cdbf4941ba09e1c9e0a80e88a157b0989e9b476b71a21c6b"
+        );
     }
 }
