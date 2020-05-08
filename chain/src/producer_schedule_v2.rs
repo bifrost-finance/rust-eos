@@ -3,9 +3,9 @@
 
 use alloc::vec::Vec;
 use core::{convert::From, str::FromStr};
-use crate::{AccountName, NumBytes, ProducerKey, Read, Write, PublicKey, Checksum256, UnsignedInt};
+use crate::{AccountName, NumBytes, Read, Write, PublicKey, Checksum256, UnsignedInt};
 use codec::{Encode, Decode};
-//use core::default::Default;
+use core::default::Default;
 #[cfg(feature = "std")]
 use serde::{de::Error, Deserialize, Serialize};
 
@@ -29,7 +29,6 @@ pub struct ProducerAuthoritySchedule {
 #[repr(C)]
 pub struct ProducerAuthority {
     pub producer_name: AccountName,
-//    pub authority: VariantBlockSigningAuthority,
     pub authority: BlockSigningAuthority,
 }
 
@@ -51,8 +50,8 @@ impl<'de> serde::Deserialize<'de> for ProducerAuthority {
                 where D: serde::de::MapAccess<'de>,
             {
                 let mut producer_name = Default::default();
-                let mut authority = BlockSigningAuthority::default();
-                let mut _tag = 0i32;
+                let mut storage = BlockSigningAuthorityV0::default();
+                let mut _tag = UnsignedInt::from(0u32);
                 while let Some(field) = map.next_key()? {
                     match field {
                         "producer_name" => {
@@ -63,21 +62,12 @@ impl<'de> serde::Deserialize<'de> for ProducerAuthority {
                             let val: serde_json::Value = map.next_value()?;
                             for v in val.as_array().ok_or("no object found").map_err(|e| D::Error::custom(e))? {
                                 if v.is_object() {
-                                    authority = serde_json::from_value(v.clone()).map_err(|e| D::Error::custom(e))?;
+                                    storage = serde_json::from_value(v.clone()).map_err(|e| D::Error::custom(e))?;
+                                }
+                                if v.is_number() {
+                                    _tag = UnsignedInt::from(v.as_i64().ok_or("no number found").map_err(|e| D::Error::custom(e))? as u32);
                                 }
                             }
-//                            let val: serde_json::Value = map.next_value()?;
-//                            for v in val.as_array().ok_or("no object found").map_err(|e| D::Error::custom(e))? {
-//                                if v.is_object() {
-//                                    authority = serde_json::to_vec(v).map_err(|e| D::Error::custom(e))?;
-//                                    let t: Result<BlockSigningAuthority, _> = serde_json::from_slice(&authority);
-//                                    dbg!(&t.unwrap().keys[0].key.to_string());
-//                                }
-//                                if v.is_number() {
-//                                    _tag = v.as_i64().unwrap() as i32;
-//                                }
-//                            }
-//                            authority = val.into_bytes();
                         }
                         _ => {
                             let _: serde_json::Value = map.next_value()?;
@@ -85,10 +75,9 @@ impl<'de> serde::Deserialize<'de> for ProducerAuthority {
                         }
                     }
                 }
-//                let variant_authority = VariantBlockSigningAuthority { _tag: 0, threshold: authority.threshold, keys: authority.keys };
-//                let variant_authority = VariantBlockSigningAuthority { _tag, storage: authority };
+                let authority_v0 = BlockSigningAuthority { _tag, storage };
                 let authority = ProducerAuthority {
-                    producer_name, authority//: variant_authority
+                    producer_name, authority: authority_v0
                 };
 
                 Ok(authority)
@@ -102,7 +91,7 @@ impl<'de> serde::Deserialize<'de> for ProducerAuthority {
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 #[repr(C)]
-pub struct BlockSigningAuthority {
+pub struct BlockSigningAuthorityV0 {
     pub threshold: u32,
     pub keys: Vec<KeyWeight>,
 }
@@ -111,11 +100,9 @@ pub struct BlockSigningAuthority {
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 #[eosio_core_root_path = "crate"]
 #[repr(C)]
-pub struct VariantBlockSigningAuthority {
-    _tag: i32,
-//    pub threshold: u32,
-//    pub keys: Vec<KeyWeight>,
-    pub storage: Vec<u8>
+pub struct BlockSigningAuthority {
+    pub _tag: UnsignedInt,
+    pub storage: BlockSigningAuthorityV0
 }
 
 #[derive(Read, Write, NumBytes, Clone, Debug, Default, PartialEq, Encode, Decode)]
@@ -124,7 +111,6 @@ pub struct VariantBlockSigningAuthority {
 #[repr(C)]
 pub struct KeyWeight {
     pub weight: u16,
-    #[cfg_attr(feature = "std", serde(deserialize_with = "super::string_to_public_key"))]
     pub key: PublicKey,
 }
 
@@ -167,6 +153,7 @@ mod test {
         "#;
         let new_producers: Result<ProducerAuthority, _> = serde_json::from_str(json);
         assert!(new_producers.is_ok());
+        dbg!(&new_producers);
         assert_eq!(Checksum256::hash(new_producers.unwrap().authority).unwrap().to_string(), "6ab1bbed360f8bc900b074af7942d2d07210b6c7653f89c21ae1490f2e0d3733");
     }
 
