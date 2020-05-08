@@ -1,6 +1,7 @@
 //! EOS 2.0.x add a new feature: Weighted-Threshold-Multi-Signature (WTMsig) Block Production
 //! see this: https://github.com/EOSIO/eos/issues/7403
 
+use alloc::vec;
 use alloc::vec::Vec;
 use core::{convert::From, str::FromStr};
 use crate::{AccountName, NumBytes, Read, Write, PublicKey, Checksum256, UnsignedInt};
@@ -25,21 +26,15 @@ pub struct ProducerAuthoritySchedule {
 
 impl Default for ProducerAuthoritySchedule {
     fn default() -> Self {
-        let default_schedule = r#"
-        {
-            "version":0,
-            "producers":[{
-                "producer_name":"eosio",
-                "authority":[
-                    0,
-                    {"threshold":1,"keys":[{"key":"EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV","weight":1}
-                ]}
-            ]
-        }]
-        }
-        "#;
-        let producers = serde_json::from_str(default_schedule).expect("failed to create default producers schedule");
-        producers
+        let kw = KeyWeight { key:PublicKey::from_str("EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV").unwrap(), weight: 1};
+        let authority_v0 = BlockSigningAuthorityV0 { threshold: 1, keys: vec![kw] };
+        let authority = BlockSigningAuthority(UnsignedInt::from(0u32), authority_v0);
+        let pa = ProducerAuthority {
+            producer_name: AccountName::from_str("eosio").expect("failed to create default producers schedule"),
+            authority
+        };
+
+        ProducerAuthoritySchedule::new(0, vec![pa])
     }
 }
 
