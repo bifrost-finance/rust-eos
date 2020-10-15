@@ -2,6 +2,8 @@
 use alloc::vec::Vec;
 use crate::{Checksum256, make_canonical_pair};
 use codec::{Encode, Decode};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 // given an unsigned integral number return the smallest
 // power-of-2 which is greater than or equal to the given number
@@ -55,6 +57,7 @@ fn calculate_max_depth(node_count: u64) -> usize {
 }
 
 #[derive(Clone, Default, Debug, PartialEq, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 pub struct IncrementalMerkle {
     _node_count: u64,
     _active_nodes: Vec<Checksum256>,
@@ -272,5 +275,29 @@ mod tests {
         assert_merkle(&mut im, "000004b391178dca57423d2a6b7d50bce57c96da226ce601e9415a11116ed577", "c8202455a65bbb3d03af70792a4874ef064adb4205aa70c9d439f65fdbb8f879", 1203);
         assert_merkle(&mut im, "000004b41b410ae71e5b2d27ed28304a342103448e8543284cf72de034ddaa1d", "43a5440ae97b9d5058364ca0657f61378d4ed0e76d84ca424714b45a9ac6b83e", 1204);
         assert_merkle(&mut im, "000004b54d7733aecae89fe83bd0fdebc32c9f73046b86272f1a55da565261be", "f4a05bb8b4402a8a486720bbfb3c9db3a599ab52268eb846e1d404b2bf63323a", 1205);
+    }
+
+    #[test]
+    fn incre_merkle_serde_should_be_ok() {
+        let inc_mekle_str = r#"{
+            "_active_nodes":[
+                "ed48bedde2ab467a53bb084025ca439a6087d342e1371d214f7e2286566f95a7",
+                "adcf13bc2ac6feeec5e321e4d8a726fa2479f3002f507095502592a3f532dd47",
+                "7e90d284aa2fb29252d1bec0cde879b77b64a5f5692be37197b0e0ec1da66875",
+                "b55b54c43acc24e6175497efd86a44143adcf5924119a6e0571c407a317e03f2",
+                "3839bd2b5e621f4d9777d7302c9ed7659e613e64db0774105bb05cf21bd9f8c5",
+                "e0d0f4462663bc85de1f3f45ddeb33d7f7ab03242d09057d3cb266d5bfb002ba",
+                "52dc9246d664ed229c1b0f06526600cb2223dbde6266fe925796d0bba7c0eb88",
+                "cae9dbc497ccf539af0900a87dcdac7031b29173aacc8f123cf292cc65a11ea6",
+                "75529d7636195bff8ffea40fd234d2ab876ee90049af1b3c261fad7ddb27cb87",
+                "ca50800f17f87553c5905dcd56740e07ad8422527a9d2ca3b03a98bc2ed1aff9",
+                "89c365695ac50e1342d854bf4bdb35066ca7b1954d04c6df4581915c5147b4df",
+                "9292a3e4f9af07c619ba70ca31f8aef64bae7a31154369544f32874b416b2dad",
+                "f1db0a5a755beedcce5f0c62e003740f3a99cfdfa12f0889bbb492aaade749d7"],
+            "_node_count":31966338
+        }"#;
+        let merkle: Result<IncrementalMerkle, _> = serde_json::from_str(inc_mekle_str);
+        assert!(merkle.is_ok());
+        assert_eq!(merkle.unwrap()._node_count, 31966338);
     }
 }

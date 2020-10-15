@@ -8,9 +8,10 @@ use alloc::vec::Vec;
 use core::str::FromStr;
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
-use serde::de::Error;
+use serde::{de::Error, Serialize};
 
 #[derive(Clone, Debug, Read, Write, NumBytes, Default, Encode, Decode, PartialEq, Digest, SerializeData)]
+#[cfg_attr(feature = "std", derive(Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct ActionReceipt {
     pub receiver: AccountName,

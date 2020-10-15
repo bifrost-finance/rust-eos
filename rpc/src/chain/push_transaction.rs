@@ -356,8 +356,15 @@ mod tests {
         let ref_block_prefix = block.ref_block_prefix as u32;
 
         // Construct action
-        let action = Action::transfer("alice", "bob", "1.0000 EOS", "a memo").ok().unwrap();
-        let actions = vec![action];
+        let action = Action::transfer(
+            "jim", "bifrostcross", "1.0000 EOS",
+            "5HDpD7BkSkFNNRbY3kWyEHaZEFQm4QwJAsHtPW7TLHBZRPhj@bifrost:EOS"
+        ).ok().unwrap();
+        let action1 = Action::transfer(
+            "jim", "bifrostcross", "2.0000 EOS",
+            "5HDpD7BkSkFNNRbY3kWyEHaZEFQm4QwJAsHtPW7TLHBZRPhj@bifrost:EOS"
+        ).ok().unwrap();
+        let actions = vec![action, action1];
 
         // Construct transaction
         let expiration = TimePointSec::now().sec_since_epoch() + 300;

@@ -2,8 +2,11 @@ use alloc::vec;
 use alloc::vec::Vec;
 use crate::{Read, Write, NumBytes, UnsignedInt, WriteError, ReadError};
 use codec::{Encode, Decode};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq)]
+#[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
 pub struct FlatMap<K, V> {
     maps: Vec<(K, V)>,
 }
