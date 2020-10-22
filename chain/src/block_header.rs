@@ -8,7 +8,7 @@ use crate::{
 };
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
-use serde::{de::Error, Deserialize, Serialize};
+use serde::{de::Error, Deserialize, Serialize, ser::{Serializer, SerializeStruct}};
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode, SerializeData)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
@@ -102,7 +102,6 @@ impl BlockHeader {
 }
 
 #[derive(Debug, Clone, Default, Read, Write, NumBytes, PartialEq, Encode, Decode, SerializeData)]
-#[cfg_attr(feature = "std", derive(Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct SignedBlockHeader {
     pub block_header: BlockHeader,
@@ -228,6 +227,25 @@ impl<'de> serde::Deserialize<'de> for SignedBlockHeader {
     }
 }
 
+#[cfg(feature = "std")]
+impl serde::ser::Serialize for SignedBlockHeader {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        let mut state = serializer.serialize_struct("SignedBlockHeader", 10)?;
+        dbg!(&self.block_header.timestamp);
+        state.serialize_field("timestamp", &self.block_header.timestamp)?;
+        state.serialize_field("producer", &self.block_header.producer)?;
+        state.serialize_field("confirmed", &self.block_header.confirmed)?;
+        state.serialize_field("previous", &self.block_header.previous)?;
+        state.serialize_field("transaction_mroot", &self.block_header.transaction_mroot)?;
+        state.serialize_field("action_mroot", &self.block_header.action_mroot)?;
+        state.serialize_field("schedule_version", &self.block_header.schedule_version)?;
+        state.serialize_field("new_producers", &self.block_header.new_producers)?;
+        state.serialize_field("header_extensions", &self.block_header.header_extensions)?;
+        state.serialize_field("producer_signature", &self.producer_signature)?;
+        state.end()
+    }
+}
+
 impl core::fmt::Display for SignedBlockHeader {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}\n\
@@ -282,5 +300,25 @@ mod test {
         assert!(signed_block_str.is_ok());
         let signed_block: Result<SignedBlockHeader, _> = serde_json::from_str(&signed_block_str.unwrap());
         assert!(signed_block.is_ok());
+    }
+
+    #[test]
+    fn serialize_signed_block_should_be_ok() {
+        let json = r#"{
+			"timestamp": "2020-10-22T08:01:25.500",
+			"producer": "eosio",
+			"confirmed": 0,
+			"previous": "0000016c09878425dcfd26d3f999b6980433b8546389cae21f910df2e8cccc51",
+			"transaction_mroot": "0000000000000000000000000000000000000000000000000000000000000000",
+			"action_mroot": "b81b0fb9240be43c1252952ee03a37bfca84589b1fad30eea0d414f2e37530c3",
+			"schedule_version": 0,
+			"new_producers": null,
+			"header_extensions": [],
+            "producer_signature": "SIG_K1_KWxmx24YRKnYLzYc99HskdpiAQzk7bJYKW2NcgxRWyz5C9BxytFDrFsA75AWebYem6PSVTg6bt5yuLPTkpKGwL6WNbRUTg"
+        }"#;
+        let signed_block: Result<SignedBlockHeader, _> = serde_json::from_str(json);
+        assert!(signed_block.is_ok());
+        let serialized_signed_block_header = serde_json::to_string(&signed_block.unwrap());
+        assert!(serialized_signed_block_header.is_ok());
     }
 }
