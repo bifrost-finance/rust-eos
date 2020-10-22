@@ -7,30 +7,32 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq)]
 #[cfg_attr(feature = "std", derive(Deserialize, Serialize))]
-pub struct FlatMap<K, V>(
-    Vec<(K, V)>
-);
+pub struct FlatMap<K, V> {
+    pub maps: Vec<(K, V)>,
+}
 
 impl<K, V> FlatMap<K, V> {
     pub fn new(key: K, value: V) -> Self {
-        Self (
-            vec![(key, value)]
-        )
+        Self {
+            maps: vec![(key, value)],
+        }
     }
 
     pub fn size(&self) -> UnsignedInt {
-        UnsignedInt::from(self.0.len())
+        UnsignedInt::from(self.maps.len())
     }
 
     pub fn assign(v: Vec<(K, V)>) -> Self {
-        Self(v)
+        Self {
+            maps: v
+        }
     }
 }
 
 impl<K: NumBytes, V: NumBytes> NumBytes for FlatMap<K, V> {
     fn num_bytes(&self) -> usize {
         let mut size = self.size().num_bytes();
-        for map in self.0.iter() {
+        for map in self.maps.iter() {
             size = size.saturating_add(map.num_bytes());
         }
 
@@ -41,7 +43,7 @@ impl<K: NumBytes, V: NumBytes> NumBytes for FlatMap<K, V> {
 impl<K: Write, V: Write> Write for FlatMap<K, V> {
     fn write(&self, bytes: &mut [u8], pos: &mut usize) -> Result<(), WriteError> {
         self.size().write(bytes, pos)?;
-        for map in self.0.iter() {
+        for map in self.maps.iter() {
             map.write(bytes, pos)?;
         }
 
@@ -59,7 +61,6 @@ impl <K: Read, V: Read> Read for FlatMap<K, V> {
             maps.push(map);
         }
 
-        // Ok(FlatMap { maps })
-        Ok(FlatMap(maps))
+        Ok(FlatMap { maps })
     }
 }

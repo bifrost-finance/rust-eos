@@ -8,10 +8,9 @@ use alloc::vec::Vec;
 use core::str::FromStr;
 use codec::{Encode, Decode};
 #[cfg(feature = "std")]
-use serde::{de::Error, Serialize};
+use serde::{de::Error, ser::{Serializer, SerializeStruct}};
 
 #[derive(Clone, Debug, Read, Write, NumBytes, Default, Encode, Decode, PartialEq, Digest, SerializeData)]
-#[cfg_attr(feature = "std", derive(Serialize))]
 #[eosio_core_root_path = "crate"]
 pub struct ActionReceipt {
     pub receiver: AccountName,
@@ -101,6 +100,22 @@ impl<'de> serde::Deserialize<'de> for ActionReceipt {
     }
 }
 
+#[cfg(feature = "std")]
+impl serde::ser::Serialize for ActionReceipt {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        let mut state = serializer.serialize_struct("ActionReceipt", 7)?;
+        state.serialize_field("receiver", &self.receiver)?;
+        state.serialize_field("act_digest", &self.act_digest)?;
+        state.serialize_field("global_sequence", &self.global_sequence)?;
+        state.serialize_field("recv_sequence", &self.recv_sequence)?;
+        let auth_sequence = &self.auth_sequence.maps;
+        state.serialize_field("auth_sequence", auth_sequence)?;
+        state.serialize_field("code_sequence", &self.code_sequence)?;
+        state.serialize_field("abi_sequence", &self.abi_sequence)?;
+        state.end()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -140,7 +155,7 @@ mod tests {
 
         let receipt: Result<ActionReceipt, _> = serde_json::from_str(receipt_str);
         assert!(receipt.is_ok());
-        let digest = receipt.unwrap().digest();
+        let digest = receipt.as_ref().unwrap().digest();
         assert!(digest.is_ok());
         assert_eq!(digest.unwrap().to_string(),  "9f4d9c5a7fa93386e8b7dd3568b5f40a88f067fb984b9de8305a56ef333086a0");
     }
