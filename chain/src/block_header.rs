@@ -166,7 +166,7 @@ impl<'de> serde::Deserialize<'de> for SignedBlockHeader {
                     match field {
                         "timestamp" => {
                             let val: String = map.next_value()?;
-                            let t = val.parse::<chrono::NaiveDateTime>().map_err(|e| D::Error::custom(e))?.timestamp_nanos();
+                            let t = val.trim_matches(|c| c == 'z' || c == 'Z').parse::<chrono::NaiveDateTime>().map_err(|e| D::Error::custom(e))?.timestamp_nanos();
                             timestamp = BlockTimestamp::from(TimePoint::from_unix_nano_seconds(t));
                         }
                         "producer" => {
@@ -231,7 +231,6 @@ impl<'de> serde::Deserialize<'de> for SignedBlockHeader {
 impl serde::ser::Serialize for SignedBlockHeader {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
         let mut state = serializer.serialize_struct("SignedBlockHeader", 10)?;
-        dbg!(&self.block_header.timestamp);
         state.serialize_field("timestamp", &self.block_header.timestamp)?;
         state.serialize_field("producer", &self.block_header.producer)?;
         state.serialize_field("confirmed", &self.block_header.confirmed)?;
@@ -305,7 +304,7 @@ mod test {
     #[test]
     fn serialize_signed_block_should_be_ok() {
         let json = r#"{
-			"timestamp": "2020-10-22T08:01:25.500",
+			"timestamp": "2020-10-22T17:10:00.000Z",
 			"producer": "eosio",
 			"confirmed": 0,
 			"previous": "0000016c09878425dcfd26d3f999b6980433b8546389cae21f910df2e8cccc51",
