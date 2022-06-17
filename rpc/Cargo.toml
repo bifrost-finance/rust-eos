@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 hex = { version = "0.4", default-features = false }
-hyper = { version = "0.12", optional = true }
+hyper = { version = "0.14", optional = true }
 hyper-tls = { version = "0.3", optional = true }
 js-sys = { version = "0.3.5", optional = true }
 chain = { package = "eos-chain", path = "../chain" }
