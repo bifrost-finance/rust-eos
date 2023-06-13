@@ -14,7 +14,7 @@ rpc_codegen = { version = "0.1", path = "rpc_codegen" }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false }
 stdweb = { version = "0.4.14", optional = true }
-tokio = { version = "0.1", optional = true }
+tokio = { version = "1.18", optional = true }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"], optional = true }
 wasm-bindgen-futures = { version = "0.3.5", optional = true }
 
